@@ -111,7 +111,7 @@ class MySessionMetadata extends Equatable {
       id: json['id'] ?? '',
       lastMessageContent: json['lastMessageContent'] ?? '',
       lastMessageAt: json['lastMessageAt'] != null ? DateTime.parse(json['lastMessageAt'] as String) : null,
-      unreadCount: json['unreadCount'] ?? 0,
+      unreadCount: json['customerUnreadCount'] ?? 0,
     );
   }
 
@@ -120,7 +120,7 @@ class MySessionMetadata extends Equatable {
       'id': id,
       'lastMessageContent': lastMessageContent,
       'lastMessageAt': lastMessageAt,
-      'unreadCount': unreadCount,
+      'customerUnreadCount': unreadCount,
     };
   }
 

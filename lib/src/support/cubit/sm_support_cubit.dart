@@ -171,7 +171,9 @@ class SMSupportCubit extends Cubit<SMSupportState> {
       result.when(
         success: (data) {
           smPrint('Get My Sessions Success: ${data.result.length} sessions');
-          emit(state.copyWith(getMySessionsStatus: BaseStatus.success, mySessions: data.result));
+          emit(
+            state.copyWith(getMySessionsStatus: BaseStatus.success, mySessions: data.result, isGetSessionsBefore: true),
+          );
         },
         error: (error) {
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
@@ -502,7 +504,7 @@ class SMSupportCubit extends Cubit<SMSupportState> {
       final type = sessionStatsData['type'] as String?;
       final data = sessionStatsData['data'];
 
-      if (type == 'new_message' && data != null) {
+      if ((type == 'new_message' || type == 'session_reopened') && data != null) {
         if (data is List) {
           // Handle multiple session updates
           for (final sessionData in data) {
@@ -524,6 +526,7 @@ class SMSupportCubit extends Cubit<SMSupportState> {
   void _updateSessionFromStats(Map<String, dynamic> sessionData) {
     try {
       final sessionId = sessionData['id'] as String?;
+      final sessionStatus = sessionData['status'] as String?;
       final metadata = sessionData['metadata'] as Map<String, dynamic>?;
 
       if (sessionId == null || metadata == null) {
@@ -543,7 +546,10 @@ class SMSupportCubit extends Cubit<SMSupportState> {
           );
 
           smPrint('Updated session ${session.id} with new metadata');
-          return session.copyWith(metadata: newMetadata);
+          return session.copyWith(
+            status: sessionStatus != null ? SessionStatus.fromString(sessionStatus) : session.status,
+            metadata: newMetadata,
+          );
         }
         return session;
       }).toList();

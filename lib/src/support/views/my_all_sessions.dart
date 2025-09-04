@@ -44,7 +44,7 @@ class _MySessionsState extends State<MySessions> {
                 children: [
                   __appBar(),
                   Divider(color: ColorsPallets.disabled25, thickness: 1),
-                  if (state.getMySessionsStatus.isLoading) ...[
+                  if (state.getMySessionsStatus.isLoading && !state.isGetSessionsBefore) ...[
                     ...List.generate(3, (index) {
                       return ShimmerItems.ticketShimmer();
                     }),

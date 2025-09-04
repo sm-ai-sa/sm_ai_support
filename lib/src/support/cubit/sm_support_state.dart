@@ -40,6 +40,7 @@ class SMSupportState extends Equatable {
   final SessionModel? currentSession;
   final List<MySessionModel> mySessions;
   final int myUnreadSessionsCount;
+  final bool isGetSessionsBefore;
 
   // Tenant data
   final TenantModel? currentTenant;
@@ -72,6 +73,7 @@ class SMSupportState extends Equatable {
     this.reopenSessionStatus = BaseStatus.initial,
 
     this.reopenSessionId,
+    this.isGetSessionsBefore = false,
 
     // Tenant status
     this.getTenantStatus = BaseStatus.initial,
@@ -120,6 +122,8 @@ class SMSupportState extends Equatable {
     String? reopenSessionId,
     bool? isResetReopenSessionId,
 
+    bool? isGetSessionsBefore,
+
     // Tenant status
     BaseStatus? getTenantStatus,
 
@@ -167,6 +171,7 @@ class SMSupportState extends Equatable {
       uploadFileStatus: uploadFileStatus ?? this.uploadFileStatus,
       reopenSessionStatus: reopenSessionStatus ?? this.reopenSessionStatus,
       reopenSessionId: reopenSessionId ?? (isResetReopenSessionId == true ? null : this.reopenSessionId),
+      isGetSessionsBefore: isGetSessionsBefore ?? this.isGetSessionsBefore,
       // Tenant status
       getTenantStatus: getTenantStatus ?? this.getTenantStatus,
 
@@ -214,6 +219,8 @@ class SMSupportState extends Equatable {
     uploadFileStatus,
     reopenSessionStatus,
     reopenSessionId,
+
+    isGetSessionsBefore,
 
     // Tenant status
     getTenantStatus,
