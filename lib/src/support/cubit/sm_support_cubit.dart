@@ -504,7 +504,7 @@ class SMSupportCubit extends Cubit<SMSupportState> {
       final type = sessionStatsData['type'] as String?;
       final data = sessionStatsData['data'];
 
-      if ((type == 'new_message' || type == 'session_reopened') && data != null) {
+      if ((type == 'new_message' || type == 'session_updated') && data != null) {
         if (data is List) {
           // Handle multiple session updates
           for (final sessionData in data) {

@@ -345,7 +345,8 @@ class _ChatPageState extends State<ChatPage> {
       child: Column(
         children: [
           Visibility(
-            visible: message.reply != null,
+            visible:
+                message.reply != null && !(message.contentType.isReopenSession || message.contentType.isCloseSession),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
@@ -361,9 +362,11 @@ class _ChatPageState extends State<ChatPage> {
             ),
           ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (message.reply != null) ...[
+              if (message.contentType.isReopenSession || message.contentType.isCloseSession)
+                Flexible(flex: 2, child: Container(color: ColorsPallets.primaryColor, height: 1))
+              else if (message.reply != null) ...[
                 DesignSystem.svgIcon(
                   'curve',
                   width: 19.rw,
@@ -372,33 +375,45 @@ class _ChatPageState extends State<ChatPage> {
                 ),
                 SizedBox(width: 8.rw),
               ],
-              Flexible(
-                child: Align(alignment: AlignmentDirectional.centerStart, child: _messageBasedOnType(message, true)),
-              ),
-              SizedBox(width: 50.rw),
-            ],
-          ),
-          SizedBox(height: 4.rh),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // if (message.isHolderMessage) ...[
-              //   Icon(Icons.watch_later_outlined, size: 12.rSp, color: ColorsPallets.subdued400),
-              // ] else ...[
 
-              // ],
-              DesignSystem.svgIcon(
-                // Message marked as read (read) else (read1)
-                message.isRead ? 'read' : 'read1',
-                size: 18.rSp,
+              Flexible(
+                flex: 3,
+                child: Align(
+                  alignment: (message.contentType.isReopenSession || message.contentType.isCloseSession)
+                      ? AlignmentDirectional.center
+                      : AlignmentDirectional.centerStart,
+                  child: _messageBasedOnType(message, true),
+                ),
               ),
-              SizedBox(width: 4.rw),
-              Text(
-                '${message.createdAt.monthNameDay}, ${message.createdAt.timeFormat}',
-                style: TextStyles.s_10_500.copyWith(color: ColorsPallets.subdued400),
-              ),
+              if (message.contentType.isReopenSession || message.contentType.isCloseSession)
+                Flexible(flex: 2, child: Container(color: ColorsPallets.primaryColor, height: 1))
+              else
+                SizedBox(width: 50.rw),
             ],
           ),
+          if (!(message.contentType.isReopenSession || message.contentType.isCloseSession)) ...[
+            SizedBox(height: 4.rh),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                // if (message.isHolderMessage) ...[
+                //   Icon(Icons.watch_later_outlined, size: 12.rSp, color: ColorsPallets.subdued400),
+                // ] else ...[
+
+                // ],
+                DesignSystem.svgIcon(
+                  // Message marked as read (read) else (read1)
+                  message.isRead ? 'read' : 'read1',
+                  size: 18.rSp,
+                ),
+                SizedBox(width: 4.rw),
+                Text(
+                  '${message.createdAt.monthNameDay}, ${message.createdAt.timeFormat}',
+                  style: TextStyles.s_10_500.copyWith(color: ColorsPallets.subdued400),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -419,10 +434,11 @@ class _ChatPageState extends State<ChatPage> {
                     Row(
                       children: [
                         if (message.contentType.isReopenSession || message.contentType.isCloseSession)
-                          Flexible(child: Container(color: ColorsPallets.primaryColor, height: 1))
+                          Flexible(flex: 2, child: Container(color: ColorsPallets.primaryColor, height: 1))
                         else
                           SizedBox(width: 50.rw),
                         Flexible(
+                          flex: 3,
                           child: InkWell(
                             onLongPress: () {
                               // Set reply on this message
@@ -437,7 +453,7 @@ class _ChatPageState extends State<ChatPage> {
                           ),
                         ),
                         if (message.contentType.isReopenSession || message.contentType.isCloseSession)
-                          Flexible(child: Container(color: ColorsPallets.primaryColor, height: 1)),
+                          Flexible(flex: 2, child: Container(color: ColorsPallets.primaryColor, height: 1)),
                       ],
                     ),
                     if (!(message.contentType.isReopenSession || message.contentType.isCloseSession)) ...[
