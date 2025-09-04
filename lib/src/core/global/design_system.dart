@@ -148,7 +148,7 @@ class DesignSystem {
     double borderRadius = 0,
   }) {
     return networkSvgIcon(
-      '${Apis.categoryIconUrl}/$icon.svg',
+      '${Apis.categoryIconUrl}/$icon',
       width: width,
       height: height,
       size: size,
@@ -382,7 +382,7 @@ class DesignSystem {
       animationDuration: Duration(milliseconds: 100),
       valueLabelPadding: EdgeInsets.zero,
       valueLabelMargin: EdgeInsets.zero,
-      starOffColor: starOffColor ?? ColorsPallets.warning500.withOpacity(.4),
+      starOffColor: starOffColor ?? ColorsPallets.warning500.withValues(alpha: .4),
       starColor: ColorsPallets.warning500,
     );
   }

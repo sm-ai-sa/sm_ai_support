@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -26,16 +27,21 @@ class ChatPage extends StatefulWidget {
   final bool initTicket;
   final SessionModel? session;
   final MySessionModel? mySession;
+  final CategoryModel? category;
 
-  const ChatPage({super.key, this.session, this.mySession, this.initTicket = false})
-    : assert(session != null || mySession != null, 'Either session or mySession must be provided');
+  const ChatPage({super.key, this.session, this.mySession, this.category, this.initTicket = false})
+    : assert(
+        session != null || mySession != null || (category != null && initTicket),
+        'Either session or mySession must be provided, or category with initTicket for new sessions',
+      );
 
   // Convenience getters
   String get sessionId => session?.id ?? mySession?.id ?? '';
-  SessionModel get currentSession => session ?? mySession!.toSessionModel();
-  CategoryModel? get category => session?.category ?? mySession?.category;
-  // bool get isShowRate => true;
-  bool get isShowRate => (mySession?.isRatingRequired ?? false) && (mySession?.status.isClosed ?? false);
+  SessionModel? get currentSession => session ?? mySession?.toSessionModel();
+  CategoryModel? get sessionCategory => session?.category ?? mySession?.category ?? category;
+
+  // Check if this is a new session without existing session data
+  bool get isNewSession => initTicket && sessionId.isEmpty && category != null;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -47,18 +53,44 @@ class _ChatPageState extends State<ChatPage> {
   late SingleSessionCubit _sessionCubit;
   bool _streamStarted = false; // Track if stream has been started
 
+  /// Get the current session from SMSupportCubit state or fallback to widget's mySession
+  MySessionModel? _getCurrentSession(SMSupportState state) {
+    if (widget.sessionId.isNotEmpty) {
+      // Try to find the session in the current state first
+      final updatedSession = state.mySessions.firstWhereOrNull((s) => s.id == widget.sessionId);
+      if (updatedSession != null) {
+        return updatedSession;
+      }
+    }
+    // Fallback to the original session passed to the widget
+    return widget.mySession;
+  }
+
+  /// Check if rating should be shown based on current session state
+  bool _shouldShowRating() {
+    final sessionMessageRatingRequired = _sessionCubit.state.isRatingRequired;
+
+    // Return true if either the session or session messages indicate rating is required
+    return sessionMessageRatingRequired;
+  }
+
   @override
   void initState() {
     super.initState();
 
-    // Initialize SingleSessionCubit
+    // Initialize SingleSessionCubit with session ID (empty for new sessions)
     _sessionCubit = SingleSessionCubit(sessionId: widget.sessionId);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    // If this is a new session, pass the category information
+    if (widget.isNewSession && widget.category != null) {
+      _sessionCubit.setCategoryForNewSession(widget.category!);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       _scrollToBottom(plus: 100);
       if (!widget.initTicket && widget.sessionId.isNotEmpty) {
-        // Load session messages
-        _sessionCubit.getSessionMessages();
+        // Load session messages for existing sessions
+        await _sessionCubit.getSessionMessages();
         // Mark messages as read
         _sessionCubit.markMessagesAsRead();
         // Send typing indicator
@@ -69,7 +101,10 @@ class _ChatPageState extends State<ChatPage> {
         _streamStarted = true;
       }
 
-      if (widget.isShowRate) {
+      // Check if rating should be shown based on current state
+
+      final shouldShowRating = _shouldShowRating();
+      if (shouldShowRating) {
         primaryBottomSheet(
           showLeadingContainer: true,
           child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
@@ -118,10 +153,18 @@ class _ChatPageState extends State<ChatPage> {
         return;
       }
 
+      // Get current session ID from the cubit state (in case it was updated after session creation)
+      final currentSessionId = _sessionCubit.state.sessionId;
+
+      if (currentSessionId.isEmpty) {
+        smPrint('Cannot start message stream: sessionId is empty');
+        return;
+      }
+
       // Get customer ID if authenticated
       final customerId = AuthManager.isAuthenticated ? AuthManager.currentCustomer?.id : null;
 
-      smPrint('Starting message stream - TenantId: $tenantId, SessionId: ${widget.sessionId}, CustomerId: $customerId');
+      smPrint('Starting message stream - TenantId: $tenantId, SessionId: $currentSessionId, CustomerId: $customerId');
 
       // Start the WebSocket stream
       _sessionCubit.startMessageStream(tenantId: tenantId, customerId: customerId);
@@ -134,79 +177,118 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [BlocProvider.value(value: _sessionCubit)],
-      child: Scaffold(
-        backgroundColor: ColorsPallets.white,
-        extendBody: true,
-        appBar: __appBar(),
-        body: Column(
-          children: [
-            DesignSystem.primaryDivider(),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.rh, horizontal: 22.rw),
-              child: BlocBuilder<SMSupportCubit, SMSupportState>(
-                builder: (context, state) {
-                  return Row(
-                    children: [
-                      DesignSystem.categorySvg(widget.category?.icon ?? '', width: 24.rSp, height: 24.rSp),
-                      SizedBox(width: 14.rw),
-                      Expanded(
-                        child: Text(
-                          widget.category?.description ?? 'General Support',
-                          style: TextStyles.s_13_400.copyWith(color: ColorsPallets.normal500),
+      child: BlocListener<SingleSessionCubit, SingleSessionState>(
+        listenWhen: (previous, current) => previous.isRatingRequiredFromSocket != current.isRatingRequiredFromSocket,
+        listener: (context, state) {
+          // Show rating bottom sheet when rating is required from WebSocket
+          if (state.isRatingRequiredFromSocket) {
+            smPrint('🌟 Rating request received via WebSocket - showing rating bottom sheet');
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              primaryBottomSheet(
+                showLeadingContainer: true,
+                child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+              );
+            });
+          }
+        },
+        child: Scaffold(
+          backgroundColor: ColorsPallets.white,
+          extendBody: true,
+          appBar: __appBar(),
+          body: Column(
+            children: [
+              DesignSystem.primaryDivider(),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.rh, horizontal: 22.rw),
+                child: BlocBuilder<SMSupportCubit, SMSupportState>(
+                  builder: (context, state) {
+                    return Row(
+                      children: [
+                        DesignSystem.categorySvg(widget.sessionCategory?.icon ?? '', width: 24.rSp, height: 24.rSp),
+                        SizedBox(width: 14.rw),
+                        Expanded(
+                          child: Text(
+                            widget.sessionCategory?.categoryName ?? '--',
+                            style: TextStyles.s_13_400.copyWith(color: ColorsPallets.normal500),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    );
+                  },
+                ),
+              ),
+              DesignSystem.primaryDivider(),
+              __messagesList(),
+              DesignSystem.primaryDivider(),
+              BlocBuilder<SMSupportCubit, SMSupportState>(
+                builder: (context, state) {
+                  return BlocBuilder<SingleSessionCubit, SingleSessionState>(
+                    builder: (context, sessionState) {
+                      final currentSession = _getCurrentSession(state);
+                      final sessionStatus = currentSession?.toSessionModel().status ?? widget.currentSession?.status;
+
+                      final lastMessage = sessionState.sessionMessages.isNotEmpty
+                          ? sessionState.sessionMessages.last
+                          : null;
+
+                      final shouldShowRating = _shouldShowRating();
+
+                      return Column(
+                        children: [
+                          Visibility(
+                            visible:
+                                (widget.initTicket || sessionStatus?.isActive == true) &&
+                                !shouldShowRating &&
+                                !(lastMessage?.contentType.isCloseSession ?? false),
+                            child: MessageInput(
+                              sessionId: widget.sessionId,
+                              ticketId: ticketId,
+                              initTicket: widget.initTicket,
+                              category: widget.category, // Pass category for new sessions
+                              onSend: (isSuccess) {
+                                if (isSuccess) {
+                                  _scrollToBottom();
+                                  // Start stream after first message is sent (for new sessions)
+                                  // Only start once to prevent multiple connections
+                                  if (widget.initTicket && !_streamStarted) {
+                                    _startMessageStream();
+                                    _streamStarted = true;
+                                  }
+                                }
+                              },
+                              onSessionCreated: (sessionId) {
+                                // Session ID is already updated in createSessionWithCategory
+                                // Just start WebSocket stream for the new session
+                                if (!_streamStarted) {
+                                  _startMessageStream();
+                                  _streamStarted = true;
+                                }
+                              },
+                            ),
+                          ),
+                          Visibility(
+                            visible: shouldShowRating,
+                            child: InkWell(
+                              onTap: () {
+                                primaryBottomSheet(
+                                  showLeadingContainer: true,
+                                  child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+                                );
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 30, top: 20),
+                                child: Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
                   );
                 },
               ),
-            ),
-            DesignSystem.primaryDivider(),
-            __messagesList(),
-            DesignSystem.primaryDivider(),
-            BlocBuilder<SMSupportCubit, SMSupportState>(
-              builder: (context, state) {
-                final sessionStatus = widget.currentSession.status;
-                return Column(
-                  children: [
-                    Visibility(
-                      visible: (widget.initTicket || sessionStatus.isActive) && !widget.isShowRate,
-                      child: MessageInput(
-                        sessionId: widget.sessionId,
-                        ticketId: ticketId,
-                        initTicket: widget.initTicket,
-                        onSend: (isSuccess) {
-                          if (isSuccess) {
-                            _scrollToBottom();
-                            // Start stream after first message is sent (for new sessions)
-                            // Only start once to prevent multiple connections
-                            if (widget.initTicket && !_streamStarted) {
-                              _startMessageStream();
-                              _streamStarted = true;
-                            }
-                          }
-                        },
-                      ),
-                    ),
-                    Visibility(
-                      visible: !widget.initTicket && widget.isShowRate,
-                      child: InkWell(
-                        onTap: () {
-                          primaryBottomSheet(
-                            showLeadingContainer: true,
-                            child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
-                          );
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 30, top: 20),
-                          child: Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -223,11 +305,21 @@ class _ChatPageState extends State<ChatPage> {
         }
       },
       builder: (context, sessionState) {
-        if (sessionState.getSessionMessagesStatus.isLoading) {
+        smPrint('🖥️ UI REBUILD - Messages count: ${sessionState.sessionMessages.length}');
+        smPrint('🖥️ Session ID: ${sessionState.sessionId}');
+        smPrint('🖥️ Send status: ${sessionState.sendMessageStatus}');
+        smPrint('🖥️ Create status: ${sessionState.createSessionStatus}');
+
+        // Show loading for session messages or session creation
+        if (sessionState.getSessionMessagesStatus.isLoading
+        //  ||
+        //     (sessionState.isNewSession && sessionState.createSessionStatus.isLoading)
+        ) {
           return Expanded(child: Center(child: DesignSystem.loadingIndicator()));
         }
 
         final messagesList = sessionState.sessionMessages;
+        smPrint('🖥️ About to render ${messagesList.length} messages');
         return Expanded(
           child: ListView(
             controller: _scrollController,
@@ -382,41 +474,48 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget __emptyMessages() {
-    return BlocBuilder<SMSupportCubit, SMSupportState>(
-      builder: (context, state) {
-        final tenant = state.currentTenant;
-        final tenantId = tenant?.tenantId ?? '';
-        final logoFileName = tenant?.logo;
+    return BlocBuilder<SingleSessionCubit, SingleSessionState>(
+      builder: (context, sessionState) {
+        return BlocBuilder<SMSupportCubit, SMSupportState>(
+          builder: (context, state) {
+            final tenant = state.currentTenant;
+            final tenantId = tenant?.tenantId ?? '';
+            final logoFileName = tenant?.logo;
 
-        return Column(
-          children: [
-            SizedBox(height: 140.rh),
-            TenantLogoHelper.standard(logoFileName: logoFileName, tenantId: tenantId, size: 80),
-            SizedBox(height: 20.rh),
-            Text(SMText.startChat, style: TextStyles.s_20_400),
-            SizedBox(height: 8.rh),
-            // Text(SMText.startChatDescription, style: TextStyles.s_20_400.copyWith(color: ColorsPallets.black)),
-            // Container(
-            //   padding: EdgeInsets.symmetric(horizontal: 16.rw, vertical: 7),
-            //   margin: EdgeInsets.symmetric(horizontal: 22.rw),
-            //   decoration: BoxDecoration(color: ColorsPallets.disabled0, borderRadius: 12.br),
-            //   child: Row(
-            //     mainAxisAlignment: MainAxisAlignment.center,
-            //     children: [
-            //       Text(SMText.workingHoursFrom, style: TextStyles.s_14_400.copyWith(color: ColorsPallets.subdued400)),
-            //       SizedBox(width: 8.rw),
-            //       Text(
-            //         '09:00 - 17:00',
-            //         textDirection: TextDirection.ltr,
-            //         style: TextStyles.s_14_500.copyWith(
-            //           color: ColorsPallets.subdued400,
-            //           fontFamily: SMSupportTheme.sansFamily,
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
-          ],
+            // Show different message for new sessions
+            final startChatText = SMText.startChat;
+
+            return Column(
+              children: [
+                SizedBox(height: 140.rh),
+                TenantLogoHelper.standard(logoFileName: logoFileName, tenantId: tenantId, size: 80),
+                SizedBox(height: 20.rh),
+                Text(startChatText, style: TextStyles.s_20_400, textAlign: TextAlign.center),
+                SizedBox(height: 8.rh),
+                // Text(SMText.startChatDescription, style: TextStyles.s_20_400.copyWith(color: ColorsPallets.black)),
+                // Container(
+                //   padding: EdgeInsets.symmetric(horizontal: 16.rw, vertical: 7),
+                //   margin: EdgeInsets.symmetric(horizontal: 22.rw),
+                //   decoration: BoxDecoration(color: ColorsPallets.disabled0, borderRadius: 12.br),
+                //   child: Row(
+                //     mainAxisAlignment: MainAxisAlignment.center,
+                //     children: [
+                //       Text(SMText.workingHoursFrom, style: TextStyles.s_14_400.copyWith(color: ColorsPallets.subdued400)),
+                //       SizedBox(width: 8.rw),
+                //       Text(
+                //         '09:00 - 17:00',
+                //         textDirection: TextDirection.ltr,
+                //         style: TextStyles.s_14_500.copyWith(
+                //           color: ColorsPallets.subdued400,
+                //           fontFamily: SMSupportTheme.sansFamily,
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
+              ],
+            );
+          },
         );
       },
     );

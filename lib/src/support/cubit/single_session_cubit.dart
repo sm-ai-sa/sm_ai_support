@@ -16,9 +16,9 @@ import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
 
 class SingleSessionCubit extends Cubit<SingleSessionState> {
   StreamSubscription<SessionMessage>? _messageStreamSubscription;
+  StreamSubscription<bool>? _ratingRequestSubscription;
 
   SingleSessionCubit({required String sessionId}) : super(SingleSessionState(sessionId: sessionId));
-
 
   /// Get messages for the current session
   Future<void> getSessionMessages() async {
@@ -73,13 +73,73 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
         rateSessionStatus: BaseStatus.initial,
         repliedOn: null,
         isResetRepliedOn: true,
+        isRatingRequiredFromSocket: false,
       ),
     );
   }
 
   /// Update session ID and clear previous data
   void updateSessionId(String newSessionId) {
-    emit(SingleSessionState(sessionId: newSessionId));
+    emit(state.copyWith(sessionId: newSessionId, sessionMessages: [], sessionMessageDocs: [], isResetCategory: true));
+  }
+
+  /// Set category for new session creation
+  void setCategoryForNewSession(CategoryModel category) {
+    smPrint('Setting category for new session: ${category.categoryName} (ID: ${category.id})');
+    emit(state.copyWith(categoryForNewSession: category));
+  }
+
+  /// Create a new session with the specified category
+  Future<String?> createSessionWithCategory(CategoryModel category) async {
+    final isAuthenticated = AuthManager.isAuthenticated;
+    smPrint(
+      'Creating new session for category: ${category.categoryName} (ID: ${category.id}), isAuthenticated: $isAuthenticated',
+    );
+
+    emit(state.copyWith(createSessionStatus: BaseStatus.loading));
+
+    try {
+      final NetworkResult<SessionResponse> result;
+
+      if (isAuthenticated) {
+        result = await sl<SupportRepo>().startSession(
+          categoryId: category.id,
+          authToken: null, // Auth token automatically added by interceptor
+        );
+      } else {
+        result = await sl<SupportRepo>().startAnonymousSession(categoryId: category.id);
+      }
+
+      return result.when(
+        success: (data) async {
+          smPrint('Session created successfully: ${data.result.id}');
+
+          // Save anonymous session ID to SharedPreferences if anonymous
+          if (!isAuthenticated) {
+            await SharedPrefHelper.addAnonymousSessionId(data.result.id);
+            smPrint('Saved anonymous session ID: ${data.result.id}');
+          }
+
+          // Update state with new session
+          emit(
+            state.copyWith(createSessionStatus: BaseStatus.success, sessionId: data.result.id, isResetCategory: true),
+          );
+
+          return data.result.id;
+        },
+        error: (error) {
+          smPrint('Session creation failed: ${error.failure.error}');
+          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
+          emit(state.copyWith(createSessionStatus: BaseStatus.failure));
+          return null;
+        },
+      );
+    } catch (e) {
+      smPrint('Session creation exception: $e');
+      primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
+      emit(state.copyWith(createSessionStatus: BaseStatus.failure));
+      return null;
+    }
   }
 
   /// Mark messages as read
@@ -129,9 +189,34 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   }
 
   /// Send a message in the current session
+  /// If no session exists and category is set, creates session first
   Future<void> sendMessage({required String message, required String contentType}) async {
     final isAuthenticated = AuthManager.isAuthenticated;
-    smPrint('Send Message for session: ${state.sessionId}, isAuthenticated: $isAuthenticated');
+    smPrint('🚀 STARTING SEND MESSAGE PROCESS');
+    smPrint('Current session ID: ${state.sessionId}');
+    smPrint('Message: $message');
+    smPrint('Content Type: $contentType');
+    smPrint('Is Authenticated: $isAuthenticated');
+
+    // Check if we need to create a session first
+    if (state.sessionId.isEmpty && state.categoryForNewSession != null) {
+      smPrint('🆕 No session exists, creating new session first');
+      final sessionId = await createSessionWithCategory(state.categoryForNewSession!);
+      if (sessionId == null) {
+        smPrint('❌ Failed to create session, aborting message send');
+        return;
+      }
+      smPrint('✅ Session created successfully: $sessionId');
+    }
+
+    // Ensure we have a session ID
+    if (state.sessionId.isEmpty) {
+      smPrint('❌ No session ID available and no category set for new session');
+      primarySnackBar(smNavigatorKey.currentContext!, message: 'Unable to send message: No session available');
+      return;
+    }
+
+    smPrint('📤 Sending message to session: ${state.sessionId}');
     emit(state.copyWith(sendMessageStatus: BaseStatus.loading));
     try {
       final NetworkResult<CustomerSendMessageResponse> result;
@@ -168,11 +253,21 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
       result.when(
         success: (data) {
-          smPrint('Send Message Success: ${data.result.id}');
+          smPrint('✅ Send Message Success: ${data.result.id}');
+          smPrint('📝 Message content: ${data.result.content}');
+          smPrint('👤 Sender type: ${data.result.senderType}');
+          smPrint('📅 Created at: ${data.result.createdAt}');
 
           // Append the new message to the current list
           final List<SessionMessage> updatedMessages = List.from(state.sessionMessages);
+          smPrint('📋 Current message count before adding: ${updatedMessages.length}');
+
           updatedMessages.add(data.result);
+          smPrint('📋 Message count after adding: ${updatedMessages.length}');
+
+          // Sort messages by creation time
+          updatedMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          smPrint('📋 Messages sorted by time');
 
           emit(
             state.copyWith(
@@ -182,6 +277,8 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
               isResetRepliedOn: true,
             ),
           );
+
+          smPrint('🎯 STATE UPDATED WITH NEW MESSAGE - UI should show ${updatedMessages.length} messages');
         },
         error: (error) {
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
@@ -213,7 +310,23 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       result.when(
         success: (data) {
           smPrint('Rate Session Success: ${data.message}');
-          emit(state.copyWith(rateSessionStatus: BaseStatus.success));
+          List<SessionMessagesDoc> updatedSessionMessageDocs = [];
+          for (var element in state.sessionMessageDocs) {
+            updatedSessionMessageDocs.add(
+              SessionMessagesDoc(id: element.id, messages: element.messages, isRatingRequired: false),
+            );
+          }
+
+          emit(
+            state.copyWith(
+              rateSessionStatus: BaseStatus.success,
+              isRatingRequiredFromSocket: false, // Reset WebSocket rating requirement
+              sessionMessageDocs: updatedSessionMessageDocs,
+            ),
+          );
+
+          // Update the session in SMSupportCubit to mark rating as no longer required
+          smCubit.updateSessionRatingStatus(state.sessionId);
         },
         error: (error) {
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
@@ -276,6 +389,12 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
         onError: _onStreamError,
       );
 
+      // Listen to rating requests
+      _ratingRequestSubscription = webSocketService.ratingRequestStream?.listen(
+        _onRatingRequestReceived,
+        onError: _onStreamError,
+      );
+
       smPrint('Message stream started successfully for session: ${state.sessionId}');
     } catch (e) {
       smPrint('Error starting message stream: $e');
@@ -321,6 +440,17 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     }
   }
 
+  /// Handle rating requests from WebSocket stream
+  void _onRatingRequestReceived(bool isRatingRequired) {
+    smPrint('⭐ RATING REQUEST RECEIVED FROM WEBSOCKET STREAM!');
+    smPrint('Is Rating Required: $isRatingRequired');
+
+    // Update state with the rating requirement
+    emit(state.copyWith(isRatingRequiredFromSocket: isRatingRequired));
+
+    smPrint('✅ UI STATE UPDATED WITH RATING REQUEST!');
+  }
+
   /// Handle stream errors
   void _onStreamError(dynamic error) {
     smPrint('❌ MESSAGE STREAM ERROR: $error');
@@ -334,9 +464,12 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     try {
       smPrint('Stopping message stream for session: ${state.sessionId}');
 
-      // Cancel subscription
+      // Cancel subscriptions
       await _messageStreamSubscription?.cancel();
       _messageStreamSubscription = null;
+
+      await _ratingRequestSubscription?.cancel();
+      _ratingRequestSubscription = null;
 
       // Disconnect WebSocket
       final webSocketService = sl<WebSocketService>();

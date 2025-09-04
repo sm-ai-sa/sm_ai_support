@@ -16,6 +16,7 @@ class WebSocketService {
   StreamController<SessionMessage>? _messageController;
   StreamController<int>? _unreadSessionsCountController;
   StreamController<Map<String, dynamic>>? _sessionStatsController;
+  StreamController<bool>? _ratingRequestController;
   String? _currentChannelName;
   Timer? _pingTimer;
   Timer? _pollingTimer;
@@ -43,6 +44,9 @@ class WebSocketService {
   /// Get the stream of session stats updates
   Stream<Map<String, dynamic>>? get sessionStatsStream => _sessionStatsController?.stream;
 
+  /// Get the stream of rating request updates
+  Stream<bool>? get ratingRequestStream => _ratingRequestController?.stream;
+
   /// Check if currently connected (Socket.IO or polling)
   bool get isConnected => _isConnected || _usePollingFallback;
 
@@ -66,6 +70,7 @@ class WebSocketService {
     log('WebSocketService: Message controller exists: ${_messageController != null}');
     log('WebSocketService: Unread count controller exists: ${_unreadSessionsCountController != null}');
     log('WebSocketService: Session stats controller exists: ${_sessionStatsController != null}');
+    log('WebSocketService: Rating request controller exists: ${_ratingRequestController != null}');
     log('WebSocketService: ================================');
   }
 
@@ -94,6 +99,7 @@ class WebSocketService {
 
       // Initialize message controller
       _messageController = StreamController<SessionMessage>.broadcast();
+      _ratingRequestController = StreamController<bool>.broadcast();
       _currentChannelName = channelName;
 
       // Try Socket.IO first
@@ -297,8 +303,10 @@ class WebSocketService {
     try {
       log('WebSocketService: Handling direct message: $jsonData');
       
-      // Check for Admin message format: {"type": "new_message", "data": {...}}
+      // Check for event type
       final eventType = jsonData['type'] as String?;
+      
+      // Handle new_message format: {"type": "new_message", "data": {...}}
       if (eventType == 'new_message' && jsonData['data'] != null) {
         final messageData = jsonData['data'] as Map<String, dynamic>;
         log('WebSocketService: Processing new_message from Admin: $messageData');
@@ -313,6 +321,22 @@ class WebSocketService {
         } catch (parseError) {
           log('WebSocketService: ❌ Error parsing SessionMessage: $parseError');
           log('WebSocketService: Raw message data: $messageData');
+        }
+      }
+      
+      // Handle rating_request format: {"type": "rating_request", "data": bool}
+      if (eventType == 'rating_request') {
+        log('WebSocketService: Processing rating_request: $jsonData');
+        
+        try {
+          // The data should be a boolean indicating if rating is required
+          final isRatingRequired = true;
+          _ratingRequestController?.add(isRatingRequired);
+          log('WebSocketService: ✅ RATING REQUEST RECEIVED AND EMITTED: $isRatingRequired');
+          return;
+        } catch (parseError) {
+          log('WebSocketService: ❌ Error parsing rating request: $parseError');
+          log('WebSocketService: Raw rating data: $jsonData');
         }
       }
       
@@ -781,6 +805,9 @@ class WebSocketService {
       
       await _sessionStatsController?.close();
       _sessionStatsController = null;
+      
+      await _ratingRequestController?.close();
+      _ratingRequestController = null;
 
       // Clear state
       _currentChannelName = null;

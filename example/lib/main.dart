@@ -60,7 +60,7 @@ class SupportDemoScreen extends StatelessWidget {
                   textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 44),
               ElevatedButton.icon(
                 onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage(isEnglish: true)));

@@ -110,10 +110,12 @@ class SessionMessage extends Equatable {
 class SessionMessagesDoc extends Equatable {
   final String id;
   final List<SessionMessage> messages;
+  final bool isRatingRequired;
 
   const SessionMessagesDoc({
     required this.id,
     required this.messages,
+    required this.isRatingRequired,
   });
 
   factory SessionMessagesDoc.fromJson(Map<String, dynamic> json) {
@@ -122,6 +124,7 @@ class SessionMessagesDoc extends Equatable {
       messages: (json['messages'] as List)
           .map((e) => SessionMessage.fromJson(e as Map<String, dynamic>))
           .toList(),
+      isRatingRequired: (json['isRatingRequired'] ?? false) as bool,
     );
   }
 
@@ -129,11 +132,22 @@ class SessionMessagesDoc extends Equatable {
     return {
       'id': id,
       'messages': messages.map((e) => e.toJson()).toList(),
+      'isRatingRequired': isRatingRequired,
     };
   }
 
+  copyWith({
+    bool? isRatingRequired,
+  }) {
+    return SessionMessagesDoc(
+      id: id,
+      messages: messages,
+      isRatingRequired: isRatingRequired ?? this.isRatingRequired,
+    );
+  }
+
   @override
-  List<Object?> get props => [id, messages];
+  List<Object?> get props => [id, messages, isRatingRequired];
 }
 
 /// Response wrapper for session messages API

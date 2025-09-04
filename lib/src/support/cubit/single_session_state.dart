@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 class SingleSessionState extends Equatable {
   /// The ID of the current session
@@ -17,6 +18,9 @@ class SingleSessionState extends Equatable {
   /// Status for uploading files
   final BaseStatus uploadFileStatus;
   
+  /// Status for creating a new session
+  final BaseStatus createSessionStatus;
+  
   /// ID of the message being replied to
   final String? repliedOn;
   
@@ -25,6 +29,12 @@ class SingleSessionState extends Equatable {
   
   /// Raw session message documents from API
   final List<SessionMessagesDoc> sessionMessageDocs;
+  
+  /// Category for new sessions that haven't been created yet
+  final CategoryModel? categoryForNewSession;
+  
+  /// Whether rating is currently required for this session (from WebSocket)
+  final bool isRatingRequiredFromSocket;
 
   const SingleSessionState({
     required this.sessionId,
@@ -32,9 +42,12 @@ class SingleSessionState extends Equatable {
     this.sendMessageStatus = BaseStatus.initial,
     this.rateSessionStatus = BaseStatus.initial,
     this.uploadFileStatus = BaseStatus.initial,
+    this.createSessionStatus = BaseStatus.initial,
     this.repliedOn,
     this.sessionMessages = const [],
     this.sessionMessageDocs = const [],
+    this.categoryForNewSession,
+    this.isRatingRequiredFromSocket = false,
   });
 
   SingleSessionState copyWith({
@@ -43,10 +56,14 @@ class SingleSessionState extends Equatable {
     BaseStatus? sendMessageStatus,
     BaseStatus? rateSessionStatus,
     BaseStatus? uploadFileStatus,
+    BaseStatus? createSessionStatus,
     String? repliedOn,
     bool? isResetRepliedOn,
     List<SessionMessage>? sessionMessages,
     List<SessionMessagesDoc>? sessionMessageDocs,
+    CategoryModel? categoryForNewSession,
+    bool? isResetCategory,
+    bool? isRatingRequiredFromSocket,
   }) {
     return SingleSessionState(
       sessionId: sessionId ?? this.sessionId,
@@ -54,9 +71,12 @@ class SingleSessionState extends Equatable {
       sendMessageStatus: sendMessageStatus ?? this.sendMessageStatus,
       rateSessionStatus: rateSessionStatus ?? this.rateSessionStatus,
       uploadFileStatus: uploadFileStatus ?? this.uploadFileStatus,
+      createSessionStatus: createSessionStatus ?? this.createSessionStatus,
       repliedOn: repliedOn ?? (isResetRepliedOn == true ? null : this.repliedOn),
       sessionMessages: sessionMessages ?? this.sessionMessages,
       sessionMessageDocs: sessionMessageDocs ?? this.sessionMessageDocs,
+      categoryForNewSession: categoryForNewSession ?? (isResetCategory == true ? null : this.categoryForNewSession),
+      isRatingRequiredFromSocket: isRatingRequiredFromSocket ?? this.isRatingRequiredFromSocket,
     );
   }
 
@@ -67,9 +87,12 @@ class SingleSessionState extends Equatable {
         sendMessageStatus,
         rateSessionStatus,
         uploadFileStatus,
+        createSessionStatus,
         repliedOn,
         sessionMessages,
         sessionMessageDocs,
+        categoryForNewSession,
+        isRatingRequiredFromSocket,
       ];
 
   /// Convenience getters
@@ -121,4 +144,22 @@ class SingleSessionState extends Equatable {
 
   /// Check if session has unread messages
   bool get hasUnreadMessages => unreadCount > 0;
+  
+  /// Check if this is a new session that hasn't been created yet
+  bool get isNewSession => sessionId.isEmpty && categoryForNewSession != null;
+  
+  /// Check if session creation is in progress
+  bool get isCreatingSession => createSessionStatus.isLoading;
+  
+  /// Check if session creation was successful
+  bool get sessionCreated => createSessionStatus.isSuccess;
+  
+  /// Check if session creation failed
+  bool get sessionCreationFailed => createSessionStatus.isFailure;
+  
+  /// Check if rating is required based on session message docs or WebSocket response
+  bool get isRatingRequired {
+    smPrint('isRatingRequired: ${sessionMessageDocs.any((doc) => doc.isRatingRequired)} || $isRatingRequiredFromSocket');
+    return sessionMessageDocs.any((doc) => doc.isRatingRequired) || isRatingRequiredFromSocket;
+  }
 }

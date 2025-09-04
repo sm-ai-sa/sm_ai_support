@@ -26,6 +26,7 @@ class Apis {
   
   // Rating
   static const String rateSession = '$baseUrl/rating/session';
+  static const String rateSessionAnonymous= '$baseUrl/rating/session/anonymous';
   
   // Authentication
   static const String sendOtp = '$baseUrl/verification/send-in-app-code';

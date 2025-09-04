@@ -92,32 +92,19 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
                       children: [
                         InkWell(
                           onTap: () async {
-                            // Use new session-based approach
+                            // Navigate directly to chat page with category info
+                            // Session will be created with the first message
                             try {
-                              if (state.isAuthenticated) {
-                                await smCubit.startSession(categoryId: category.id);
-                              } else {
-                                await smCubit.startAnonymousSession(categoryId: category.id);
-                              }
-
-                              // Wait for the state to update and check if session creation was successful
-                              // We need to wait a bit for the state to update after the API call
-                              await Future.delayed(const Duration(milliseconds: 100));
-
-                              // Get the latest state after the API call
-                              final updatedState = smCubit.state;
-
-                              // Only navigate if session creation was successful
-                              if (updatedState.startSessionStatus.isSuccess && updatedState.currentSession != null) {
-                                if (context.mounted) {
-                                  context.smPush(ChatPage(initTicket: true, session: updatedState.currentSession!));
-                                }
+                              if (context.mounted) {
+                                context.smPush(ChatPage(
+                                  category: category,
+                                  initTicket: true,
+                                ));
                               }
                             } catch (e) {
-                              smPrint('Error in category tap: $e');
-                              // Additional error handling if needed
+                              smPrint('Error in category navigation: $e');
                               if (context.mounted) {
-                                primarySnackBar(context, message: SMText.sessionStartError);
+                                primarySnackBar(context, message: SMText.somethingWentWrong);
                               }
                             }
                           },
@@ -128,11 +115,7 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
                                 DesignSystem.categorySvg(category.icon),
                                 SizedBox(width: 14.rw),
                                 Expanded(child: Text(category.categoryName, style: TextStyles.s_13_400)),
-                                // if loading and start session on this category show loading indicator
-                                if (state.startSessionStatus.isLoading && state.startSessionOnCategoryId == category.id)
-                                  DesignSystem.loadingIndicator()
-                                else
-                                  DesignSystem.arrowLeftOrRight(),
+                                DesignSystem.arrowLeftOrRight(),
                               ],
                             ),
                           ),

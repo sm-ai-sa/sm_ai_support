@@ -165,4 +165,16 @@ class SMText {
   static String get closedSessions => isEnglish ? "Session closed" : "تم إغلاق الجلسة";
 
   static String get reopenSession => isEnglish ? "Session reopened" : "تم إعادة فتح الجلسة";
+
+  static String get hour => isEnglish ? "hr" : "ساعة";
+
+  static String get minute => isEnglish ? "min" : "دقيقة";
+
+  static String get day => isEnglish ? "d" : "يوم";
+
+  static String get month => isEnglish ? "mo" : "شهر";
+
+  static String get year => isEnglish ? "y" : "سنة";
+
+  static String get s => isEnglish ? "s" : "s";
 }

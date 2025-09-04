@@ -18,11 +18,11 @@ class SMSupportCubit extends Cubit<SMSupportState> {
   Future<void> initializeData(String local) async {
     smPrint('initializeData ---------------: $local');
     emit(state.copyWith(currentLocale: local));
-    
+
     // Force refresh Dio instance and NetworkServices when locale changes
     try {
       DioFactory.resetDio(newLocale: local);
-      
+
       // Also reset NetworkServices to get fresh Dio instance
       if (sl.isRegistered<NetworkServices>()) {
         sl.unregister<NetworkServices>();
@@ -289,7 +289,7 @@ class SMSupportCubit extends Cubit<SMSupportState> {
   /// [sessionId] - The ID of the session to reopen
   Future<void> reopenSession(String sessionId) async {
     smPrint('Reopen Session: $sessionId');
-    emit(state.copyWith(reopenSessionStatus: BaseStatus.loading));
+    emit(state.copyWith(reopenSessionStatus: BaseStatus.loading, reopenSessionId: sessionId));
     try {
       final result = await sl<SupportRepo>().reopenSession(sessionId: sessionId);
 
@@ -300,16 +300,30 @@ class SMSupportCubit extends Cubit<SMSupportState> {
           // Update the session in the local list with the new status
           _updateSessionStatus(sessionId);
 
-          emit(state.copyWith(reopenSessionStatus: BaseStatus.success));
+          emit(
+            state.copyWith(
+              reopenSessionStatus: BaseStatus.success,
+              reopenSessionId: null,
+              isResetReopenSessionId: true,
+            ),
+          );
         },
         error: (error) {
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
-          emit(state.copyWith(reopenSessionStatus: BaseStatus.failure));
+          emit(
+            state.copyWith(
+              reopenSessionStatus: BaseStatus.failure,
+              reopenSessionId: null,
+              isResetReopenSessionId: true,
+            ),
+          );
         },
       );
     } catch (e) {
       primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
-      emit(state.copyWith(reopenSessionStatus: BaseStatus.failure));
+      emit(
+        state.copyWith(reopenSessionStatus: BaseStatus.failure, reopenSessionId: null, isResetReopenSessionId: true),
+      );
     }
   }
 
@@ -539,6 +553,26 @@ class SMSupportCubit extends Cubit<SMSupportState> {
     } catch (e) {
       smPrint('Error updating session from stats: $e');
     }
+  }
+
+  /// Update session rating status after successful rating
+  /// This method is called after a session has been successfully rated
+  /// [sessionId] - The ID of the session that was rated
+  void updateSessionRatingStatus(String sessionId) {
+    smPrint('Updating rating status for session: $sessionId');
+
+    // Find the session in mySessions list and update isRatingRequired to false
+    final updatedSessions = state.mySessions.map((session) {
+      if (session.id == sessionId) {
+        // Update the session to mark rating as no longer required
+        return session.copyWith(isRatingRequired: false);
+      }
+      return session;
+    }).toList();
+
+    // Update the state with the modified sessions list
+    emit(state.copyWith(mySessions: List.from(updatedSessions)));
+    smPrint('Updated isRatingRequired to false for session: $sessionId');
   }
 
   @override

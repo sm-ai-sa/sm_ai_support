@@ -1,9 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
-import 'package:sm_ai_support/src/core/models/auth_model.dart';
-import 'package:sm_ai_support/src/core/models/session_messages_model.dart';
-import 'package:sm_ai_support/src/core/models/session_model.dart';
-import 'package:sm_ai_support/src/core/models/upload_model.dart';
 import 'package:sm_ai_support/src/core/network/api.dart';
 import 'package:sm_ai_support/src/core/network/dio_factory.dart';
 
@@ -106,7 +103,10 @@ class NetworkServices {
   /// Rate a session
   Future<Response> rateSession({required String sessionId, required int rating, String? comment}) async {
     final request = RateSessionRequest(sessionId: sessionId, rating: rating, comment: comment);
-    return await dio.post(Apis.rateSession, data: request.toJson());
+    return await dio.post(
+      AuthManager.isAuthenticated ? Apis.rateSession : Apis.rateSessionAnonymous,
+      data: request.toJson(),
+    );
   }
 
   /// Reopen a closed session

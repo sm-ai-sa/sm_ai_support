@@ -17,12 +17,17 @@ class MessageInput extends StatefulWidget {
   /// if it not opened yey
   final String ticketId;
   final Function(bool) onSend;
+  final CategoryModel? category; // Category for new sessions
+  final Function(String)? onSessionCreated; // Callback when session is created
+  
   const MessageInput({
     super.key,
     required this.sessionId,
     required this.ticketId,
     this.initTicket = false,
     required this.onSend,
+    this.category,
+    this.onSessionCreated,
   });
 
   @override
@@ -36,6 +41,11 @@ class _MessageInputState extends State<MessageInput> {
   Widget build(BuildContext context) {
     return BlocConsumer<SingleSessionCubit, SingleSessionState>(
       listener: (context, state) {
+        // Handle session creation
+        if (state.createSessionStatus.isSuccess && state.sessionId.isNotEmpty) {
+          widget.onSessionCreated?.call(state.sessionId);
+        }
+        
         if (state.sendMessageStatus.isSuccess) {
           widget.onSend(true);
           _messageController.clear();
@@ -98,7 +108,8 @@ class _MessageInputState extends State<MessageInput> {
                     onTap: () {
                       if (_messageController.text.isNotEmpty &&
                           !state.sendMessageStatus.isLoading &&
-                          !state.uploadFileStatus.isLoading) {
+                          !state.uploadFileStatus.isLoading &&
+                          !state.createSessionStatus.isLoading) {
                         context.read<SingleSessionCubit>().sendMessage(
                           message: _messageController.text,
                           contentType: 'TEXT',
@@ -110,7 +121,9 @@ class _MessageInputState extends State<MessageInput> {
                       backgroundColor: _messageController.text.isNotEmpty
                           ? ColorsPallets.primaryColor.withValues(alpha: .9)
                           : ColorsPallets.primaryColor.withValues(alpha: .3),
-                      child: (state.sendMessageStatus.isLoading || state.uploadFileStatus.isLoading)
+                      child: (state.sendMessageStatus.isLoading || 
+                              state.uploadFileStatus.isLoading || 
+                              state.createSessionStatus.isLoading)
                           ? DesignSystem.loadingIndicator(color: Colors.white)
                           : DesignSystem.svgIcon('arrow-up', size: 18.rSp),
                     ),

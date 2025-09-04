@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
@@ -21,7 +22,11 @@ class SessionItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        context.smPush(ChatPage(mySession: session));
+        // Get the current session from SMSupportCubit state to ensure we have the latest data
+        final smSupportCubit = context.read<SMSupportCubit>();
+        final currentSession = smSupportCubit.state.mySessions.firstWhereOrNull((s) => s.id == session.id) ?? session;
+
+        context.smPush(ChatPage(mySession: currentSession, category: currentSession.category));
       },
       child: BlocBuilder<SMSupportCubit, SMSupportState>(
         builder: (context, state) {
@@ -72,7 +77,7 @@ class SessionItem extends StatelessWidget {
                       visible: (session.status.isActive && session.metadata.unreadCount == 0),
                       child: Text(
                         session.metadata.lastMessageAt?.timeAgo() ?? '',
-                        textDirection: TextDirection.ltr,
+                        textDirection: smCubit.state.currentLocale == 'en' ? TextDirection.ltr : TextDirection.rtl,
                         style: TextStyles.s_14_400.copyWith(
                           color: ColorsPallets.subdued400,
                           fontFamily: SMSupportTheme.sansFamily,
@@ -86,7 +91,7 @@ class SessionItem extends StatelessWidget {
                         builder: (context, state) {
                           final cubit = context.read<SMSupportCubit>();
 
-                          return state.reopenSessionStatus.isLoading
+                          return (state.reopenSessionStatus.isLoading && state.reopenSessionId == session.id)
                               ? DesignSystem.loadingIndicator()
                               : InkWell(
                                   onTap: () async {

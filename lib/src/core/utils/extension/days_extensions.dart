@@ -166,19 +166,19 @@ extension DateExtension on DateTime {
     final difference = now.difference(this);
 
     if (difference.inSeconds < 60) {
-      return '${difference.inSeconds} sec';
+      return '${difference.inSeconds} ${SMText.second}';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} min';
+      return '${difference.inMinutes} ${SMText.minute}';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours} hr';
+      return '${difference.inHours} ${SMText.hour}';
     } else if (difference.inDays < 30) {
-      return '${difference.inDays} d';
+      return '${difference.inDays} ${SMText.day}';
     } else if (difference.inDays < 365) {
       final months = (difference.inDays / 30).round(); // Approximate months
-      return '$months month${months > 1 ? 's' : ''}';
+      return '$months ${SMText.month}${months > 1 ? SMText.s : ''}';
     } else {
       final years = (difference.inDays / 365).floor();
-      return '$years year${years > 1 ? 's' : ''}';
+      return '$years ${SMText.year}${years > 1 ? SMText.s : ''}';  
     }
   }
 }
