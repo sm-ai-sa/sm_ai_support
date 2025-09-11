@@ -6,7 +6,7 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 /// A widget that displays tenant logos with automatic URL resolution
 /// Handles both direct URLs and file names that need to be resolved via the download API
 class TenantLogo extends StatefulWidget {
-  final String? logoFileName; // Logo file name from tenant data
+  final String? logoUrl; // Logo file name from tenant data
   final String tenantId; // Tenant ID for URL resolution
   final double? width;
   final double? height;
@@ -18,7 +18,7 @@ class TenantLogo extends StatefulWidget {
 
   const TenantLogo({
     super.key,
-    required this.logoFileName,
+    required this.logoUrl,
     required this.tenantId,
     this.width,
     this.height,
@@ -48,7 +48,7 @@ class _TenantLogoState extends State<TenantLogo> {
   void didUpdateWidget(TenantLogo oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Re-resolve if the logo file name or tenant ID changed
-    if (oldWidget.logoFileName != widget.logoFileName || oldWidget.tenantId != widget.tenantId) {
+    if (oldWidget.logoUrl != widget.logoUrl || oldWidget.tenantId != widget.tenantId) {
       _resolveLogoUrl();
     }
   }
@@ -71,7 +71,7 @@ class _TenantLogoState extends State<TenantLogo> {
 
       if (mounted) {
         setState(() {
-          _resolvedUrl = 'https://sm-dev-bucket.blr1.cdn.digitaloceanspaces.com/files/public/${widget.logoFileName}';
+          _resolvedUrl = widget.logoUrl;
           _isLoading = false;
           _hasError = false; // Never set error since we always have fallback
         });
@@ -161,7 +161,7 @@ class TenantLogoHelper {
     BorderRadius? borderRadius,
   }) {
     return TenantLogo(
-      logoFileName: logoFileName,
+      logoUrl: logoFileName,
       tenantId: tenantId,
       width: size.rSp,
       height: size.rSp,
@@ -172,16 +172,16 @@ class TenantLogoHelper {
 
   /// Create a small tenant logo widget (24x24)
   static Widget small({required String? logoFileName, required String tenantId, BoxFit fit = BoxFit.cover}) {
-    return TenantLogo(logoFileName: logoFileName, tenantId: tenantId, width: 24.rSp, height: 24.rSp, fit: fit);
+    return TenantLogo(logoUrl: logoFileName, tenantId: tenantId, width: 24.rSp, height: 24.rSp, fit: fit);
   }
 
   /// Create a medium tenant logo widget (48x48)
   static Widget medium({required String? logoFileName, required String tenantId, BoxFit fit = BoxFit.cover}) {
-    return TenantLogo(logoFileName: logoFileName, tenantId: tenantId, width: 48.rSp, height: 48.rSp, fit: fit);
+    return TenantLogo(logoUrl: logoFileName, tenantId: tenantId, width: 48.rSp, height: 48.rSp, fit: fit);
   }
 
   /// Create a large tenant logo widget (120x120)
   static Widget large({required String? logoFileName, required String tenantId, BoxFit fit = BoxFit.cover}) {
-    return TenantLogo(logoFileName: logoFileName, tenantId: tenantId, width: 120.rSp, height: 120.rSp, fit: fit);
+    return TenantLogo(logoUrl: logoFileName, tenantId: tenantId, width: 120.rSp, height: 120.rSp, fit: fit);
   }
 }

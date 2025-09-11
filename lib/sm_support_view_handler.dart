@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.dart';
@@ -36,7 +37,8 @@ class _SMSupportViewHandlerState extends State<SMSupportViewHandler> {
     ScreenSizes.init(context);
 
     // Initialize authentication and fetch tenant data
-    await sl<AuthCubit>().initializeAuth();
+    // await sl<AuthCubit>().initializeAuth();
+     await AuthManager.init();
     await smCubit.getTenant(tenantId: SMConfig.smData.tenantId);
 
     primaryCupertinoBottomSheet(

@@ -261,9 +261,9 @@ class SMSupportState extends Equatable {
   }
 
   List<MySessionModel> get sortedSessions {
-    mySessions.sort((a, b) {
-      return (b.metadata.lastMessageAt ?? DateTime(1900)).compareTo(a.metadata.lastMessageAt ?? DateTime(1900));
-    });
+    // mySessions.sort((a, b) {
+    //   return (b.metadata.lastMessageAt ?? DateTime(1900)).compareTo(a.metadata.lastMessageAt ?? DateTime(1900));
+    // });
     return mySessions;
   }
 

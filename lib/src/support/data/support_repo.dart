@@ -248,9 +248,11 @@ class SupportRepo {
   /// Mark customer messages as read
   /// Marks messages in a session as read by the customer
   /// [sessionId] - The ID of the session to mark messages as read
-  Future<NetworkResult<dynamic>> customerReadMessages({required String sessionId}) async {
+  Future<NetworkResult<dynamic>> readMessages({required String sessionId}) async {
     try {
-      final response = await networkServices.customerReadMessages(sessionId: sessionId);
+      final response = AuthManager.isAuthenticated
+          ? await networkServices.customerReadMessages(sessionId: sessionId)
+          : await networkServices.anonymousCustomerReadMessages(sessionId: sessionId);
 
       if (response.statusCode?.isSuccess ?? false) {
         smPrint('Customer Read Messages Response: Success for session $sessionId');

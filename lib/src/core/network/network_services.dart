@@ -100,6 +100,12 @@ class NetworkServices {
     return await dio.put(Apis.customerReadMessages, data: request);
   }
 
+  /// Mark anonymous customer messages as read
+  Future<Response> anonymousCustomerReadMessages({required String sessionId}) async {
+    final request = {'id': sessionId};
+    return await dio.put(Apis.anonymousCustomerReadMessage, data: request);
+  }
+
   /// Rate a session
   Future<Response> rateSession({required String sessionId, required int rating, String? comment}) async {
     final request = RateSessionRequest(sessionId: sessionId, rating: rating, comment: comment);

@@ -19,21 +19,21 @@ class AuthCubit extends Cubit<AuthState> {
   /// Initialize authentication state with stored data
   /// Checks for existing authentication data in persistent storage and restores it
   /// This method should be called when the app starts to restore user session
-  Future<void> initializeAuth() async {
-    smPrint('Initializing authentication...');
-    await AuthManager.init();
+  // Future<void> initializeAuth() async {
+  //   smPrint('Initializing authentication...');
+  //   await AuthManager.init();
 
-    if (AuthManager.isAuthenticated && AuthManager.hasValidAuthData) {
-      // Load stored auth data into state
-      emit(state.copyWith(authToken: AuthManager.authToken, currentCustomer: AuthManager.currentCustomer));
-      smPrint('Authentication restored from storage for user: ${AuthManager.currentCustomer?.id}');
-      smPrint('Auth Token: ${AuthManager.authToken}');
-    } else {
-      // Clear any partial auth data
-      await AuthManager.logout();
-      smPrint('No valid authentication found, cleared storage');
-    }
-  }
+  //   if (AuthManager.isAuthenticated && AuthManager.hasValidAuthData) {
+  //     // Load stored auth data into state
+  //     emit(state.copyWith(authToken: AuthManager.authToken, currentCustomer: AuthManager.currentCustomer));
+  //     smPrint('Authentication restored from storage for user: ${AuthManager.currentCustomer?.id}');
+  //     smPrint('Auth Token: ${AuthManager.authToken}');
+  //   } else {
+  //     // Clear any partial auth data
+  //     await AuthManager.logout();
+  //     smPrint('No valid authentication found, cleared storage');
+  //   }
+  // }
 
   //! Authentication API Methods -----------------------------------
 
@@ -130,7 +130,7 @@ class AuthCubit extends Cubit<AuthState> {
           emit(
             state.copyWith(
               verifyOtpStatus: BaseStatus.success,
-              authToken: data.result.token,
+              // authToken: data.result.token,
               currentCustomer: data.result.customer,
               tempToken: null,
               isResetTempToken: true,
@@ -167,7 +167,7 @@ class AuthCubit extends Cubit<AuthState> {
       emit(
         state.copyWith(
           logoutStatus: BaseStatus.success,
-          authToken: null,
+          // authToken: null,
           isResetAuthToken: true,
           currentCustomer: null,
           isResetCurrentCustomer: true,

@@ -4,7 +4,8 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_stars/flutter_rating_stars.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+// import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gif/gif.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
@@ -12,7 +13,6 @@ import 'package:sm_ai_support/src/constant/path.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/global/cached_image.dart';
 import 'package:sm_ai_support/src/core/global/shimmer_items.dart';
-import 'package:sm_ai_support/src/core/network/api.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
@@ -148,7 +148,7 @@ class DesignSystem {
     double borderRadius = 0,
   }) {
     return networkSvgIcon(
-      '${Apis.categoryIconUrl}/$icon',
+      icon,
       width: width,
       height: height,
       size: size,
@@ -358,6 +358,39 @@ class DesignSystem {
     return InkWell(onTap: onTap, child: content);
   }
 
+  // static Widget starsRating({
+  //   bool isOnlyShow = true,
+  //   double? value,
+  //   double? starSize,
+  //   Color? starOffColor,
+  //   Function(double)? onRateChanged,
+  // }) {
+  //   return RatingStars(
+  //     value: value ?? 5,
+  //     onValueChanged: (v) {
+  //       if (onRateChanged != null) {
+  //         onRateChanged(v);
+  //       }
+  //     },
+  //     starBuilder: (index, color) => DesignSystem.svgIcon('star', size: 12.rSp, color: color),
+  //     starCount: 5,
+  //     starSize: starSize ?? 12.rSp,
+  //     maxValue: 5,
+  //     starSpacing: 8,
+  //     maxValueVisibility: false,
+  //     valueLabelVisibility: false,
+  //     animationDuration: Duration(milliseconds: 100),
+  //     valueLabelPadding: EdgeInsets.zero,
+  //     valueLabelMargin: EdgeInsets.zero,
+  //     starOffColor: starOffColor ?? ColorsPallets.warning500.withValues(alpha: .4),
+  //     starColor: ColorsPallets.warning500,
+  //     valueLabelTextStyle: TextStyles.s_12_400.copyWith(color: ColorsPallets.warning500),
+  //     valueLabelColor: ColorsPallets.warning500,
+  //     valueLabelRadius: 0,
+  //    axis: Axis.horizontal,
+  //   );
+  // }
+
   static Widget starsRating({
     bool isOnlyShow = true,
     double? value,
@@ -365,25 +398,24 @@ class DesignSystem {
     Color? starOffColor,
     Function(double)? onRateChanged,
   }) {
-    return RatingStars(
-      value: value ?? 5,
-      onValueChanged: (v) {
+    return RatingBar.builder(
+      initialRating: value ?? 5,
+      onRatingUpdate: (v) {
         if (onRateChanged != null) {
           onRateChanged(v);
         }
       },
-      starBuilder: (index, color) => DesignSystem.svgIcon('star', size: 12.rSp, color: color),
-      starCount: 5,
-      starSize: starSize ?? 12.rSp,
-      maxValue: 5,
-      starSpacing: 8,
-      maxValueVisibility: false,
-      valueLabelVisibility: false,
-      animationDuration: Duration(milliseconds: 100),
-      valueLabelPadding: EdgeInsets.zero,
-      valueLabelMargin: EdgeInsets.zero,
-      starOffColor: starOffColor ?? ColorsPallets.warning500.withValues(alpha: .4),
-      starColor: ColorsPallets.warning500,
+      itemBuilder: (c, index) => DesignSystem.svgIcon(
+        'star',
+        size: 12.rSp,
+        color: index < (value ?? 5) ? ColorsPallets.warning500 : ColorsPallets.warning500.withValues(alpha: .4),
+      ),
+      itemCount: 5,
+      itemPadding: EdgeInsets.symmetric(horizontal: 2.rw),
+      itemSize: starSize ?? 12.rSp,
+      maxRating: 5,
+      glow: false,
+      tapOnlyMode: true,
     );
   }
 

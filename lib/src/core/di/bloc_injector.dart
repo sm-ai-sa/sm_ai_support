@@ -10,7 +10,7 @@ Future<void> init(GetIt instance) async {
   }
   
   if (!instance.isRegistered<SMSupportCubit>()) {
-    instance.registerLazySingleton(() => SMSupportCubit());
+    instance.registerCachedFactory(() => SMSupportCubit());
   }
   
   // SingleSessionCubit is registered as a factory since it requires sessionId parameter

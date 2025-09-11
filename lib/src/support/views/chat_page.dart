@@ -145,8 +145,8 @@ class _ChatPageState extends State<ChatPage> {
   void _startMessageStream() {
     try {
       // Get tenant ID from SMSupportCubit
-      final smSupportCubit = context.read<SMSupportCubit>();
-      final tenantId = smSupportCubit.state.currentTenant?.tenantId;
+      
+      final tenantId = smCubit.state.currentTenant?.tenantId;
 
       if (tenantId == null) {
         smPrint('Cannot start message stream: tenantId is null');
@@ -204,7 +204,7 @@ class _ChatPageState extends State<ChatPage> {
                   builder: (context, state) {
                     return Row(
                       children: [
-                        DesignSystem.categorySvg(widget.sessionCategory?.icon ?? '', width: 24.rSp, height: 24.rSp),
+                        DesignSystem.categorySvg(widget.sessionCategory?.categoryIcon ?? '', width: 24.rSp, height: 24.rSp),
                         SizedBox(width: 14.rw),
                         Expanded(
                           child: Text(

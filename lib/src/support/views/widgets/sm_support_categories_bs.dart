@@ -17,6 +17,7 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
 import 'package:sm_ai_support/src/support/views/chat_page.dart';
 import 'package:sm_ai_support/src/support/views/my_all_sessions.dart';
+import 'package:sm_ai_support/src/support/views/widgets/rate_bs.dart';
 
 class SMSupportCategoriesBs extends StatefulWidget {
   const SMSupportCategoriesBs({super.key});
@@ -96,10 +97,7 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
                             // Session will be created with the first message
                             try {
                               if (context.mounted) {
-                                context.smPush(ChatPage(
-                                  category: category,
-                                  initTicket: true,
-                                ));
+                                context.smPush(ChatPage(category: category, initTicket: true));
                               }
                             } catch (e) {
                               smPrint('Error in category navigation: $e');
@@ -112,7 +110,7 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
                             padding: EdgeInsets.symmetric(vertical: 16.rh),
                             child: Row(
                               children: [
-                                DesignSystem.categorySvg(category.icon),
+                                DesignSystem.categorySvg(category.categoryIcon),
                                 SizedBox(width: 14.rw),
                                 Expanded(child: Text(category.categoryName, style: TextStyles.s_13_400)),
                                 DesignSystem.arrowLeftOrRight(),
@@ -208,10 +206,7 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
                 SMConfig.parentContext.smParentPop();
               },
             ),
-            TenantLogoHelper.small(
-              logoFileName: logoFileName,
-              tenantId: tenantId,
-            ),
+            TenantLogoHelper.small(logoFileName: logoFileName, tenantId: tenantId),
           ],
         );
       },

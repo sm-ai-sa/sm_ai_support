@@ -116,7 +116,7 @@ class WebSocketService {
       if (!_usePollingFallback) {
         log('WebSocketService: Attempting polling fallback...');
         _usePollingFallback = true;
-        await _startPollingFallback(_currentChannelName!);
+        await _startPollingFallback(_currentChannelName);
       } else {
         await _cleanup();
         rethrow;
@@ -394,7 +394,7 @@ class WebSocketService {
       log('WebSocketService: Max reconnection attempts reached, switching to polling fallback...');
       _usePollingFallback = true;
       if (_currentChannelName != null) {
-        _startPollingFallback(_currentChannelName!);
+        _startPollingFallback(_currentChannelName);
       }
     } else {
       log('WebSocketService: Already using polling fallback, cleaning up...');
@@ -726,7 +726,7 @@ class WebSocketService {
   }
 
   /// Start polling fallback mechanism
-  Future<void> _startPollingFallback(String channelName) async {
+  Future<void> _startPollingFallback(String? channelName) async {
     try {
       log('WebSocketService: Starting polling fallback for channel: $channelName');
       

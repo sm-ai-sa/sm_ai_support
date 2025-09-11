@@ -23,8 +23,8 @@ class SessionItem extends StatelessWidget {
     return InkWell(
       onTap: () {
         // Get the current session from SMSupportCubit state to ensure we have the latest data
-        final smSupportCubit = context.read<SMSupportCubit>();
-        final currentSession = smSupportCubit.state.mySessions.firstWhereOrNull((s) => s.id == session.id) ?? session;
+      
+        final currentSession = smCubit.state.mySessions.firstWhereOrNull((s) => s.id == session.id) ?? session;
 
         context.smPush(ChatPage(mySession: currentSession, category: currentSession.category));
       },
@@ -39,7 +39,7 @@ class SessionItem extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     DesignSystem.categorySvg(
-                      session.category.icon,
+                      session.category.categoryIcon,
                       color: session.status.isClosed ? ColorsPallets.disabled300 : null,
                     ),
                     SizedBox(width: 14.rw),
@@ -89,13 +89,13 @@ class SessionItem extends StatelessWidget {
                       visible: session.status.isClosed,
                       child: BlocBuilder<SMSupportCubit, SMSupportState>(
                         builder: (context, state) {
-                          final cubit = context.read<SMSupportCubit>();
+                         
 
                           return (state.reopenSessionStatus.isLoading && state.reopenSessionId == session.id)
                               ? DesignSystem.loadingIndicator()
                               : InkWell(
                                   onTap: () async {
-                                    await cubit.reopenSession(session.id);
+                                    await smCubit.reopenSession(session.id);
                                   },
                                   child: Row(
                                     children: [

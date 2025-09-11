@@ -17,6 +17,7 @@ import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
 class SingleSessionCubit extends Cubit<SingleSessionState> {
   StreamSubscription<SessionMessage>? _messageStreamSubscription;
   StreamSubscription<bool>? _ratingRequestSubscription;
+  Timer? _markAsReadDebounceTimer;
 
   SingleSessionCubit({required String sessionId}) : super(SingleSessionState(sessionId: sessionId));
 
@@ -146,12 +147,15 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   Future<void> markMessagesAsRead() async {
     smPrint('Mark messages as read for session: ${state.sessionId}');
     try {
-      final result = await sl<SupportRepo>().customerReadMessages(sessionId: state.sessionId);
+      final result = await sl<SupportRepo>().readMessages(sessionId: state.sessionId);
       result.when(
         success: (data) {
           smPrint('Mark Messages as Read Success for session: ${state.sessionId}');
-          // Update the unread count in SMSupportCubit after successful API call
-          smCubit.updateSessionUnreadCount(state.sessionId);
+
+          if (AuthManager.isAuthenticated) {
+            // Update the unread count in SMSupportCubit after successful API call
+            smCubit.updateSessionUnreadCount(state.sessionId);
+          }
         },
         error: (error) {
           smPrint('Mark Messages as Read Error: ${error.failure.error}');
@@ -160,6 +164,20 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     } catch (e) {
       smPrint('Mark Messages as Read Error: $e');
     }
+  }
+
+  /// Mark messages as read with debounce to prevent multiple rapid calls
+  void markMessagesAsReadDebounced({Duration delay = const Duration(seconds: 10)}) {
+    smPrint('Debounced mark messages as read triggered for session: ${state.sessionId}');
+    
+    // Cancel previous timer if it exists
+    _markAsReadDebounceTimer?.cancel();
+    
+    // Set new timer
+    _markAsReadDebounceTimer = Timer(delay, () {
+      smPrint('Executing debounced mark messages as read after delay');
+      markMessagesAsRead();
+    });
   }
 
   /// Send typing indicator (placeholder for future implementation)
@@ -398,7 +416,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       smPrint('Message stream started successfully for session: ${state.sessionId}');
     } catch (e) {
       smPrint('Error starting message stream: $e');
-      primarySnackBar(smNavigatorKey.currentContext!, message: 'Failed to connect to real-time messaging');
+      // primarySnackBar(smNavigatorKey.currentContext!, message: 'Failed to connect to real-time messaging');
     }
   }
 
@@ -435,8 +453,8 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
     // Mark message as read if it's from admin and chat is active
     if (newMessage.senderType != SessionMessageSenderType.customer) {
-      smPrint('📖 Marking admin message as read...');
-      markMessagesAsRead();
+      smPrint('📖 Marking admin message as read with debounce...');
+      markMessagesAsReadDebounced();
     }
   }
 
@@ -609,6 +627,10 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   Future<void> close() async {
     // Stop message stream before closing cubit
     await stopMessageStream();
+    
+    // Cancel debounce timer
+    _markAsReadDebounceTimer?.cancel();
+    
     return super.close();
   }
 }
