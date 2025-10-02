@@ -19,7 +19,7 @@ class MessageInput extends StatefulWidget {
   final Function(bool) onSend;
   final CategoryModel? category; // Category for new sessions
   final Function(String)? onSessionCreated; // Callback when session is created
-  
+
   const MessageInput({
     super.key,
     required this.sessionId,
@@ -45,7 +45,7 @@ class _MessageInputState extends State<MessageInput> {
         if (state.createSessionStatus.isSuccess && state.sessionId.isNotEmpty) {
           widget.onSessionCreated?.call(state.sessionId);
         }
-        
+
         if (state.sendMessageStatus.isSuccess) {
           widget.onSend(true);
           _messageController.clear();
@@ -67,7 +67,7 @@ class _MessageInputState extends State<MessageInput> {
           child: Column(
             children: [
               //! Replied On --------------------
-              __repliedOn(state), 
+              __repliedOn(state),
               Row(
                 children: [
                   InkWell(
@@ -118,12 +118,10 @@ class _MessageInputState extends State<MessageInput> {
                     },
                     child: CircleAvatar(
                       radius: 16.rw,
-                      backgroundColor: _messageController.text.isNotEmpty
-                          ? ColorsPallets.primaryColor.withValues(alpha: .9)
-                          : ColorsPallets.primaryColor.withValues(alpha: .3),
-                      child: (state.sendMessageStatus.isLoading || 
-                              state.uploadFileStatus.isLoading || 
-                              state.createSessionStatus.isLoading)
+                      backgroundColor: _messageController.text.isEmpty || state.sendMessageStatus.isLoading
+                          ? ColorsPallets.primaryColor.withValues(alpha: .3)
+                          : ColorsPallets.primaryColor.withValues(alpha: .9),
+                      child: (state.uploadFileStatus.isLoading || state.createSessionStatus.isLoading)
                           ? DesignSystem.loadingIndicator(color: Colors.white)
                           : DesignSystem.svgIcon('arrow-up', size: 18.rSp),
                     ),

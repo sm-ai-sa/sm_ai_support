@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:uuid/uuid.dart';
@@ -70,7 +71,9 @@ class Utils {
 
 ///* Print shortcuts `print()`
 void smPrint(dynamic data) {
-  debugPrint(data.toString());
+  if (kDebugMode) {
+    debugPrint(data.toString());
+  }
 }
 
 void printFullText(String text) {

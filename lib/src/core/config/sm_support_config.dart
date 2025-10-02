@@ -20,11 +20,41 @@ class SMConfig {
     return _smSupportData!;
   }
 
-  ///* Set SMSupportData
+  ///* Set SMSupportData and store SMSecret securely
   static Future<void> initSMSupportData({required SMSupportData data, required BuildContext appContext}) async {
     smPrint('initSMSupportData ---------------: ${data.locale.localeCode}');
+    smPrint('🔐 SMSecret provided: ${data.smSecret.isNotEmpty ? "✅ Yes (${data.smSecret.length} chars)" : "❌ Empty"}');
+    
     _smSupportData = data;
     parentContext = appContext;
+    
+    // Store SMSecret securely
+    try {
+      await SecureStorageHelper.setSMSecret(data.smSecret);
+      smPrint('🔐 SMSecret stored successfully');
+      
+      // Verify storage by reading it back
+      final storedSecret = await SecureStorageHelper.getSMSecret();
+      smPrint('🔐 SMSecret verification: ${storedSecret != null && storedSecret.isNotEmpty ? "✅ Stored correctly" : "❌ Storage failed"}');
+    } catch (e) {
+      smPrint('🔐 Error storing SMSecret: $e');
+    }
+    
     smCubit.initializeData(data.locale.localeCode);
+  }
+
+  ///* Get SMSecret from secure storage
+  static Future<String?> getSMSecret() async {
+    return await SecureStorageHelper.getSMSecret();
+  }
+
+  ///* Check if SMSecret exists
+  static Future<bool> hasSMSecret() async {
+    return await SecureStorageHelper.hasSMSecret();
+  }
+
+  ///* Clear SMSecret (useful for logout or reset)
+  static Future<void> clearSMSecret() async {
+    await SecureStorageHelper.clearSMSecret();
   }
 }

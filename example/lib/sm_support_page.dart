@@ -14,7 +14,8 @@ class SMSupportPage extends StatelessWidget {
       smSupportData: SMSupportData(
         appName: 'UNI-SUPPORT',
         locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
-        tenantId: '1',
+        tenantId: '3',
+        smSecret: 'your_secret_key_here', // Replace with your actual secret key
       ),
     );
   }

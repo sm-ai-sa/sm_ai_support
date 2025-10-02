@@ -34,6 +34,11 @@ class SupportDemoScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.support_agent, size: 100, color: Colors.blue),
+              const Text(
+                'VERSION 7',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
               const SizedBox(height: 24),
               const Text(
                 'SM AI Support Package Demo',

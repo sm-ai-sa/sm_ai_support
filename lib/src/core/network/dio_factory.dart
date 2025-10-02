@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 class DioFactory {
   //* Singleton __________________________________
@@ -41,8 +42,9 @@ class DioFactory {
       _configureAndroidSpecific();
 
       addDioHeaders();
-      addDioInterceptor();
+      addSMSecretInterceptor(); // Add SM Secret interceptor FIRST
       addAuthInterceptor(); // Add auth interceptor
+      addDioInterceptor(); // Add logging interceptor AFTER headers are set
       addAppInterceptor();
       return dio!;
     } else {
@@ -182,6 +184,41 @@ class DioFactory {
     );
   }
 
+  //* ADD : SM SECRET INTERCEPTOR -------------------------------------
+  static void addSMSecretInterceptor() {
+    dio?.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          // Add SMSecret to all requests
+          try {
+            smPrint('🔐 SMSecret Interceptor: Attempting to retrieve SMSecret...');
+            final smSecret = await SMConfig.getSMSecret();
+            smPrint(
+              '🔐 SMSecret Retrieved: ${smSecret != null ? "✅ Found (${smSecret.length} chars)" : "❌ Not found"}',
+            );
+
+            if (smSecret != null && smSecret.isNotEmpty) {
+              options.headers['X-API-Key'] = smSecret;
+              smPrint('🔐 SMSecret Header Added: SM-Secret = ${smSecret.substring(0, 4)}...');
+              smPrint('🔐 All Headers: ${options.headers}');
+            } else {
+              smPrint('🔐 SMSecret NOT added - secret is null or empty');
+            }
+          } catch (e) {
+            smPrint('🔐 Error retrieving SMSecret for request: $e');
+          }
+          handler.next(options);
+        },
+        onResponse: (response, handler) {
+          handler.next(response);
+        },
+        onError: (error, handler) {
+          handler.next(error);
+        },
+      ),
+    );
+  }
+
   //* ADD : DIO HEADERS -------------------------------------
   static void addDioHeaders() {
     String tenantId = SMConfig.smData.tenantId;
@@ -224,7 +261,7 @@ class AppInterceptors extends InterceptorsWrapper {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     // Get current language from headers first, then fallback to smCubit state
     String language = 'ar'; // Default fallback
-    
+
     // Try to get from existing headers first (preferred)
     String? headerLanguage = options.headers["Accept-Language"];
     if (headerLanguage != null && headerLanguage.isNotEmpty) {

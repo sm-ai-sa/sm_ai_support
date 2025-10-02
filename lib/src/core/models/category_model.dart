@@ -27,7 +27,7 @@ class CategoryModel extends Equatable {
   @override
   List<Object?> get props => [id, description, icon, iconInfo];
 
-  String get categoryName => description ?? name ?? '';
+  String get categoryName => name ?? description ?? '';
 
   String get categoryIcon => icon ?? iconInfo?.name ?? '';
 }

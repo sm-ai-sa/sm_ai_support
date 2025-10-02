@@ -128,9 +128,10 @@ class DesignSystem {
           child: SvgPicture.network(
             iconName,
             matchTextDirection: isDirectional,
-
             colorFilter: color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,
             fit: fit ?? BoxFit.cover,
+            placeholderBuilder: (_) => ShimmerItems.shimmerContainer(width: width, height: height, radius: 6),
+            errorBuilder: (_, __, ___) => svgIcon('category/warning'),
           ),
         ),
       ),

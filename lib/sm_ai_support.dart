@@ -20,6 +20,7 @@ export 'src/core/models/upload_model.dart';
 export 'src/core/network/network_result.dart';
 /// Services
 export 'src/core/services/auth_manager.dart';
+export 'src/core/services/secure_storage_helper.dart';
 export 'src/core/services/shared_pref_helper.dart';
 export 'src/core/services/websocket_service.dart';
 export 'src/core/utils/enums.dart';
