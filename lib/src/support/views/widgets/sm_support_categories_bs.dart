@@ -17,7 +17,6 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
 import 'package:sm_ai_support/src/support/views/chat_page.dart';
 import 'package:sm_ai_support/src/support/views/my_all_sessions.dart';
-import 'package:sm_ai_support/src/support/views/widgets/rate_bs.dart';
 
 class SMSupportCategoriesBs extends StatefulWidget {
   const SMSupportCategoriesBs({super.key});

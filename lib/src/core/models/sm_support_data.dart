@@ -12,17 +12,21 @@ class SMSupportData extends Equatable {
   ///* Tenant ID to fetch tenant-specific configuration
   final String tenantId;
 
-  ///* Secret key for API authentication (stored securely)
-  final String smSecret;
+  ///* API key for authentication (stored securely)
+  final String apiKey;
+
+  ///* Secret key for HMAC request signing (stored securely)
+  final String secretKey;
 
   ///* Data constructor for `SMSupportData` with required parameters only
   const SMSupportData({
     required this.appName,
     required this.locale,
     required this.tenantId,
-    required this.smSecret,
+    required this.apiKey,
+    required this.secretKey,
   });
 
   @override
-  List<Object?> get props => [appName, locale, tenantId, smSecret];
+  List<Object?> get props => [appName, locale, tenantId, apiKey, secretKey];
 }

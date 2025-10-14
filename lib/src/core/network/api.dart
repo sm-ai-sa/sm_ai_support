@@ -1,5 +1,5 @@
 class Apis {
-  static const String baseUrl = 'https://sandbox.unicode.team/api/core';
+  static const String baseUrl = 'https://partner.withsm.ai/api/core';
 
   static const String categoryIconUrl = 'https://sm-public-space.blr1.cdn.digitaloceanspaces.com';
   // Tenant

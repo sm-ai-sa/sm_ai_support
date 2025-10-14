@@ -680,7 +680,7 @@ result.when(
 
 ### Base URL
 ```dart
-static const String baseUrl = 'https://sandbox.unicode.team/api/core';
+static const String baseUrl = 'https://partner.withsm.ai/api/core';
 ```
 
 ### Available Icons

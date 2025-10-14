@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
+import 'package:sm_ai_support/src/core/network/hmac_interceptor.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 class DioFactory {
@@ -42,7 +43,8 @@ class DioFactory {
       _configureAndroidSpecific();
 
       addDioHeaders();
-      addSMSecretInterceptor(); // Add SM Secret interceptor FIRST
+      addAPIKeyInterceptor(); // Add API Key interceptor FIRST
+      addHmacInterceptor(); // Add HMAC signature interceptor SECOND
       addAuthInterceptor(); // Add auth interceptor
       addDioInterceptor(); // Add logging interceptor AFTER headers are set
       addAppInterceptor();
@@ -184,28 +186,34 @@ class DioFactory {
     );
   }
 
-  //* ADD : SM SECRET INTERCEPTOR -------------------------------------
-  static void addSMSecretInterceptor() {
+  //* ADD : HMAC SIGNATURE INTERCEPTOR -------------------------------------
+  static void addHmacInterceptor() {
+    dio?.interceptors.add(HmacInterceptor());
+    smPrint('🔐 HMAC Signature Interceptor added to Dio');
+  }
+
+  //* ADD : API KEY INTERCEPTOR -------------------------------------
+  static void addAPIKeyInterceptor() {
     dio?.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Add SMSecret to all requests
+          // Add API Key to all requests
           try {
-            smPrint('🔐 SMSecret Interceptor: Attempting to retrieve SMSecret...');
-            final smSecret = await SMConfig.getSMSecret();
+            smPrint('🔐 API Key Interceptor: Attempting to retrieve API Key...');
+            final apiKey = await SMConfig.getAPIKey();
             smPrint(
-              '🔐 SMSecret Retrieved: ${smSecret != null ? "✅ Found (${smSecret.length} chars)" : "❌ Not found"}',
+              '🔐 API Key Retrieved: ${apiKey != null ? "✅ Found (${apiKey.length} chars)" : "❌ Not found"}',
             );
 
-            if (smSecret != null && smSecret.isNotEmpty) {
-              options.headers['X-API-Key'] = smSecret;
-              smPrint('🔐 SMSecret Header Added: SM-Secret = ${smSecret.substring(0, 4)}...');
+            if (apiKey != null && apiKey.isNotEmpty) {
+              options.headers['X-API-Key'] = apiKey;
+              smPrint('🔐 API Key Header Added: X-API-Key = ${apiKey.substring(0, 4)}...');
               smPrint('🔐 All Headers: ${options.headers}');
             } else {
-              smPrint('🔐 SMSecret NOT added - secret is null or empty');
+              smPrint('🔐 API Key NOT added - key is null or empty');
             }
           } catch (e) {
-            smPrint('🔐 Error retrieving SMSecret for request: $e');
+            smPrint('🔐 Error retrieving API Key for request: $e');
           }
           handler.next(options);
         },

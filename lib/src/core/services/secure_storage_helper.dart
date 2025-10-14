@@ -14,48 +14,48 @@ class SecureStorageHelper {
   );
 
   // Keys for storing secure data
-  static const String _smSecretKey = 'sm_secret';
+  static const String _apiKeyKey = 'api_key';
 
-  /// Store SMSecret securely
-  static Future<void> setSMSecret(String secret) async {
+  /// Store API Key securely
+  static Future<void> setAPIKey(String apiKey) async {
     try {
-      await _secureStorage.write(key: _smSecretKey, value: secret);
-      smPrint('SMSecret stored securely');
+      await _secureStorage.write(key: _apiKeyKey, value: apiKey);
+      smPrint('API Key stored securely');
     } catch (e) {
-      smPrint('Error storing SMSecret: $e');
+      smPrint('Error storing API Key: $e');
       rethrow;
     }
   }
 
-  /// Retrieve SMSecret from secure storage
-  static Future<String?> getSMSecret() async {
+  /// Retrieve API Key from secure storage
+  static Future<String?> getAPIKey() async {
     try {
-      final secret = await _secureStorage.read(key: _smSecretKey);
-      return secret;
+      final apiKey = await _secureStorage.read(key: _apiKeyKey);
+      return apiKey;
     } catch (e) {
-      smPrint('Error retrieving SMSecret: $e');
+      smPrint('Error retrieving API Key: $e');
       return null;
     }
   }
 
-  /// Clear SMSecret from secure storage
-  static Future<void> clearSMSecret() async {
+  /// Clear API Key from secure storage
+  static Future<void> clearAPIKey() async {
     try {
-      await _secureStorage.delete(key: _smSecretKey);
-      smPrint('SMSecret cleared from secure storage');
+      await _secureStorage.delete(key: _apiKeyKey);
+      smPrint('API Key cleared from secure storage');
     } catch (e) {
-      smPrint('Error clearing SMSecret: $e');
+      smPrint('Error clearing API Key: $e');
       rethrow;
     }
   }
 
-  /// Check if SMSecret exists in secure storage
-  static Future<bool> hasSMSecret() async {
+  /// Check if API Key exists in secure storage
+  static Future<bool> hasAPIKey() async {
     try {
-      final secret = await getSMSecret();
-      return secret != null && secret.isNotEmpty;
+      final apiKey = await getAPIKey();
+      return apiKey != null && apiKey.isNotEmpty;
     } catch (e) {
-      smPrint('Error checking SMSecret existence: $e');
+      smPrint('Error checking API Key existence: $e');
       return false;
     }
   }
@@ -68,6 +68,52 @@ class SecureStorageHelper {
     } catch (e) {
       smPrint('Error clearing all secure storage: $e');
       rethrow;
+    }
+  }
+
+  // Generic secure storage methods for other components
+
+  /// Store any secure value with a custom key
+  static Future<void> setSecureValue(String key, String value) async {
+    try {
+      await _secureStorage.write(key: key, value: value);
+      smPrint('Secure value stored for key: $key');
+    } catch (e) {
+      smPrint('Error storing secure value for key $key: $e');
+      rethrow;
+    }
+  }
+
+  /// Retrieve any secure value by key
+  static Future<String?> getSecureValue(String key) async {
+    try {
+      final value = await _secureStorage.read(key: key);
+      return value;
+    } catch (e) {
+      smPrint('Error retrieving secure value for key $key: $e');
+      return null;
+    }
+  }
+
+  /// Delete any secure value by key
+  static Future<void> deleteSecureValue(String key) async {
+    try {
+      await _secureStorage.delete(key: key);
+      smPrint('Secure value deleted for key: $key');
+    } catch (e) {
+      smPrint('Error deleting secure value for key $key: $e');
+      rethrow;
+    }
+  }
+
+  /// Check if a secure value exists for the given key
+  static Future<bool> hasSecureValue(String key) async {
+    try {
+      final value = await getSecureValue(key);
+      return value != null && value.isNotEmpty;
+    } catch (e) {
+      smPrint('Error checking secure value existence for key $key: $e');
+      return false;
     }
   }
 }

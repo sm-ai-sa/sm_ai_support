@@ -15,7 +15,8 @@ class SMSupportPage extends StatelessWidget {
         appName: 'UNI-SUPPORT',
         locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
         tenantId: '3',
-        smSecret: 'your_secret_key_here', // Replace with your actual secret key
+        apiKey: 'your_api_key_here', // Replace with your actual API key
+        secretKey: 'your_secret_key_here', // Required: Secret key for HMAC request signing
       ),
     );
   }
