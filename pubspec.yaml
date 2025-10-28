@@ -49,10 +49,9 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   socket_io_client: ^2.0.3+1
   uni_country_city_picker: ^1.0.2
-  crypto: ^3.0.3 
+  crypto: ^3.0.3
+  webview_flutter: ^4.9.0
 
-
-  
 dev_dependencies:
   flutter_test:
     sdk: flutter

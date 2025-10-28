@@ -117,8 +117,19 @@ class HmacSignatureHelper {
   }
 
   /// Generate signature and return headers for API request
+  /// Returns headers with lowercase names as per backend specification:
+  /// - x-api-key (API key for tenant identification)
+  /// - x-t (Unix timestamp in seconds)
+  /// - x-signature (HMAC-SHA256 signature)
   static Future<Map<String, String>?> generateAuthHeaders(String body) async {
     try {
+      // Get API key from secure storage
+      final apiKey = await SecureStorageHelper.getAPIKey();
+      if (apiKey == null || apiKey.isEmpty) {
+        smPrint('🔐 API Key not found, cannot generate HMAC headers');
+        return null;
+      }
+
       final result = await generateSignature(body);
       if (result == null) {
         smPrint('🔐 Failed to generate HMAC signature for headers');
@@ -126,11 +137,13 @@ class HmacSignatureHelper {
       }
       
       final headers = {
-        'X-Timestamp': result['timestamp']!,
-        'X-Signature': result['signature']!,
+        'x-api-key': apiKey,                // Backend expects lowercase x-api-key
+        'x-t': result['timestamp']!,        // Backend expects x-t (not X-Timestamp)
+        'x-signature': result['signature']!, // Backend expects lowercase x-signature
       };
       
-      smPrint('🔐 HMAC Auth headers generated: X-Timestamp, X-Signature');
+      smPrint('🔐 HMAC Auth headers generated: x-api-key, x-t, x-signature');
+      smPrint('🔐 API Key: ${apiKey.substring(0, 4)}..., Timestamp: ${result['timestamp']}, Signature: ${result['signature']!.substring(0, 8)}...');
       return headers;
     } catch (e) {
       smPrint('🔐 Error generating HMAC auth headers: $e');

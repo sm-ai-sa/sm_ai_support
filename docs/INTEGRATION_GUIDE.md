@@ -18,6 +18,10 @@ ElevatedButton(
         appName: "My Awesome App",
         locale: SMSupportLocale.english,
         tenantId: "your_tenant_id", // Required: Your tenant identifier
+        apiKey: "your_api_key",
+        secretKey: "your_secret_key",
+        baseUrl: "https://your-api-server.com/api/core",
+        socketBaseUrl: "wss://your-api-server.com/ws",
       ),
     );
   },
@@ -162,6 +166,10 @@ class HomePage extends StatelessWidget {
         appName: "My Awesome App",
         locale: SMSupportLocale.english,
         tenantId: "unicode", // Your tenant ID
+        apiKey: "your_api_key",
+        secretKey: "your_secret_key",
+        baseUrl: "https://your-api-server.com/api/core",
+        socketBaseUrl: "wss://your-api-server.com/ws",
       ),
     );
   }
@@ -212,6 +220,10 @@ SMSupportData(
   appName: "My App",
   locale: SMSupportLocale.english,
   tenantId: "your_company_id", // Get this from your Unicode dashboard
+  apiKey: "your_api_key",
+  secretKey: "your_secret_key",
+  baseUrl: "https://your-api-server.com/api/core",
+  socketBaseUrl: "wss://your-api-server.com/ws",
 )
 ```
 
@@ -221,7 +233,12 @@ Brand colors are automatically fetched from the tenant API based on your `tenant
 ### Localization
 ```dart
 SMSupportData(
-  // ... other fields
+  appName: "My App",
+  tenantId: "your_tenant_id",
+  apiKey: "your_api_key",
+  secretKey: "your_secret_key",
+  baseUrl: "https://your-api-server.com/api/core",
+  socketBaseUrl: "wss://your-api-server.com/ws",
   locale: SMSupportLocale.arabic, // or SMSupportLocale.english
 )
 ```

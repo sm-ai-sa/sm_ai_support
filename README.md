@@ -96,6 +96,8 @@ class SupportPage extends StatelessWidget {
         tenantId: 'your_tenant_id',
         apiKey: 'your_api_key_here', // Required for authentication
         secretKey: 'your_secret_key_here', // Required: For HMAC request signing
+        baseUrl: 'https://your-api-server.com/api/core', // REST API base URL
+        socketBaseUrl: 'wss://your-api-server.com/ws', // WebSocket base URL
       ),
     );
   }
@@ -160,6 +162,8 @@ SMSupport(
     tenantId: 'tenant_123',
     apiKey: 'your_secure_api_key', // Stored securely using flutter_secure_storage
     secretKey: 'your_hmac_secret', // Required: Enables HMAC request signing
+    baseUrl: 'https://your-api-server.com/api/core', // REST API base URL
+    socketBaseUrl: 'wss://your-api-server.com/ws', // WebSocket base URL
   ),
 )
 ```
@@ -264,6 +268,8 @@ class HomePage extends StatelessWidget {
             tenantId: 'your_tenant_id',
             apiKey: 'your_api_key_here',
             secretKey: 'your_secret_key_here', // Required
+            baseUrl: 'https://your-api-server.com/api/core',
+            socketBaseUrl: 'wss://your-api-server.com/ws',
           ),
         ),
       ),
@@ -290,6 +296,8 @@ class LocalizedSupportPage extends StatelessWidget {
         tenantId: 'your_tenant_id',
         apiKey: 'your_api_key_here',
         secretKey: 'your_secret_key_here', // Required
+        baseUrl: 'https://your-api-server.com/api/core',
+        socketBaseUrl: 'wss://your-api-server.com/ws',
       ),
     );
   }
@@ -314,13 +322,15 @@ class ProductionSupportPage extends StatelessWidget {
         tenantId: 'prod_tenant_123',
         apiKey: const String.fromEnvironment('SM_SUPPORT_API_KEY'),
         secretKey: const String.fromEnvironment('SM_SUPPORT_SECRET_KEY'),
+        baseUrl: const String.fromEnvironment('SM_SUPPORT_BASE_URL', defaultValue: 'https://api.example.com/api/core'),
+        socketBaseUrl: const String.fromEnvironment('SM_SUPPORT_SOCKET_URL', defaultValue: 'wss://api.example.com/ws'),
       ),
     );
   }
 }
 
 // Usage with environment variables
-// flutter run --dart-define=SM_SUPPORT_API_KEY=your_key --dart-define=SM_SUPPORT_SECRET_KEY=your_secret
+// flutter run --dart-define=SM_SUPPORT_API_KEY=your_key --dart-define=SM_SUPPORT_SECRET_KEY=your_secret --dart-define=SM_SUPPORT_BASE_URL=https://api.example.com/api/core --dart-define=SM_SUPPORT_SOCKET_URL=wss://api.example.com/ws
 ```
 
 ---
@@ -432,11 +442,13 @@ Configuration data for the support system.
 
 ```dart
 SMSupportData({
-  required String appName,
-  required SMSupportLocale locale,
-  required String tenantId,
-  required String apiKey,
-  required String secretKey,
+  required String appName,          // Your application name
+  required SMSupportLocale locale,  // UI language (en or ar)
+  required String tenantId,         // Your tenant identifier
+  required String apiKey,           // API authentication key
+  required String secretKey,        // HMAC signing secret key
+  required String baseUrl,          // REST API base URL (e.g., 'https://api.example.com/api/core')
+  required String socketBaseUrl,    // WebSocket base URL (e.g., 'wss://api.example.com/ws')
 })
 ```
 

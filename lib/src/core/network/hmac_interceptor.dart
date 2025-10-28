@@ -27,17 +27,28 @@ class HmacInterceptor extends InterceptorsWrapper {
 
       smPrint('🔐 HMAC Interceptor: Generating signature for ${options.method} ${options.path}');
 
-      // Get request body as string
+      // Check if this is a multipart/form-data request (file upload)
+      if (options.data is FormData) {
+        smPrint('🔐 HMAC Interceptor: FormData detected (file upload) - Skipping HMAC signature');
+        smPrint('🔐 HMAC Interceptor: File uploads use presigned URLs, HMAC not required for actual upload');
+        
+        // Still add API key for the upload request endpoint (not the presigned URL upload)
+        final apiKey = await HmacSignatureHelper.getSecretKey();
+        if (apiKey != null) {
+          options.headers['x-api-key'] = apiKey;
+        }
+        
+        handler.next(options);
+        return;
+      }
+
+      // Get request body as string for HMAC signature
       String requestBody = '';
       if (options.data != null) {
         if (options.data is String) {
           requestBody = options.data as String;
         } else if (options.data is Map || options.data is List) {
           requestBody = jsonEncode(options.data);
-        } else if (options.data is FormData) {
-          // For FormData, we'll use a simplified approach
-          // In production, you might want to serialize FormData differently
-          requestBody = options.data.toString();
         } else {
           requestBody = options.data.toString();
         }

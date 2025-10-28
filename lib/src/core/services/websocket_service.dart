@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:sm_ai_support/sm_ai_support.dart';
+import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 /// Socket.IO service for real-time messaging
@@ -27,13 +28,13 @@ class WebSocketService {
   String? _sessionId;
   String? _customerId;
   bool _isConnected = false;
-  
+
   // Channel names for the new streams
   String? _unreadSessionsCountChannel;
   String? _sessionStatsChannel;
 
-  /// Base Socket.IO URL
-  static const String _baseUrl = 'wss://sandbox.unicode.team/ws';
+  /// Base Socket.IO URL - Get from SMConfig
+  String get _baseUrl => SMConfig.smData.socketBaseUrl;
 
   /// Get the stream of incoming messages
   Stream<SessionMessage>? get messageStream => _messageController?.stream;
@@ -80,7 +81,7 @@ class WebSocketService {
     _tenantId = tenantId;
     _sessionId = sessionId;
     _customerId = customerId;
-    
+
     try {
       // Build channel name first
       final customerIdentifier = customerId ?? 'anonymous';
@@ -108,10 +109,9 @@ class WebSocketService {
       } else {
         await _startPollingFallback(channelName);
       }
-      
     } catch (e) {
       log('WebSocketService: Connection failed: $e');
-      
+
       // If Socket.IO fails, try polling fallback
       if (!_usePollingFallback) {
         log('WebSocketService: Attempting polling fallback...');
@@ -129,22 +129,25 @@ class WebSocketService {
     log('WebSocketService: Connecting to Socket.IO server: $_baseUrl/customer/room');
 
     // Create Socket.IO client with proper configuration
-    _socket = IO.io('$_baseUrl/customer/room', IO.OptionBuilder()
-        .setTransports(['websocket', 'polling'])
-        .enableAutoConnect()
-        .enableReconnection()
-        .setReconnectionAttempts(3)
-        .setReconnectionDelay(1000)
-        .setTimeout(20000)
-        .setPath('/socket.io/')
-        .build());
+    _socket = IO.io(
+      '$_baseUrl/customer/room',
+      IO.OptionBuilder()
+          .setTransports(['websocket', 'polling'])
+          .enableAutoConnect()
+          .enableReconnection()
+          .setReconnectionAttempts(3)
+          .setReconnectionDelay(1000)
+          .setTimeout(20000)
+          .setPath('/socket.io/')
+          .build(),
+    );
 
     // Set up event listeners
     _setupSocketListeners(channelName);
 
     // Connect to the server
     _socket!.connect();
-    
+
     // Wait for connection to establish
     await _waitForConnection();
 
@@ -160,10 +163,10 @@ class WebSocketService {
       log('WebSocketService: Socket.IO connected');
       _isConnected = true;
       _reconnectAttempts = 0;
-      
+
       // Subscribe to the specific channel
       _joinChannel(channelName);
-      
+
       // Start heartbeat
       _startHeartbeat();
     });
@@ -184,10 +187,10 @@ class WebSocketService {
 
     // Listen for new messages on the subscribed channel
     _socket!.on('new_message', _onNewMessageReceived);
-    
+
     // Listen for messages on the specific channel name
     _socket!.on(channelName, _onMessageReceived);
-    
+
     // Listen for general message events
     _socket!.on('message', _onMessageReceived);
 
@@ -223,7 +226,7 @@ class WebSocketService {
       if (!['connect', 'disconnect', 'ping', 'pong'].contains(event)) {
         log('WebSocketService: Received event: "$event"');
       }
-      
+
       // Check if this event is our channel and contains message data
       if (event == channelName || event.startsWith('message_')) {
         log('WebSocketService: Processing channel event: "$event"');
@@ -236,12 +239,12 @@ class WebSocketService {
   Future<void> _waitForConnection() async {
     int attempts = 0;
     const maxAttempts = 20; // 10 seconds total
-    
+
     while (!_isConnected && attempts < maxAttempts) {
       await Future.delayed(const Duration(milliseconds: 500));
       attempts++;
     }
-    
+
     if (!_isConnected) {
       throw Exception('Socket.IO connection timeout after ${maxAttempts * 500}ms');
     }
@@ -251,11 +254,11 @@ class WebSocketService {
   void _onNewMessageReceived(dynamic data) {
     try {
       log('WebSocketService: 📨 Received new_message event: $data');
-      
+
       if (data is Map<String, dynamic>) {
         // Check if it's wrapped in a data field
         final messageData = data.containsKey('data') ? data['data'] : data;
-        
+
         if (messageData is Map<String, dynamic>) {
           try {
             final message = SessionMessage.fromJson(messageData);
@@ -280,7 +283,7 @@ class WebSocketService {
   void _onMessageReceived(dynamic data) {
     try {
       log('WebSocketService: 📨 Received message event: $data');
-      
+
       if (data is Map<String, dynamic>) {
         _handleDirectMessage(data);
       } else if (data is String) {
@@ -297,20 +300,20 @@ class WebSocketService {
       _messageController?.addError(e);
     }
   }
-  
+
   /// Handle direct messages (fallback)
   void _handleDirectMessage(Map<String, dynamic> jsonData) {
     try {
       log('WebSocketService: Handling direct message: $jsonData');
-      
+
       // Check for event type
       final eventType = jsonData['type'] as String?;
-      
+
       // Handle new_message format: {"type": "new_message", "data": {...}}
       if (eventType == 'new_message' && jsonData['data'] != null) {
         final messageData = jsonData['data'] as Map<String, dynamic>;
         log('WebSocketService: Processing new_message from Admin: $messageData');
-        
+
         try {
           final message = SessionMessage.fromJson(messageData);
           _messageController?.add(message);
@@ -323,11 +326,11 @@ class WebSocketService {
           log('WebSocketService: Raw message data: $messageData');
         }
       }
-      
+
       // Handle rating_request format: {"type": "rating_request", "data": bool}
       if (eventType == 'rating_request') {
         log('WebSocketService: Processing rating_request: $jsonData');
-        
+
         try {
           // The data should be a boolean indicating if rating is required
           final isRatingRequired = true;
@@ -339,7 +342,7 @@ class WebSocketService {
           log('WebSocketService: Raw rating data: $jsonData');
         }
       }
-      
+
       // Check if it's a direct SessionMessage format
       if (jsonData.containsKey('id') && jsonData.containsKey('content')) {
         try {
@@ -351,10 +354,9 @@ class WebSocketService {
           log('WebSocketService: Error parsing direct message: $parseError');
         }
       }
-      
+
       log('WebSocketService: ❌ Unknown message format: $eventType');
       log('WebSocketService: Full message: $jsonData');
-      
     } catch (e) {
       log('WebSocketService: ❌ Error handling direct message: $e');
       log('WebSocketService: Raw JSON data: $jsonData');
@@ -382,9 +384,9 @@ class WebSocketService {
     log('WebSocketService: Connection closed for channel: $_currentChannelName');
     log('WebSocketService: Reconnect attempts so far: $_reconnectAttempts/$_maxReconnectAttempts');
     log('WebSocketService: Using polling fallback: $_usePollingFallback');
-    
+
     _isConnected = false;
-    
+
     // Socket.IO has built-in reconnection, but we can add our own logic here if needed
     if (_currentChannelName != null && _reconnectAttempts < _maxReconnectAttempts && !_usePollingFallback) {
       log('WebSocketService: Socket.IO will handle reconnection...');
@@ -408,13 +410,11 @@ class WebSocketService {
       log('WebSocketService: Joining Socket.IO channel: $channelName');
       log('WebSocketService: 🔍 CHANNEL NAME BEING SUBSCRIBED TO: $channelName');
       log('WebSocketService: Channel length: ${channelName.length}');
-      
+
       if (_socket != null && _isConnected) {
         // Use Socket.IO event to subscribe to channel
-        _socket!.emit('subscribe', {
-          'channel': channelName,
-        });
-        
+        _socket!.emit('subscribe', {'channel': channelName});
+
         log('WebSocketService: 📤 Sent Socket.IO subscribe event for channel: $channelName');
       }
     } catch (e) {
@@ -425,7 +425,7 @@ class WebSocketService {
   /// Start heartbeat to keep connection alive
   void _startHeartbeat() {
     _pingTimer?.cancel();
-    
+
     // Send ping every 30 seconds (Socket.IO handles this automatically, but we can add custom logic)
     _pingTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       if (_socket != null && _isConnected) {
@@ -436,7 +436,7 @@ class WebSocketService {
         timer.cancel();
       }
     });
-    
+
     log('WebSocketService: Heartbeat started');
   }
 
@@ -451,9 +451,7 @@ class WebSocketService {
   void subscribeToChannel(String channelName) {
     if (_socket != null && _isConnected) {
       try {
-        _socket!.emit('subscribe', {
-          'channel': channelName,
-        });
+        _socket!.emit('subscribe', {'channel': channelName});
         log('WebSocketService: Subscribed to channel: $channelName');
       } catch (e) {
         log('WebSocketService: Error subscribing to channel: $e');
@@ -512,31 +510,31 @@ class WebSocketService {
       }
 
       final channelName = 'unread_sessions_count_$tenantId$customerId';
-      
+
       // Check if already connected to this channel
       if (_unreadSessionsCountChannel == channelName) {
         log('WebSocketService: Already connected to unread sessions count stream: $channelName');
         return;
       }
-      
+
       // Disconnect from previous channel if any
       if (_unreadSessionsCountChannel != null) {
         _socket?.off(_unreadSessionsCountChannel!);
       }
-      
+
       _unreadSessionsCountChannel = channelName;
-      
+
       log('WebSocketService: Connecting to unread sessions count stream: $channelName');
-      
+
       // Initialize the stream controller if not already done
       _unreadSessionsCountController ??= StreamController<int>.broadcast();
-      
+
       // Subscribe to the channel
       subscribeToChannel(channelName);
-      
+
       // Listen for unread count updates
       _socket?.on(channelName, _onUnreadSessionsCountReceived);
-      
+
       log('WebSocketService: Successfully connected to unread sessions count stream');
     } catch (e) {
       log('WebSocketService: Error connecting to unread sessions count stream: $e');
@@ -544,7 +542,7 @@ class WebSocketService {
     }
   }
 
-  /// Connect to session stats stream  
+  /// Connect to session stats stream
   /// This stream provides real-time updates for session statistics in my sessions page
   Future<void> connectToSessionStatsStream({required String tenantId, required String customerId}) async {
     try {
@@ -554,31 +552,31 @@ class WebSocketService {
       }
 
       final channelName = 'session_stats_$tenantId$customerId';
-      
+
       // Check if already connected to this channel
       if (_sessionStatsChannel == channelName) {
         log('WebSocketService: Already connected to session stats stream: $channelName');
         return;
       }
-      
+
       // Disconnect from previous channel if any
       if (_sessionStatsChannel != null) {
         _socket?.off(_sessionStatsChannel!);
       }
-      
+
       _sessionStatsChannel = channelName;
-      
+
       log('WebSocketService: Connecting to session stats stream: $channelName');
-      
+
       // Initialize the stream controller if not already done
       _sessionStatsController ??= StreamController<Map<String, dynamic>>.broadcast();
-      
+
       // Subscribe to the channel
       subscribeToChannel(channelName);
-      
+
       // Listen for session stats updates
       _socket?.on(channelName, _onSessionStatsReceived);
-      
+
       log('WebSocketService: Successfully connected to session stats stream');
     } catch (e) {
       log('WebSocketService: Error connecting to session stats stream: $e');
@@ -611,30 +609,33 @@ class WebSocketService {
   /// Helper method to connect to WebSocket server without a specific session channel
   Future<void> _connectToWebSocketServer() async {
     if (_isConnected) return;
-    
+
     try {
       log('WebSocketService: Connecting to Socket.IO server for additional streams');
-      
+
       // Create Socket.IO client with proper configuration
-      _socket = IO.io('$_baseUrl/customer/room', IO.OptionBuilder()
-          .setTransports(['websocket', 'polling'])
-          .enableAutoConnect()
-          .enableReconnection()
-          .setReconnectionAttempts(3)
-          .setReconnectionDelay(1000)
-          .setTimeout(20000)
-          .setPath('/socket.io/')
-          .build());
+      _socket = IO.io(
+        '$_baseUrl/customer/room',
+        IO.OptionBuilder()
+            .setTransports(['websocket', 'polling'])
+            .enableAutoConnect()
+            .enableReconnection()
+            .setReconnectionAttempts(3)
+            .setReconnectionDelay(1000)
+            .setTimeout(20000)
+            .setPath('/socket.io/')
+            .build(),
+      );
 
       // Set up basic connection listeners
       _setupBasicSocketListeners();
 
       // Connect to the server
       _socket!.connect();
-      
+
       // Wait for connection to establish
       await _waitForConnection();
-      
+
       log('WebSocketService: Connected successfully to Socket.IO server for additional streams');
     } catch (e) {
       log('WebSocketService: Error connecting to Socket.IO server: $e');
@@ -651,7 +652,7 @@ class WebSocketService {
       log('WebSocketService: Socket.IO connected for additional streams');
       _isConnected = true;
       _reconnectAttempts = 0;
-      
+
       // Start heartbeat
       _startHeartbeat();
     });
@@ -673,7 +674,7 @@ class WebSocketService {
   void _onUnreadSessionsCountReceived(dynamic data) {
     try {
       log('WebSocketService: 📊 Received unread sessions count update: $data');
-      
+
       int count;
       if (data is int) {
         count = data;
@@ -683,7 +684,7 @@ class WebSocketService {
         log('WebSocketService: ❌ Invalid unread sessions count format: $data');
         return;
       }
-      
+
       _unreadSessionsCountController?.add(count);
       log('WebSocketService: ✅ Unread sessions count updated: $count');
     } catch (e) {
@@ -696,14 +697,16 @@ class WebSocketService {
   void _onSessionStatsReceived(dynamic data) {
     try {
       log('WebSocketService: 📊 Received session stats update: $data');
-      
+
       if (data is Map<String, dynamic>) {
         _sessionStatsController?.add(data);
         log('WebSocketService: ✅ Session stats updated successfully');
         log('WebSocketService: Session stats type: ${data['type']}');
-        
+
         if (data['data'] != null) {
-          log('WebSocketService: Session stats data count: ${data['data'] is List ? (data['data'] as List).length : 1}');
+          log(
+            'WebSocketService: Session stats data count: ${data['data'] is List ? (data['data'] as List).length : 1}',
+          );
         }
       } else {
         log('WebSocketService: ❌ Invalid session stats format: $data');
@@ -717,11 +720,11 @@ class WebSocketService {
   /// Disconnect from Socket.IO
   Future<void> disconnect() async {
     log('WebSocketService: Disconnecting from channel: $_currentChannelName');
-    
+
     // Disconnect from additional streams
     disconnectFromUnreadSessionsCountStream();
     disconnectFromSessionStatsStream();
-    
+
     await _cleanup();
   }
 
@@ -729,52 +732,53 @@ class WebSocketService {
   Future<void> _startPollingFallback(String? channelName) async {
     try {
       log('WebSocketService: Starting polling fallback for channel: $channelName');
-      
+
       _usePollingFallback = true;
       _stopPollingTimer();
-      
+
       // Poll every 3 seconds for new messages
       _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) async {
         await _pollForMessages();
       });
-      
+
       log('WebSocketService: Polling fallback started successfully');
     } catch (e) {
       log('WebSocketService: Error starting polling fallback: $e');
       rethrow;
     }
   }
-  
+
   /// Poll for new messages using HTTP requests
   Future<void> _pollForMessages() async {
     try {
       if (_tenantId == null || _sessionId == null) return;
-      
-      log('WebSocketService: Polling for messages for tenant: $_tenantId, session: $_sessionId, customer: ${_customerId ?? "anonymous"}');
-      
+
+      log(
+        'WebSocketService: Polling for messages for tenant: $_tenantId, session: $_sessionId, customer: ${_customerId ?? "anonymous"}',
+      );
+
       // TODO: Implement actual polling by calling your messages API
       // You would implement this to call your actual messages API:
       // 1. Get latest messages from your REST API
       // 2. Compare with last received message
       // 3. If new messages found, emit them via _messageController
-      
+
       // Example implementation:
       // final response = await yourApiService.getSessionMessages(
       //   tenantId: _tenantId!,
       //   sessionId: _sessionId!,
       //   since: lastPolledTimestamp,
       // );
-      // 
+      //
       // for (final messageData in response.newMessages) {
       //   final message = SessionMessage.fromJson(messageData);
       //   _messageController?.add(message);
       // }
-      
     } catch (e) {
       log('WebSocketService: Error polling for messages: $e');
     }
   }
-  
+
   /// Stop polling timer
   void _stopPollingTimer() {
     _pollingTimer?.cancel();
@@ -799,13 +803,13 @@ class WebSocketService {
       // Close all stream controllers
       await _messageController?.close();
       _messageController = null;
-      
+
       await _unreadSessionsCountController?.close();
       _unreadSessionsCountController = null;
-      
+
       await _sessionStatsController?.close();
       _sessionStatsController = null;
-      
+
       await _ratingRequestController?.close();
       _ratingRequestController = null;
 

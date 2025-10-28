@@ -18,18 +18,20 @@ class SupportRepo {
         smPrint('Fetch Tenant Response: Success - Tenant ID: ${tenantResponse.tenant.tenantId}');
         return Success(tenantResponse);
       } else {
-        smPrint('Fetch Tenant Error: ${response.statusCode}');
-        // Return dummy tenant for error cases
-        final dummyTenant = TenantResponse(tenant: TenantModel.dummy());
-        smPrint('Using dummy tenant data');
-        return Success(dummyTenant);
+        smPrint('Fetch Tenant Error: ${response.statusCode} - ${response.data}');
+        // // Return dummy tenant for error cases
+        // final dummyTenant = TenantResponse(tenant: TenantModel.dummy());
+        // smPrint('Using dummy tenant data');
+        // return Success(dummyTenant);
+        return Error(ErrorHandler.handle(response));
       }
     } catch (e) {
       smPrint('Fetch Tenant Error: $e');
-      // Return dummy tenant for error cases
-      final dummyTenant = TenantResponse(tenant: TenantModel.dummy());
-      smPrint('Using dummy tenant data due to exception');
-      return Success(dummyTenant);
+      // // Return dummy tenant for error cases
+      // final dummyTenant = TenantResponse(tenant: TenantModel.dummy());
+      // smPrint('Using dummy tenant data due to exception');
+      // return Success(dummyTenant);
+      return Error(ErrorHandler.handle(e));
     }
   }
 

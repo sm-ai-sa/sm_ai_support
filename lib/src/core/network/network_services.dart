@@ -3,13 +3,14 @@ import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/network/api.dart';
 import 'package:sm_ai_support/src/core/network/dio_factory.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 NetworkServices get networkServices => sl<NetworkServices>();
 
 class NetworkServices {
   // Use getter instead of final field to ensure fresh Dio instance
   Dio get dio {
-    final dioInstance = DioFactory.getDio();
+    final dioInstance = DioFactory.ensureDioInstance();
     return dioInstance;
   }
 
@@ -17,7 +18,15 @@ class NetworkServices {
 
   /// Get tenant information by ID
   Future<Response> getTenant({required String tenantId}) async {
-    return await dio.get(Apis.getTenant, queryParameters: {'id': tenantId});
+    smPrint('🌐 Making tenant API request to: ${Apis.getTenant}?id=$tenantId');
+    try {
+      final response = await dio.get(Apis.getTenant, queryParameters: {'id': tenantId});
+      smPrint('🌐 Tenant API response: ${response.statusCode}');
+      return response;
+    } catch (e) {
+      smPrint('🌐 Tenant API error: $e');
+      rethrow;
+    }
   }
 
   /// Get categories for support

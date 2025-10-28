@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 
-
 class SessionModel extends Equatable {
   final String createdAt;
   final String updatedAt;

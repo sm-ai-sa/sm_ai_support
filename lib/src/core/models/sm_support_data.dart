@@ -18,6 +18,12 @@ class SMSupportData extends Equatable {
   ///* Secret key for HMAC request signing (stored securely)
   final String secretKey;
 
+  ///* Base URL for REST API endpoints
+  final String baseUrl;
+
+  ///* Base URL for WebSocket connections
+  final String socketBaseUrl;
+
   ///* Data constructor for `SMSupportData` with required parameters only
   const SMSupportData({
     required this.appName,
@@ -25,8 +31,10 @@ class SMSupportData extends Equatable {
     required this.tenantId,
     required this.apiKey,
     required this.secretKey,
+    required this.baseUrl,
+    required this.socketBaseUrl,
   });
 
   @override
-  List<Object?> get props => [appName, locale, tenantId, apiKey, secretKey];
+  List<Object?> get props => [appName, locale, tenantId, apiKey, secretKey, baseUrl, socketBaseUrl];
 }
