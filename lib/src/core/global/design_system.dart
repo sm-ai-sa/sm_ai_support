@@ -81,6 +81,7 @@ class DesignSystem {
     BoxFit? fit,
     bool isFliped = false,
     double borderRadius = 0,
+    String? path, // Custom path for icon subdirectories
   }) {
     return InkWell(
       onTap: onTap,
@@ -92,7 +93,7 @@ class DesignSystem {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(borderRadius: borderRadius.br),
           child: SvgPicture.asset(
-            '${SMAssetsPath.icons}/$iconName.svg',
+            path != null ? '$path$iconName.svg' : '${SMAssetsPath.icons}/$iconName.svg',
             matchTextDirection: isDirectional,
             package: isExternalSvg ? null : SMAssetsPath.packageName,
             colorFilter: color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,

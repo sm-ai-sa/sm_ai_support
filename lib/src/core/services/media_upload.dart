@@ -95,7 +95,7 @@ class MediaUpload {
   }
 
   /// Validates file size based on upload category
-  /// Images: 1 MB limit, Audio: 10 MB limit
+  /// Images: 1 MB limit, Audio: 10 MB limit, Video: 50 MB limit, Files: 10 MB limit
   static Future<bool> _validateFileSize(File file, FileUploadCategory category) async {
     try {
       final fileSizeInBytes = await file.length();
@@ -108,6 +108,10 @@ class MediaUpload {
           return fileSizeInMB <= 1.0; // 1 MB limit for images
         case FileUploadCategory.sessionAudio:
           return fileSizeInMB <= 10.0; // 10 MB limit for audio
+        case FileUploadCategory.sessionVideo:
+          return fileSizeInMB <= 50.0; // 50 MB limit for videos
+        case FileUploadCategory.sessionFile:
+          return fileSizeInMB <= 10.0; // 10 MB limit for files/documents
         case FileUploadCategory.profilePicture:
           return fileSizeInMB <= 1.0; // 1 MB limit for profile picture
       }

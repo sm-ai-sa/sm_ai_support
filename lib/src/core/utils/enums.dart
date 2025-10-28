@@ -184,34 +184,46 @@ enum SessionMessageContentType {
   text,
   audio,
   image,
+  video,
+  file,
   assignment,
   closeSession,
   reopenSession,
+  closeSessionBySystem,
   authorized,
   unauthorized,
-  needAuth;
+  needAuth,
+  unsupportedMedia;
 
   bool get isText => this == SessionMessageContentType.text;
   bool get isAudio => this == SessionMessageContentType.audio;
   bool get isImage => this == SessionMessageContentType.image;
+  bool get isVideo => this == SessionMessageContentType.video;
+  bool get isFile => this == SessionMessageContentType.file;
   bool get isAssignment => this == SessionMessageContentType.assignment;
   bool get isCloseSession => this == SessionMessageContentType.closeSession;
   bool get isReopenSession => this == SessionMessageContentType.reopenSession;
+  bool get isCloseSessionBySystem => this == SessionMessageContentType.closeSessionBySystem;
   bool get isAuthorized => this == SessionMessageContentType.authorized;
   bool get isUnauthorized => this == SessionMessageContentType.unauthorized;
   bool get isNeedAuth => this == SessionMessageContentType.needAuth;
+  bool get isUnsupportedMedia => this == SessionMessageContentType.unsupportedMedia;
 
   static SessionMessageContentType fromString(String contentType) {
     return switch (contentType.toUpperCase()) {
       'TEXT' => SessionMessageContentType.text,
       'AUDIO' => SessionMessageContentType.audio,
       'IMAGE' => SessionMessageContentType.image,
+      'VIDEO' => SessionMessageContentType.video,
+      'FILE' => SessionMessageContentType.file,
       'ASSIGNMENT' => SessionMessageContentType.assignment,
       'CLOSE_SESSION' => SessionMessageContentType.closeSession,
       'REOPEN_SESSION' => SessionMessageContentType.reopenSession,
+      'CLOSE_SESSION_BY_SYSTEM' => SessionMessageContentType.closeSessionBySystem,
       'AUTHORIZED' => SessionMessageContentType.authorized,
       'UNAUTHORIZED' => SessionMessageContentType.unauthorized,
       'NEED_AUTH' => SessionMessageContentType.needAuth,
+      'UNSUPPORTED_MEDIA' => SessionMessageContentType.unsupportedMedia,
       _ => SessionMessageContentType.text,
     };
   }

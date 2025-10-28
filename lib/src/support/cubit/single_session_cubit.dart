@@ -14,6 +14,13 @@ import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
 
+/// Media type enum for file picker dialog
+enum MediaFileType {
+  video,
+  audio,
+  document,
+}
+
 class SingleSessionCubit extends Cubit<SingleSessionState> {
   StreamSubscription<SessionMessage>? _messageStreamSubscription;
   StreamSubscription<bool>? _ratingRequestSubscription;
@@ -527,21 +534,27 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   //! Media Upload Methods -----------------------------------
 
   /// Pick Media From Gallery and upload
+  /// Automatically detects file type and category from extension
   Future<String?> pickAndUploadMedia(
     BuildContext context, {
     bool isFile = false,
-    FileUploadCategory category = FileUploadCategory.messageImage,
   }) async {
     try {
-      final media = isFile
-          ? await PickerHelper.pickFile()
-          : await PickerHelper.pickMediaWithValidation(context, category: category);
-      if (media == null) return null;
+      final result = isFile
+          ? await PickerHelper.pickFile(context)
+          : await PickerHelper.pickMediaWithValidation(context);
+      
+      if (result == null) return null;
 
       emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
 
       //* Upload file to storage provider using new API
-      final String? fileUrl = await MediaUpload.uploadFile(file: media, sessionId: state.sessionId, category: category);
+      // Category is automatically determined from file extension
+      final String? fileUrl = await MediaUpload.uploadFile(
+        file: result.file, 
+        sessionId: state.sessionId, 
+        category: result.category,
+      );
 
       if (fileUrl != null) {
         emit(state.copyWith(uploadFileStatus: BaseStatus.success));
@@ -565,16 +578,16 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   /// Pick Image From camera and upload
   Future<String?> pickAndUploadCameraImage(BuildContext context) async {
     try {
-      final media = await PickerHelper.pickImageFromCamera(context);
-      if (media == null) return null;
+      final result = await PickerHelper.pickImageFromCameraWithCategory(context);
+      if (result == null) return null;
 
       emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
 
       //* Upload file to storage provider using new API
       final String? fileUrl = await MediaUpload.uploadFile(
-        file: media,
+        file: result.file,
         sessionId: state.sessionId,
-        category: FileUploadCategory.messageImage,
+        category: result.category,
       );
 
       if (fileUrl != null) {
@@ -602,16 +615,22 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     String contentType = 'IMAGE';
     if (Utils.isImageUrl(fileUrl)) {
       contentType = 'IMAGE';
-    } else if (Utils.isFileUrl(fileUrl)) {
-      contentType = 'DOCUMENT';
     } else if (Utils.isVideoUrl(fileUrl)) {
       contentType = 'VIDEO';
+    } else if (fileUrl.endsWith('.mp3') || fileUrl.endsWith('.wav') || fileUrl.endsWith('.m4a')) {
+      contentType = 'AUDIO';
+    } else if (Utils.isFileUrl(fileUrl)) {
+      contentType = 'FILE';
     }
     // extract file name
     final fileName = ImageUrlResolver.extractFileName(fileUrl);
 
     // Send the media message
-    await sendMessage(message: fileName, contentType: contentType);
+    // TODO: Add fileSize metadata support when sendMessage accepts it
+    await sendMessage(
+      message: fileName, 
+      contentType: contentType,
+    );
   }
 
   /// Check if currently uploading a file

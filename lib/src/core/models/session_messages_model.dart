@@ -45,6 +45,8 @@ class SessionMessage extends Equatable {
   final SessionMessageReply? reply;
   final DateTime createdAt;
   final dynamic admin; // Can be null or admin object
+  final Map<String, dynamic>? metadata; // For file size and other metadata
+  final bool isOptimistic; // For optimistic UI updates
 
   const SessionMessage({
     required this.id,
@@ -57,6 +59,8 @@ class SessionMessage extends Equatable {
     this.reply,
     required this.createdAt,
     this.admin,
+    this.metadata,
+    this.isOptimistic = false,
   });
 
   factory SessionMessage.fromJson(Map<String, dynamic> json) {
@@ -73,6 +77,8 @@ class SessionMessage extends Equatable {
           : null,
       createdAt: DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now(),
       admin: json['admin'],
+      metadata: json['metadata'] as Map<String, dynamic>?,
+      isOptimistic: json['_optimistic'] as bool? ?? false,
     );
   }
 
@@ -88,8 +94,13 @@ class SessionMessage extends Equatable {
       'reply': reply?.toJson(),
       'createdAt': createdAt,
       'admin': admin,
+      'metadata': metadata,
+      '_optimistic': isOptimistic,
     };
   }
+
+  /// Get file size from metadata (in bytes)
+  int? get fileSize => metadata?['fileSize'] as int?;
 
   @override
   List<Object?> get props => [
@@ -103,6 +114,8 @@ class SessionMessage extends Equatable {
         reply,
         createdAt,
         admin,
+        metadata,
+        isOptimistic,
       ];
 }
 

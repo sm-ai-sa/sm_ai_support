@@ -8,7 +8,8 @@ class SMText {
 
   static String get writeYourMessageHere => isEnglish ? "Write your message here ..." : "اكتب رسالتك هنا...";
 
-  static String get attachFromLibrary => isEnglish ? "Attach from library" : "صورة من الملفات";
+  static String get attachFromLibrary => isEnglish ? "Attach from library" : "ارفاق من الملفات";
+  static String get attachFromGallery => isEnglish ? "Attach from gallery" : "ارفاق من المعرض";
 
   static String get attachFile => isEnglish ? "Attach File" : "إرفاق ملف";
 
@@ -166,6 +167,8 @@ class SMText {
 
   static String get reopenSession => isEnglish ? "Session reopened" : "تم إعادة فتح الجلسة";
 
+  static String get sessionClosedBySystem => isEnglish ? "Session closed by system" : "تم إغلاق الجلسة بواسطة النظام";
+
   static String get hour => isEnglish ? "hr" : "ساعة";
 
   static String get minute => isEnglish ? "min" : "دقيقة";
@@ -177,4 +180,18 @@ class SMText {
   static String get year => isEnglish ? "y" : "سنة";
 
   static String get s => isEnglish ? "s" : "s";
+
+  // Media message strings
+  static String get video => isEnglish ? "Video" : "فيديو";
+  static String get audioMessage => isEnglish ? "Audio Message" : "رسالة صوتية";
+  static String get uploading => isEnglish ? "Uploading..." : "جاري الرفع...";
+  static String get tapToPlay => isEnglish ? "Tap to play" : "اضغط للتشغيل";
+  static String get unsupportedAttachment => isEnglish ? "Unsupported attachment" : "مرفق غير مدعوم";
+
+  // Video player strings
+  static String get videoPlayer => isEnglish ? "Video Player" : "مشغل الفيديو";
+  static String get loadingVideo => isEnglish ? "Loading video..." : "جاري تحميل الفيديو...";
+  static String get failedToLoadVideo => isEnglish ? "Failed to load video" : "فشل تحميل الفيديو";
+  static String get retry => isEnglish ? "Retry" : "إعادة المحاولة";
+  static String get videoPlayerNotAvailable => isEnglish ? "Video player not available" : "مشغل الفيديو غير متاح";
 }
