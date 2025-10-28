@@ -6,7 +6,6 @@ import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.da
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
-import 'package:sm_ai_support/src/core/utils/dummy_messages.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
@@ -25,13 +24,8 @@ class ChatPage extends StatefulWidget {
   final MySessionModel? mySession;
   final CategoryModel? category;
 
-  const ChatPage({
-    super.key,
-    this.session,
-    this.mySession,
-    this.category,
-    this.initTicket = false,
-  }) : assert(
+  const ChatPage({super.key, this.session, this.mySession, this.category, this.initTicket = false})
+    : assert(
         session != null || mySession != null || (category != null && initTicket),
         'Either session or mySession must be provided, or category with initTicket for new sessions',
       );
@@ -74,7 +68,7 @@ class _ChatPageState extends State<ChatPage> {
     if (widget.isNewSession && widget.category != null) {
       _sessionCubit.setCategoryForNewSession(widget.category!);
     }
-    }
+  }
 
   /// Setup post-frame callback for initial loading
   void _setupPostFrameCallback() {
@@ -192,8 +186,7 @@ class _ChatPageState extends State<ChatPage> {
     return MultiBlocProvider(
       providers: [BlocProvider.value(value: _sessionCubit)],
       child: BlocListener<SingleSessionCubit, SingleSessionState>(
-        listenWhen: (previous, current) =>
-            previous.isRatingRequiredFromSocket != current.isRatingRequiredFromSocket,
+        listenWhen: (previous, current) => previous.isRatingRequiredFromSocket != current.isRatingRequiredFromSocket,
         listener: _handleRatingRequest,
         child: Scaffold(
           backgroundColor: ColorsPallets.white,
@@ -215,41 +208,37 @@ class _ChatPageState extends State<ChatPage> {
 
   /// Handle rating request from WebSocket
   void _handleRatingRequest(BuildContext context, SingleSessionState state) {
-          if (state.isRatingRequiredFromSocket) {
-            smPrint('🌟 Rating request received via WebSocket - showing rating bottom sheet');
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              primaryBottomSheet(
-                showLeadingContainer: true,
-                child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
-              );
-            });
-          }
+    if (state.isRatingRequiredFromSocket) {
+      smPrint('🌟 Rating request received via WebSocket - showing rating bottom sheet');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        primaryBottomSheet(
+          showLeadingContainer: true,
+          child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+        );
+      });
+    }
   }
 
   /// Build category header
   Widget _buildCategoryHeader() {
     return Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.rh, horizontal: 22.rw),
-                child: BlocBuilder<SMSupportCubit, SMSupportState>(
-                  builder: (context, state) {
-                    return Row(
-                      children: [
-              DesignSystem.categorySvg(
-                widget.sessionCategory?.categoryIcon ?? '',
-                width: 24.rSp,
-                height: 24.rSp,
-              ),
-                        SizedBox(width: 14.rw),
-                        Expanded(
-                          child: Text(
-                            widget.sessionCategory?.categoryName ?? '--',
-                            style: TextStyles.s_13_400.copyWith(color: ColorsPallets.normal500),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+      padding: EdgeInsets.symmetric(vertical: 8.rh, horizontal: 22.rw),
+      child: BlocBuilder<SMSupportCubit, SMSupportState>(
+        builder: (context, state) {
+          return Row(
+            children: [
+              DesignSystem.categorySvg(widget.sessionCategory?.categoryIcon ?? '', width: 24.rSp, height: 24.rSp),
+              SizedBox(width: 14.rw),
+              Expanded(
+                child: Text(
+                  widget.sessionCategory?.categoryName ?? '--',
+                  style: TextStyles.s_13_400.copyWith(color: ColorsPallets.normal500),
                 ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -273,11 +262,14 @@ class _ChatPageState extends State<ChatPage> {
         }
 
         // Combine dummy messages with real messages for testing
-        final dummyMessages = DummyMessages.getAllDummyMessages();
+        // final dummyMessages = DummyMessages.getAllDummyMessages();
+        final dummyMessages = [];
         final realMessages = sessionState.sessionMessages;
         final messagesList = [...dummyMessages, ...realMessages];
 
-        smPrint('📋 Total messages (${messagesList.length}): ${dummyMessages.length} dummy + ${realMessages.length} real');
+        smPrint(
+          '📋 Total messages (${messagesList.length}): ${dummyMessages.length} dummy + ${realMessages.length} real',
+        );
 
         return Expanded(
           child: ListView(
@@ -287,14 +279,11 @@ class _ChatPageState extends State<ChatPage> {
             children: [
               // Show dummy messages info banner
               if (dummyMessages.isNotEmpty) _buildDummyMessagesBanner(dummyMessages.length),
-              
+
               if (messagesList.isEmpty) _buildEmptyState(),
               SizedBox(height: 16.rh),
               ...messagesList.map((message) {
-                return ChatMessageItem(
-                  message: message,
-                  sessionId: widget.sessionId,
-                );
+                return ChatMessageItem(message: message, sessionId: widget.sessionId);
               }),
             ],
           ),
@@ -333,10 +322,7 @@ class _ChatPageState extends State<ChatPage> {
     return BlocBuilder<SMSupportCubit, SMSupportState>(
       builder: (context, state) {
         final tenant = state.currentTenant;
-        return ChatEmptyState(
-          logoFileName: tenant?.logo,
-          tenantId: tenant?.tenantId ?? '',
-        );
+        return ChatEmptyState(logoFileName: tenant?.logo, tenantId: tenant?.tenantId ?? '');
       },
     );
   }
@@ -344,57 +330,55 @@ class _ChatPageState extends State<ChatPage> {
   /// Build message input area
   Widget _buildMessageInput() {
     return BlocBuilder<SMSupportCubit, SMSupportState>(
-                builder: (context, state) {
-                  return BlocBuilder<SingleSessionCubit, SingleSessionState>(
-                    builder: (context, sessionState) {
-                      final currentSession = _getCurrentSession(state);
-                      final sessionStatus = currentSession?.toSessionModel().status ?? widget.currentSession?.status;
+      builder: (context, state) {
+        return BlocBuilder<SingleSessionCubit, SingleSessionState>(
+          builder: (context, sessionState) {
+            final currentSession = _getCurrentSession(state);
+            final sessionStatus = currentSession?.toSessionModel().status ?? widget.currentSession?.status;
 
-                      final lastMessage = sessionState.sessionMessages.isNotEmpty
-                          ? sessionState.sessionMessages.last
-                          : null;
+            final lastMessage = sessionState.sessionMessages.isNotEmpty ? sessionState.sessionMessages.last : null;
 
-                      final shouldShowRating = _shouldShowRating();
+            final shouldShowRating = _shouldShowRating();
 
-                      return Column(
-                        children: [
+            return Column(
+              children: [
                 // Message input
-                          Visibility(
-                  visible: (widget.initTicket || sessionStatus?.isActive == true) &&
-                                !shouldShowRating &&
-                                !(lastMessage?.contentType.isCloseSession ?? false),
-                            child: MessageInput(
-                              sessionId: widget.sessionId,
-                              ticketId: ticketId,
-                              initTicket: widget.initTicket,
+                Visibility(
+                  visible:
+                      (widget.initTicket || sessionStatus?.isActive == true) &&
+                      !shouldShowRating &&
+                      !(lastMessage?.contentType.isCloseSession ?? false),
+                  child: MessageInput(
+                    sessionId: widget.sessionId,
+                    ticketId: ticketId,
+                    initTicket: widget.initTicket,
                     category: widget.category,
                     onSend: _onMessageSent,
                     onSessionCreated: _onSessionCreated,
                   ),
                 ),
-                
+
                 // Rating button
-                          Visibility(
-                            visible: shouldShowRating,
-                            child: InkWell(
-                              onTap: () {
-                                primaryBottomSheet(
-                                  showLeadingContainer: true,
-                                  child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
-                                );
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.only(bottom: 30, top: 20),
-                                child: Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
-                              ),
-                            ),
-                          ),
-                        ],
+                Visibility(
+                  visible: shouldShowRating,
+                  child: InkWell(
+                    onTap: () {
+                      primaryBottomSheet(
+                        showLeadingContainer: true,
+                        child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
                       );
                     },
-                  );
-                },
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 30, top: 20),
+                      child: Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
-
