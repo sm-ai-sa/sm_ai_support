@@ -41,6 +41,8 @@ SMSupport(
     tenantId: 'your_tenant_id',
     apiKey: 'your_api_secret',
     secretKey: 'your_secret_key', // Enable HMAC signing
+    baseUrl: 'https://your-api-server.com/api/core',
+    socketBaseUrl: 'wss://your-api-server.com/ws',
   ),
 );
 ```
@@ -262,13 +264,15 @@ Enable debug logging to troubleshoot HMAC issues:
 To disable HMAC signing:
 
 ```dart
-// Simply omit secretKey or set it to null
+// Set secretKey to empty string to disable HMAC
 SMSupportData(
   appName: 'Your App',
   locale: SMSupportLocale.en,
   tenantId: 'your_tenant_id',
   apiKey: 'your_api_secret',
-  // secretKey: null, // HMAC disabled
+  secretKey: '', // HMAC disabled
+  baseUrl: 'https://your-api-server.com/api/core',
+  socketBaseUrl: 'wss://your-api-server.com/ws',
 );
 ```
 
