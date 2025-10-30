@@ -682,7 +682,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- Built with ❤️ by the [Unicode Team](https://github.com/unicode-org)
+- Built with ❤️ by the [Unicode Team]
 - Powered by Flutter and Dart
 - Icons by [Material Design Icons](https://materialdesignicons.com/)
 
