@@ -44,7 +44,7 @@ class ImageMessageWidget extends StatelessWidget {
           height: 150.rh,
           fit: BoxFit.cover,
           borderRadius: BorderRadius.circular(8),
-          category: FileUploadCategory.messageImage,
+          category: FileUploadCategory.sessionMedia,
         ),
       ),
     );
@@ -60,7 +60,7 @@ class ImageMessageWidget extends StatelessWidget {
       imageUrl = await ImageUrlResolver.resolveImageUrl(
         fileName: fileName,
         sessionId: sessionId,
-        category: FileUploadCategory.messageImage,
+        category: FileUploadCategory.sessionMedia,
       );
     }
 

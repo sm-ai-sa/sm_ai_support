@@ -70,16 +70,17 @@ class _MessageInputState extends State<MessageInput> {
               __repliedOn(state),
               Row(
                 children: [
-                  InkWell(
-                    onTap: state.uploadFileStatus.isLoading
-                        ? null
-                        : () {
-                            __pickerBottomSheet(context);
-                          },
-                    child: state.uploadFileStatus.isLoading
-                        ? DesignSystem.loadingIndicator()
-                        : DesignSystem.svgIcon('attach', size: 22.rSp),
-                  ),
+                  if (AuthManager.isAuthenticated)
+                    InkWell(
+                      onTap: state.uploadFileStatus.isLoading
+                          ? null
+                          : () {
+                              __pickerBottomSheet(context);
+                            },
+                      child: state.uploadFileStatus.isLoading
+                          ? DesignSystem.loadingIndicator()
+                          : DesignSystem.svgIcon('attach', size: 22.rSp),
+                    ),
                   // TODO: Implement file picker functionality
                   // if (state.pickedFile != null) ...[
                   //   SizedBox(width: 8.rw),

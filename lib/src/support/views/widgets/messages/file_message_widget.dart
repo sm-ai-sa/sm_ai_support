@@ -108,7 +108,7 @@ class FileMessageWidget extends StatelessWidget {
         fileUrl = await ImageUrlResolver.resolveMediaUrl(
           fileName: fileName,
           sessionId: sessionId,
-          category: FileUploadCategory.sessionFile,
+          category: FileUploadCategory.sessionMedia,
         );
       }
 

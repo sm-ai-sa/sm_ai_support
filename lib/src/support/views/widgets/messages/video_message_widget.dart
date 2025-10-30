@@ -57,7 +57,7 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
         videoUrl = await ImageUrlResolver.resolveMediaUrl(
           fileName: fileName,
           sessionId: widget.sessionId,
-          category: FileUploadCategory.sessionVideo,
+          category: FileUploadCategory.sessionMedia,
         );
       }
 
@@ -228,7 +228,7 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
       videoUrl = await ImageUrlResolver.resolveMediaUrl(
         fileName: fileName,
         sessionId: widget.sessionId,
-        category: FileUploadCategory.sessionVideo,
+        category: FileUploadCategory.sessionMedia,
       );
     }
 

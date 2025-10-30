@@ -7,11 +7,7 @@ class SessionMessageReply extends Equatable {
   final String messageId;
   final String contentType;
 
-  const SessionMessageReply({
-    required this.message,
-    required this.messageId,
-    required this.contentType,
-  });
+  const SessionMessageReply({required this.message, required this.messageId, required this.contentType});
 
   factory SessionMessageReply.fromJson(Map<String, dynamic> json) {
     return SessionMessageReply(
@@ -22,11 +18,7 @@ class SessionMessageReply extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'message': message,
-      'messageId': messageId,
-      'contentType': contentType,
-    };
+    return {'message': message, 'messageId': messageId, 'contentType': contentType};
   }
 
   @override
@@ -72,9 +64,7 @@ class SessionMessage extends Equatable {
       isRead: json['isRead'] as bool,
       isDelivered: json['isDelivered'] as bool,
       isFailed: json['isFailed'] as bool,
-      reply: json['reply'] != null 
-          ? SessionMessageReply.fromJson(json['reply'] as Map<String, dynamic>)
-          : null,
+      reply: json['reply'] != null ? SessionMessageReply.fromJson(json['reply'] as Map<String, dynamic>) : null,
       createdAt: DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now(),
       admin: json['admin'],
       metadata: json['metadata'] as Map<String, dynamic>?,
@@ -104,19 +94,19 @@ class SessionMessage extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        content,
-        contentType,
-        senderType,
-        isRead,
-        isDelivered,
-        isFailed,
-        reply,
-        createdAt,
-        admin,
-        metadata,
-        isOptimistic,
-      ];
+    id,
+    content,
+    contentType,
+    senderType,
+    isRead,
+    isDelivered,
+    isFailed,
+    reply,
+    createdAt,
+    admin,
+    metadata,
+    isOptimistic,
+  ];
 }
 
 /// Model for a session messages document containing all messages for a session
@@ -125,38 +115,22 @@ class SessionMessagesDoc extends Equatable {
   final List<SessionMessage> messages;
   final bool isRatingRequired;
 
-  const SessionMessagesDoc({
-    required this.id,
-    required this.messages,
-    required this.isRatingRequired,
-  });
+  const SessionMessagesDoc({required this.id, required this.messages, required this.isRatingRequired});
 
   factory SessionMessagesDoc.fromJson(Map<String, dynamic> json) {
     return SessionMessagesDoc(
       id: json['id'] as String,
-      messages: (json['messages'] as List)
-          .map((e) => SessionMessage.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      messages: (json['messages'] as List).map((e) => SessionMessage.fromJson(e as Map<String, dynamic>)).toList(),
       isRatingRequired: (json['isRatingRequired'] ?? false) as bool,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'messages': messages.map((e) => e.toJson()).toList(),
-      'isRatingRequired': isRatingRequired,
-    };
+    return {'id': id, 'messages': messages.map((e) => e.toJson()).toList(), 'isRatingRequired': isRatingRequired};
   }
 
-  copyWith({
-    bool? isRatingRequired,
-  }) {
-    return SessionMessagesDoc(
-      id: id,
-      messages: messages,
-      isRatingRequired: isRatingRequired ?? this.isRatingRequired,
-    );
+  copyWith({bool? isRatingRequired}) {
+    return SessionMessagesDoc(id: id, messages: messages, isRatingRequired: isRatingRequired ?? this.isRatingRequired);
   }
 
   @override
@@ -165,28 +139,22 @@ class SessionMessagesDoc extends Equatable {
 
 /// Response wrapper for session messages API
 class SessionMessagesResponse extends Equatable {
-  final List<SessionMessagesDoc> result;
+  final SessionMessagesDoc result;
   final int statusCode;
 
-  const SessionMessagesResponse({
-    required this.result,
-    required this.statusCode,
-  });
+  const SessionMessagesResponse({required this.result, required this.statusCode});
+
 
   factory SessionMessagesResponse.fromJson(Map<String, dynamic> json) {
     return SessionMessagesResponse(
-      result: (json['result'] as List)
-          .map((e) => SessionMessagesDoc.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      result: SessionMessagesDoc.fromJson(json['result'] as Map<String, dynamic>),
+
       statusCode: json['statusCode'] as int,
     );
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'result': result.map((e) => e.toJson()).toList(),
-      'statusCode': statusCode,
-    };
+    return {'result': result.toJson(), 'statusCode': statusCode};
   }
 
   @override
@@ -208,16 +176,12 @@ class CustomerSendMessageRequest extends Equatable {
   });
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> json = {
-      'sessionId': sessionId,
-      'message': message,
-      'contentType': contentType,
-    };
-    
+    final Map<String, dynamic> json = {'sessionId': sessionId, 'message': message, 'contentType': contentType};
+
     if (reply != null) {
       json['reply'] = reply!.toJson();
     }
-    
+
     return json;
   }
 
@@ -230,10 +194,7 @@ class CustomerSendMessageResponse extends Equatable {
   final SessionMessage result;
   final int statusCode;
 
-  const CustomerSendMessageResponse({
-    required this.result,
-    required this.statusCode,
-  });
+  const CustomerSendMessageResponse({required this.result, required this.statusCode});
 
   factory CustomerSendMessageResponse.fromJson(Map<String, dynamic> json) {
     return CustomerSendMessageResponse(
@@ -243,10 +204,7 @@ class CustomerSendMessageResponse extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'result': result.toJson(),
-      'statusCode': statusCode,
-    };
+    return {'result': result.toJson(), 'statusCode': statusCode};
   }
 
   @override

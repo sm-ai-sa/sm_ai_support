@@ -28,7 +28,7 @@ class SingleSessionState extends Equatable {
   final List<SessionMessage> sessionMessages;
   
   /// Raw session message documents from API
-  final List<SessionMessagesDoc> sessionMessageDocs;
+  final SessionMessagesDoc sessionMessageDoc;
   
   /// Category for new sessions that haven't been created yet
   final CategoryModel? categoryForNewSession;
@@ -45,7 +45,7 @@ class SingleSessionState extends Equatable {
     this.createSessionStatus = BaseStatus.initial,
     this.repliedOn,
     this.sessionMessages = const [],
-    this.sessionMessageDocs = const [],
+    this.sessionMessageDoc = const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false),
     this.categoryForNewSession,
     this.isRatingRequiredFromSocket = false,
   });
@@ -60,7 +60,7 @@ class SingleSessionState extends Equatable {
     String? repliedOn,
     bool? isResetRepliedOn,
     List<SessionMessage>? sessionMessages,
-    List<SessionMessagesDoc>? sessionMessageDocs,
+    SessionMessagesDoc? sessionMessageDoc,
     CategoryModel? categoryForNewSession,
     bool? isResetCategory,
     bool? isRatingRequiredFromSocket,
@@ -74,7 +74,7 @@ class SingleSessionState extends Equatable {
       createSessionStatus: createSessionStatus ?? this.createSessionStatus,
       repliedOn: repliedOn ?? (isResetRepliedOn == true ? null : this.repliedOn),
       sessionMessages: sessionMessages ?? this.sessionMessages,
-      sessionMessageDocs: sessionMessageDocs ?? this.sessionMessageDocs,
+      sessionMessageDoc: sessionMessageDoc ?? this.sessionMessageDoc,
       categoryForNewSession: categoryForNewSession ?? (isResetCategory == true ? null : this.categoryForNewSession),
       isRatingRequiredFromSocket: isRatingRequiredFromSocket ?? this.isRatingRequiredFromSocket,
     );
@@ -90,7 +90,7 @@ class SingleSessionState extends Equatable {
         createSessionStatus,
         repliedOn,
         sessionMessages,
-        sessionMessageDocs,
+        sessionMessageDoc,
         categoryForNewSession,
         isRatingRequiredFromSocket,
       ];
@@ -159,7 +159,7 @@ class SingleSessionState extends Equatable {
   
   /// Check if rating is required based on session message docs or WebSocket response
   bool get isRatingRequired {
-    smPrint('isRatingRequired: ${sessionMessageDocs.any((doc) => doc.isRatingRequired)} || $isRatingRequiredFromSocket');
-    return sessionMessageDocs.any((doc) => doc.isRatingRequired) || isRatingRequiredFromSocket;
+    smPrint('isRatingRequired: ${sessionMessageDoc.isRatingRequired} || $isRatingRequiredFromSocket');
+    return sessionMessageDoc.isRatingRequired || isRatingRequiredFromSocket;
   }
 }

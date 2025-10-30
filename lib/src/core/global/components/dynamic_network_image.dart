@@ -26,7 +26,7 @@ class DynamicNetworkImage extends StatefulWidget {
     this.height,
     this.fit,
     this.borderRadius,
-    this.category = FileUploadCategory.messageImage,
+    this.category = FileUploadCategory.sessionMedia,
     this.placeholder,
     this.errorWidget,
   });

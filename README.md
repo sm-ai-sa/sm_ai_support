@@ -20,12 +20,16 @@
 ## ✨ Features
 
 ### 🎯 **Core Functionality**
-- 💬 **Real-time Chat** - WebSocket-powered instant messaging with typing indicators
+- 💬 **Real-time Chat** - WebSocket-powered instant messaging with delivery status and typing indicators
 - 🤖 **AI-Powered Support** - Intelligent responses and automated assistance
-- 📱 **Media Support** - Share images, files, documents with automatic compression
+- 📱 **Advanced Media Support** - Share images, videos, files, and documents
+  - Automatic image compression and optimization
+  - Chunked file upload for large files
+  - Support for multiple file types (PDF, DOC, DOCX, XLS, XLSX, images, videos)
+  - Upload progress tracking with cancellation support
 - 🌍 **Multi-language** - Built-in English and Arabic support with RTL layout
 - 👤 **Flexible Authentication** - Anonymous and authenticated user flows
-- 📊 **Session Management** - Organized conversation history with persistence
+- 📊 **Session Management** - Organized conversation history with persistence and search
 
 ### 🏢 **Enterprise Ready**
 - 🏗️ **Multi-tenant Architecture** - Perfect for SaaS applications
@@ -62,10 +66,32 @@ flutter pub get
 
 | Platform | Minimum Version |
 |----------|----------------|
-| **Flutter** | 3.8.1+ |
-| **Dart** | 3.0.0+ |
+| **Flutter** | 1.17.0+ |
+| **Dart** | 3.8.1+ |
 | **iOS** | 12.0+ |
 | **Android** | API 21+ (Android 5.0) |
+
+### Required Permissions
+
+**Android** (`android/app/src/main/AndroidManifest.xml`):
+```xml
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+```
+
+**iOS** (`ios/Runner/Info.plist`):
+```xml
+<key>NSCameraUsageDescription</key>
+<string>We need access to your camera to take photos for support</string>
+<key>NSPhotoLibraryUsageDescription</key>
+<string>We need access to your photo library to select images for support</string>
+<key>NSMicrophoneUsageDescription</key>
+<string>We need access to your microphone for audio messages</string>
+```
 
 ---
 
@@ -138,6 +164,8 @@ FloatingActionButton(
 | `tenantId` | `String` | ✅ | Your unique tenant identifier | - |
 | `apiKey` | `String` | ✅ | API key for authentication (stored securely) | - |
 | `secretKey` | `String` | ✅ | Secret key for HMAC request signing (stored securely) | - |
+| `baseUrl` | `String` | ✅ | Base URL for REST API endpoints (e.g., `https://api.example.com/api/core`) | - |
+| `socketBaseUrl` | `String` | ✅ | Base URL for WebSocket connections (e.g., `wss://api.example.com/ws`) | - |
 
 #### Available Locales
 
@@ -170,20 +198,43 @@ SMSupport(
 
 #### Security Features
 
-The package automatically handles secure storage of sensitive data:
+The package automatically handles secure storage of sensitive data and request signing:
 
 - **API Key**: Stored using `flutter_secure_storage` for secure authentication
-- **Secret Key**: Used for HMAC request signing to ensure request integrity
+- **Secret Key**: Used for HMAC-SHA256 request signing to ensure request integrity
+- **HMAC Signatures**: All API requests are automatically signed with HMAC-SHA256
 - **Automatic Cleanup**: Keys are cleared when the app is uninstalled
+- **Secure Storage**: Uses platform-specific secure storage (iOS Keychain, Android EncryptedSharedPreferences)
 
 ```dart
-// Access secure configuration (if needed)
+// Check if configuration is initialized
 final hasApiKey = await SMConfig.hasAPIKey();
 final hasSecretKey = await SMConfig.hasSecretKey();
 
-// Clear secure data (for logout/reset)
+// Get stored keys (if needed for debugging)
+final apiKey = await SMConfig.getAPIKey();
+final secretKey = await SMConfig.getSecretKey();
+
+// Clear individual keys
+await SMConfig.clearAPIKey();
+await SMConfig.clearSecretKey();
+
+// Clear all secure data (for logout/reset)
 await SMConfig.clearAllSecureData();
 ```
+
+**HMAC Request Signing:**
+
+All HTTP requests are automatically signed using HMAC-SHA256. The signature is computed from:
+- Request timestamp (Unix timestamp in seconds)
+- HTTP method (GET, POST, etc.)
+- Request path
+- Request body (for POST/PUT requests)
+
+The signature is sent in the `X-Signature` header, and the timestamp in the `X-Timestamp` header. This ensures:
+- Request authenticity
+- Protection against replay attacks
+- Request integrity verification
 
 ---
 
@@ -322,15 +373,24 @@ class ProductionSupportPage extends StatelessWidget {
         tenantId: 'prod_tenant_123',
         apiKey: const String.fromEnvironment('SM_SUPPORT_API_KEY'),
         secretKey: const String.fromEnvironment('SM_SUPPORT_SECRET_KEY'),
-        baseUrl: const String.fromEnvironment('SM_SUPPORT_BASE_URL', defaultValue: 'https://api.example.com/api/core'),
-        socketBaseUrl: const String.fromEnvironment('SM_SUPPORT_SOCKET_URL', defaultValue: 'wss://api.example.com/ws'),
+        baseUrl: const String.fromEnvironment(
+          'SM_SUPPORT_BASE_URL',
+          defaultValue: 'https://api.example.com/api/core',
+        ),
+        socketBaseUrl: const String.fromEnvironment(
+          'SM_SUPPORT_SOCKET_URL',
+          defaultValue: 'wss://api.example.com/ws',
+        ),
       ),
     );
   }
 }
 
-// Usage with environment variables
-// flutter run --dart-define=SM_SUPPORT_API_KEY=your_key --dart-define=SM_SUPPORT_SECRET_KEY=your_secret --dart-define=SM_SUPPORT_BASE_URL=https://api.example.com/api/core --dart-define=SM_SUPPORT_SOCKET_URL=wss://api.example.com/ws
+// Usage with environment variables:
+// flutter run --dart-define=SM_SUPPORT_API_KEY=your_key \
+//             --dart-define=SM_SUPPORT_SECRET_KEY=your_secret \
+//             --dart-define=SM_SUPPORT_BASE_URL=https://api.example.com/api/core \
+//             --dart-define=SM_SUPPORT_SOCKET_URL=wss://api.example.com/ws
 ```
 
 ---
@@ -343,18 +403,29 @@ class ProductionSupportPage extends StatelessWidget {
 sm_ai_support/
 ├── 📱 Core Components
 │   ├── 🎨 UI Widgets & Themes
-│   ├── 🌐 Network Layer (REST + WebSocket)
+│   ├── 🌐 Network Layer (Dio + Socket.IO)
 │   ├── 💾 Data Models & Storage
-│   └── 🔐 Security & Authentication
+│   ├── 🔐 Security & Authentication (HMAC + Secure Storage)
+│   └── 📤 Media Upload (Chunked & Streaming)
 ├── 🚀 Features
-│   ├── 💬 Real-time Chat
-│   ├── 📁 Media Management
+│   ├── 💬 Real-time Chat (WebSocket)
+│   ├── 📁 Media Management (Image, Video, File)
 │   ├── 📊 Session Handling
 │   └── 🏷️ Category System
 └── 🌍 Internationalization
     ├── 🇺🇸 English (LTR)
     └── 🇸🇦 Arabic (RTL)
 ```
+
+### Key Dependencies
+
+- **State Management**: `flutter_bloc` - BLoC pattern for reactive state management
+- **Networking**: `dio` - HTTP client with interceptors and request signing
+- **WebSocket**: `socket_io_client` - Real-time bidirectional communication
+- **Secure Storage**: `flutter_secure_storage` - Platform-specific encrypted storage
+- **Media Handling**: `image_picker`, `file_picker`, `cached_network_image`
+- **Video Playback**: `video_player`, `chewie` - Video player with controls
+- **Localization**: `flutter_localizations`, `intl` - Multi-language support
 
 ### State Management
 
@@ -366,10 +437,12 @@ The package uses **BLoC pattern** for reactive state management:
 
 ### Network Architecture
 
-- **REST API** - Configuration, authentication, file uploads
-- **WebSocket** - Real-time messaging and status updates
-- **Automatic Reconnection** - Handles network interruptions
-- **Offline Support** - Message queuing when disconnected
+- **REST API (Dio)** - Configuration, authentication, file uploads with HMAC signing
+- **WebSocket (Socket.IO)** - Real-time messaging, typing indicators, and status updates
+- **Automatic Reconnection** - Handles network interruptions gracefully
+- **Request Signing** - All requests are automatically signed with HMAC-SHA256
+- **Error Handling** - Comprehensive error handling with user-friendly messages
+- **Retry Logic** - Automatic retry for failed requests with exponential backoff
 
 ---
 
@@ -377,17 +450,32 @@ The package uses **BLoC pattern** for reactive state management:
 
 ### Security Features
 
-- 🔒 **HMAC Signatures** - Request authentication and integrity
-- 🔐 **Secure Storage** - Encrypted local data storage
+- 🔒 **HMAC-SHA256 Signatures** - Automatic request signing for authentication and integrity
+- 🔐 **Secure Storage** - Platform-specific encrypted storage (iOS Keychain, Android EncryptedSharedPreferences)
 - 🛡️ **Input Validation** - XSS and injection protection
-- 📱 **Certificate Pinning** - Network security hardening
+- 🔑 **API Key Management** - Secure credential storage and retrieval
+- ⏱️ **Replay Attack Prevention** - Timestamp-based request validation
+- 📱 **Transport Security** - HTTPS/WSS encrypted communications
+
+### Media Upload Features
+
+- 📤 **Chunked Upload** - Large files are automatically split into chunks for reliable upload
+- 📊 **Progress Tracking** - Real-time upload progress with percentage and cancel option
+- 🖼️ **Image Optimization** - Automatic compression and resizing for faster uploads
+- 📹 **Video Support** - Upload and playback of video files with custom player
+- 📄 **Document Support** - PDF, DOC, DOCX, XLS, XLSX file uploads
+- ⚡ **Upload Queue** - Multiple files can be queued and uploaded sequentially
+- 🔄 **Retry Logic** - Automatic retry on failed uploads with exponential backoff
+- ❌ **Cancellation** - Users can cancel ongoing uploads at any time
 
 ### Performance Optimizations
 
 - ⚡ **Lazy Loading** - On-demand resource loading
-- 🖼️ **Image Caching** - Efficient media management
-- 📦 **Code Splitting** - Minimal bundle size
-- 🔄 **Connection Pooling** - Optimized network usage
+- 🖼️ **Image Caching** - Efficient media management with `cached_network_image`
+- 📦 **Minimal Dependencies** - Optimized package size
+- 🔄 **Connection Pooling** - Optimized network usage with Dio
+- 📱 **Memory Management** - Efficient handling of large media files
+- ⚙️ **Background Processing** - Media compression and upload in isolates
 
 ### Monitoring & Analytics
 
@@ -463,7 +551,15 @@ Manages secure configuration and API keys.
 final hasApiKey = await SMConfig.hasAPIKey();
 final hasSecretKey = await SMConfig.hasSecretKey();
 
-// Clear secure data (for logout/reset)
+// Get stored keys (if needed)
+final apiKey = await SMConfig.getAPIKey();
+final secretKey = await SMConfig.getSecretKey();
+
+// Clear individual keys
+await SMConfig.clearAPIKey();
+await SMConfig.clearSecretKey();
+
+// Clear all secure data (for logout/reset)
 await SMConfig.clearAllSecureData();
 ```
 
@@ -505,13 +601,15 @@ flutter run
 
 **Problem**: Connection timeouts or SSL errors
 ```dart
-// Solution: Ensure proper API key configuration
+// Solution: Ensure proper configuration with all required parameters
 SMSupportData(
   appName: 'My App',
   locale: SMSupportLocale.en,
   tenantId: 'your_tenant_id',
-  apiKey: 'valid_api_key_here', // Ensure this is correct
-  secretKey: 'valid_secret_key', // Optional but recommended
+  apiKey: 'valid_api_key_here',        // Required
+  secretKey: 'valid_secret_key_here',   // Required
+  baseUrl: 'https://api.example.com/api/core',  // Required
+  socketBaseUrl: 'wss://api.example.com/ws',     // Required
 )
 ```
 
@@ -519,7 +617,7 @@ SMSupportData(
 
 **Problem**: Text not displaying in correct language
 ```dart
-// Solution: Ensure proper locale setup
+// Solution: Ensure proper locale setup in your main app
 MaterialApp(
   localizationsDelegates: [
     GlobalMaterialLocalizations.delegate,
@@ -534,12 +632,47 @@ MaterialApp(
 )
 ```
 
+#### Permission Issues
+
+**Problem**: Camera or file picker not working
+
+**Solution**: Ensure you've added the required permissions (see [Required Permissions](#required-permissions) section above)
+
+For runtime permissions:
+```dart
+// The package automatically handles permission requests
+// Just ensure the permissions are declared in your manifest files
+```
+
+**Problem**: Image picker crashes on Android 13+
+
+**Solution**: Add the new photo picker permissions:
+```xml
+<!-- Android 13+ -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+```
+
+#### Upload Issues
+
+**Problem**: File upload fails or times out
+
+**Solution**: 
+- Check your network connection
+- Verify your API key and secret key are correct
+- Ensure your server's upload size limits are sufficient
+- For large files, the package automatically uses chunked upload
+
 ### Getting Help
 
-- 📖 [Documentation](https://github.com/unicode-org/sm_ai_support/tree/main/docs)
+- 📖 [Full Documentation](https://github.com/unicode-org/sm_ai_support/tree/main/docs)
+  - [Integration Guide](https://github.com/unicode-org/sm_ai_support/blob/main/docs/INTEGRATION_GUIDE.md)
+  - [HMAC Signature Documentation](https://github.com/unicode-org/sm_ai_support/blob/main/docs/HMAC_SIGNATURE_DOCUMENTATION.md)
+  - [Media Upload Guide](https://github.com/unicode-org/sm_ai_support/blob/main/MEDIA_UPLOAD.md)
+  - [Support API Documentation](https://github.com/unicode-org/sm_ai_support/blob/main/docs/SUPPORT_API_DOCUMENTATION.md)
+  - [WebSocket Streaming](https://github.com/unicode-org/sm_ai_support/blob/main/docs/WEBSOCKET_STREAMING.md)
 - 🐛 [Issue Tracker](https://github.com/unicode-org/sm_ai_support/issues)
 - 💬 [Discussions](https://github.com/unicode-org/sm_ai_support/discussions)
-- 📧 [Support Email](mailto:support@unicode.org)
 
 ---
 

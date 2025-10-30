@@ -633,7 +633,7 @@ class _ChatPageState extends State<ChatPage> {
           imageUrl = await ImageUrlResolver.resolveImageUrl(
             fileName: fileName,
             sessionId: widget.sessionId,
-            category: FileUploadCategory.messageImage,
+            category: FileUploadCategory.sessionMedia,
           );
         }
 
@@ -655,7 +655,7 @@ class _ChatPageState extends State<ChatPage> {
           height: 150.rh,
           fit: BoxFit.cover,
           borderRadius: 8.br,
-          category: FileUploadCategory.messageImage,
+          category: FileUploadCategory.sessionMedia,
         ),
       ),
     );

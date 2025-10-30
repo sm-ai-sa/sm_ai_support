@@ -44,7 +44,7 @@ class PickerHelper {
     //* Convert the size to megabytes
     double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
     smPrint('fileSizeInMB : $fileSizeInMB');
-    if (fileSizeInMB > 20) {
+    if (fileSizeInMB > 2) {
       isValid = false;
     } else {
       isValid = true;
@@ -55,8 +55,8 @@ class PickerHelper {
 
   //* Pick File ----------------------------------------------
   /// Pick a file (document) with allowed extensions
-  /// Returns the file along with its detected category
-  static Future<({File file, FileUploadCategory category})?> pickFile(BuildContext context) async {
+  /// Returns the file along with its detected media type
+  static Future<({File file, FileMediaType mediaType})?> pickFile(BuildContext context) async {
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       status = await Permission.storage.request();
@@ -75,10 +75,10 @@ class PickerHelper {
     if (selectedFile != null && selectedFile.files.single.path != null) {
       final file = File(selectedFile.files.single.path!);
       
-      // Determine category from extension
-      final category = FileUploadCategory.fromExtension(file.path);
+      // Determine media type from extension
+      final mediaType = FileMediaType.fromExtension(file.path);
       
-      if (category == null) {
+      if (mediaType == FileMediaType.unknown) {
         primarySnackBar(context, message: 'File type not supported. Allowed: ${allowedExtensions.join(", ")}');
         return null;
       }
@@ -90,46 +90,46 @@ class PickerHelper {
         return null;
       }
 
-      return (file: file, category: category);
+      return (file: file, mediaType: mediaType);
     }
     
     return null;
   }
 
-  //* Pick Media (Image/Video) with automatic category detection
-  /// Pick media from gallery with automatic category detection based on extension
-  /// Returns the file along with its detected category
-  static Future<({File file, FileUploadCategory category})?> pickMediaWithValidation(BuildContext context) async {
+  //* Pick Media (Image/Video) with automatic media type detection
+  /// Pick media from gallery with automatic media type detection based on extension
+  /// Returns the file along with its detected media type
+  static Future<({File file, FileMediaType mediaType})?> pickMediaWithValidation(BuildContext context) async {
     // Use pickMedia for images and videos
     File? selectedFile = await pickMedia(context);
     
     if (selectedFile == null) return null;
 
-    // Determine category from extension
-    final category = FileUploadCategory.fromExtension(selectedFile.path);
+    // Determine media type from extension
+    final mediaType = FileMediaType.fromExtension(selectedFile.path);
     
-    if (category == null) {
+    if (mediaType == FileMediaType.unknown) {
       final allowedExtensions = FileUploadCategory.allMediaExtensions;
       primarySnackBar(context, message: 'File type not supported. Allowed: ${allowedExtensions.join(", ")}');
       return null;
     }
 
     // Validate that it's actually media (image or video)
-    if (category != FileUploadCategory.messageImage && category != FileUploadCategory.sessionVideo) {
+    if (mediaType != FileMediaType.image && mediaType != FileMediaType.video) {
       primarySnackBar(context, message: 'Please select an image or video file');
       return null;
     }
 
     // Size validation already done in pickMedia
-    return (file: selectedFile, category: category);
+    return (file: selectedFile, mediaType: mediaType);
   }
 
-  //* Pick Image from camera with automatic category detection
-  /// Returns the file with messageImage category
-  static Future<({File file, FileUploadCategory category})?> pickImageFromCameraWithCategory(BuildContext context) async {
+  //* Pick Image from camera with automatic media type detection
+  /// Returns the file with image media type
+  static Future<({File file, FileMediaType mediaType})?> pickImageFromCameraWithCategory(BuildContext context) async {
     final File? file = await pickImageFromCamera(context);
     if (file == null) return null;
     
-    return (file: file, category: FileUploadCategory.messageImage);
+    return (file: file, mediaType: FileMediaType.image);
   }
 }

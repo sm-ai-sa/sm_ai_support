@@ -2,7 +2,6 @@
 
 import 'dart:io';
 
-import 'package:mime/mime.dart';
 import 'package:path/path.dart' as path;
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
@@ -14,34 +13,33 @@ class MediaUpload {
   /// Upload file using the new storage API flow
   /// [file] - The file to upload
   /// [sessionId] - The session ID as reference
-  /// [category] - Upload category (MESSAGE_IMAGE, SESSION_AUDIO)
+  /// All uploads now use SESSION_MEDIA category
   static Future<String?> uploadFile({
     required File file,
     required String sessionId,
-    FileUploadCategory category = FileUploadCategory.messageImage,
   }) async {
     try {
       final fileName = path.basename(file.path);
       
       // Validate file extension
-      if (!Utils.isValidFileExtension(file.path, category.allowedExtensions)) {
-        smPrint('Invalid file extension for category ${category.value}. Allowed: ${category.allowedExtensions}');
+      if (!FileUploadCategory.isExtensionAllowed(file.path)) {
+        smPrint('Invalid file extension. Allowed: ${FileUploadCategory.allAllowedExtensions}');
         return null;
       }
 
-      // Validate file size based on category
-      final isValidSize = await _validateFileSize(file, category);
+      // Validate file size (max 50 MB for all media)
+      final isValidSize = await _validateFileSize(file);
       if (!isValidSize) {
-        final maxSize = category == FileUploadCategory.messageImage ? '1 MB' : '10 MB';
-        smPrint('File size exceeds limit for category ${category.value}. Maximum allowed: $maxSize');
+        smPrint('File size exceeds limit. Maximum allowed: 50 MB');
         return null;
       }
 
       smPrint('Starting upload for file: $fileName in session: $sessionId');
 
-      // Step 1: Request upload URL and presigned data
+      // Step 1: Request presigned upload URL from backend
+      // Always use SESSION_MEDIA category for all uploads
       final uploadResult = await sl<SupportRepo>().requestStorageUpload(
-        category: category.value,
+        category: FileUploadCategory.sessionMedia.value,
         referenceId: sessionId,
         filesName: [fileName],
       );
@@ -51,40 +49,38 @@ class MediaUpload {
         success: (response) {
           if (response.result.isNotEmpty) {
             uploadData = response.result.first;
-            smPrint('Received upload URL: ${uploadData.url}');
+            smPrint('Received presigned URL for file: ${uploadData.fileName}');
           } else {
             throw Exception('No upload data received');
           }
         },
         error: (error) {
-          throw Exception('Failed to get upload URL: ${error.failure.error}');
+          throw Exception('Failed to get presigned URL: ${error.failure.error}');
         },
       );
 
-      // Step 2: Upload to cloud storage using presigned URL
-      final cloudUploadResult = await sl<SupportRepo>().uploadToCloud(
-        uploadUrl: uploadData.url,
-        fields: uploadData.fields.toFormFields(),
+      // Step 2: Upload file directly to R2 using presigned URL
+      final r2UploadResult = await sl<SupportRepo>().uploadToR2(
+        presignedUrl: uploadData.presignedUrl,
         filePath: file.path,
-        fileName: fileName,
       );
 
       bool uploadSuccess = false;
-      cloudUploadResult.when(
+      r2UploadResult.when(
         success: (response) {
           uploadSuccess = true;
-          smPrint('File uploaded successfully to cloud storage');
+          smPrint('File uploaded successfully to R2 storage');
         },
         error: (error) {
-          throw Exception('Failed to upload to cloud: ${error.failure.error}');
+          throw Exception('Failed to upload to R2: ${error.failure.error}');
         },
       );
 
       if (uploadSuccess) {
-        // Construct the final file URL
-        final fileUrl = '${uploadData.url}/${uploadData.fields.key}';
-        smPrint('Upload completed successfully. File URL: $fileUrl');
-        return fileUrl;
+        // Return the fileName from the upload result
+        // The backend will construct the full URL when needed
+        smPrint('Upload completed successfully. File name: ${uploadData.fileName}');
+        return uploadData.fileName;
       } else {
         return null;
       }
@@ -94,58 +90,20 @@ class MediaUpload {
     }
   }
 
-  /// Validates file size based on upload category
-  /// Images: 1 MB limit, Audio: 10 MB limit, Video: 50 MB limit, Files: 10 MB limit
-  static Future<bool> _validateFileSize(File file, FileUploadCategory category) async {
+  /// Validates file size - 50 MB limit for all media files
+  static Future<bool> _validateFileSize(File file) async {
     try {
       final fileSizeInBytes = await file.length();
       final fileSizeInMB = fileSizeInBytes / (1024 * 1024);
       
-      smPrint('File size: ${fileSizeInMB.toStringAsFixed(2)} MB for category: ${category.value}');
+      smPrint('File size: ${fileSizeInMB.toStringAsFixed(2)} MB');
       
-      switch (category) {
-        case FileUploadCategory.messageImage:
-          return fileSizeInMB <= 1.0; // 1 MB limit for images
-        case FileUploadCategory.sessionAudio:
-          return fileSizeInMB <= 10.0; // 10 MB limit for audio
-        case FileUploadCategory.sessionVideo:
-          return fileSizeInMB <= 50.0; // 50 MB limit for videos
-        case FileUploadCategory.sessionFile:
-          return fileSizeInMB <= 10.0; // 10 MB limit for files/documents
-        case FileUploadCategory.profilePicture:
-          return fileSizeInMB <= 1.0; // 1 MB limit for profile picture
-      }
+      // 50 MB limit for all media files
+      return fileSizeInMB <= 50.0;
     } catch (e) {
       smPrint('Error checking file size: $e');
       return false;
     }
   }
 
-  /// Legacy method for backward compatibility
-  @Deprecated('Use uploadFile with sessionId and category parameters')
-  static Future<String?> uploadFileLegacy({
-    required File file,
-  }) async {
-    // Keep the old implementation commented for reference
-    return null;
-  }
-}
-
-String getContentType(File file) {
-  final String mimeType = lookupMimeType(file.path) ?? 'application/json';
-  smPrint('>>>> mimeType:$mimeType');
-  return mimeType;
-  // final fileExtension = path.extension(file.path);
-  // switch (fileExtension) {
-  //   case '.mp4':
-  //     return 'video/mp4';
-  //   case '.mov':
-  //     return 'video/quicktime';
-  //   case '.png':
-  //     return 'image/png';
-  //   case '.jpg':
-  //     return 'image/jpg';
-  //   default:
-  //     return 'application/json';
-  // }
 }

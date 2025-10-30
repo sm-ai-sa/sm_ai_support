@@ -36,13 +36,11 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       final result = await sl<SupportRepo>().getMySessionMessages(sessionId: state.sessionId);
       result.when(
         success: (data) {
-          smPrint('Get Session Messages Success: ${data.result.length} message documents');
+          smPrint('Get Session Messages Success: ${data.result.messages.length} message documents');
 
           // Flatten all messages from all documents
           final List<SessionMessage> allMessages = [];
-          for (final doc in data.result) {
-            allMessages.addAll(doc.messages);
-          }
+          allMessages.addAll(data.result.messages);
 
           // Sort messages by creation time
           allMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -51,7 +49,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
             state.copyWith(
               getSessionMessagesStatus: BaseStatus.success,
               sessionMessages: allMessages,
-              sessionMessageDocs: data.result,
+              sessionMessageDoc: data.result,
             ),
           );
         },
@@ -76,7 +74,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     emit(
       state.copyWith(
         sessionMessages: const [],
-        sessionMessageDocs: const [],
+        sessionMessageDoc: const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false),
         getSessionMessagesStatus: BaseStatus.initial,
         rateSessionStatus: BaseStatus.initial,
         repliedOn: null,
@@ -88,7 +86,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   /// Update session ID and clear previous data
   void updateSessionId(String newSessionId) {
-    emit(state.copyWith(sessionId: newSessionId, sessionMessages: [], sessionMessageDocs: [], isResetCategory: true));
+    emit(state.copyWith(sessionId: newSessionId, sessionMessages: [], sessionMessageDoc: const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false), isResetCategory: true));
   }
 
   /// Set category for new session creation
@@ -336,17 +334,13 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
         success: (data) {
           smPrint('Rate Session Success: ${data.message}');
           List<SessionMessagesDoc> updatedSessionMessageDocs = [];
-          for (var element in state.sessionMessageDocs) {
-            updatedSessionMessageDocs.add(
-              SessionMessagesDoc(id: element.id, messages: element.messages, isRatingRequired: false),
-            );
-          }
+          updatedSessionMessageDocs.add(state.sessionMessageDoc.copyWith(isRatingRequired: false));
 
           emit(
             state.copyWith(
               rateSessionStatus: BaseStatus.success,
               isRatingRequiredFromSocket: false, // Reset WebSocket rating requirement
-              sessionMessageDocs: updatedSessionMessageDocs,
+              sessionMessageDoc: updatedSessionMessageDocs.first,
             ),
           );
 
@@ -549,11 +543,10 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
 
       //* Upload file to storage provider using new API
-      // Category is automatically determined from file extension
+      // All files now use SESSION_MEDIA category
       final String? fileUrl = await MediaUpload.uploadFile(
         file: result.file, 
-        sessionId: state.sessionId, 
-        category: result.category,
+        sessionId: state.sessionId,
       );
 
       if (fileUrl != null) {
@@ -584,10 +577,10 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
 
       //* Upload file to storage provider using new API
+      // All files now use SESSION_MEDIA category
       final String? fileUrl = await MediaUpload.uploadFile(
         file: result.file,
         sessionId: state.sessionId,
-        category: result.category,
       );
 
       if (fileUrl != null) {

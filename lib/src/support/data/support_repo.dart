@@ -167,7 +167,9 @@ class SupportRepo {
 
       if (response.statusCode?.isSuccess ?? false) {
         final messagesResponse = SessionMessagesResponse.fromJson(response.data);
-        smPrint('Get My Session Messages Response: Success - ${messagesResponse.result.length} message documents');
+        smPrint(
+          'Get My Session Messages Response: Success - ${messagesResponse.result.messages.length} message documents',
+        );
         return Success(messagesResponse);
       } else {
         smPrint('Get My Session Messages Error: ${response.statusCode}');
@@ -318,7 +320,7 @@ class SupportRepo {
   //! Storage/Upload API Methods -----------------------------------
 
   /// Request storage upload presigned URL
-  /// [category] - Upload category (MESSAGE_IMAGE, SESSION_AUDIO)
+  /// [category] - Upload category (SESSION_MEDIA for all media files)
   /// [referenceId] - Session ID for the upload
   /// [filesName] - List of file names to upload
   Future<NetworkResult<StorageUploadResponse>> requestStorageUpload({
@@ -348,7 +350,7 @@ class SupportRepo {
   }
 
   /// Request download URLs for files
-  /// [category] - Download category (MESSAGE_IMAGE, SESSION_AUDIO)
+  /// [category] - Download category (SESSION_MEDIA for all media files)
   /// [referenceId] - Session ID for the download
   /// [filesName] - List of file names to download
   Future<NetworkResult<StorageDownloadResponse>> requestStorageDownload({
@@ -377,42 +379,25 @@ class SupportRepo {
     }
   }
 
-  /// Upload file to cloud storage using presigned URL
-  /// [uploadUrl] - The presigned URL for upload
-  /// [fields] - Form fields from the upload request
+  /// Upload file to R2 cloud storage using presigned URL
+  /// [presignedUrl] - The presigned URL for upload
   /// [filePath] - Local file path to upload
-  /// [fileName] - Name of the file
-  Future<NetworkResult<dynamic>> uploadToCloud({
-    required String uploadUrl,
-    required Map<String, String> fields,
-    required String filePath,
-    required String fileName,
-  }) async {
+  Future<NetworkResult<dynamic>> uploadToR2({required String presignedUrl, required String filePath}) async {
     try {
-      smPrint('Upload to Cloud Request: $uploadUrl');
-      // print the fields
-      smPrint('Upload to Cloud Fields: $fields');
-      // print the filePath
-      smPrint('Upload to Cloud File Path: $filePath');
-      // print the fileName
-      smPrint('Upload to Cloud File Name: $fileName');
+      smPrint('Upload to R2 Request: $presignedUrl');
+      smPrint('Upload to R2 File Path: $filePath');
 
-      final response = await networkServices.uploadToCloud(
-        uploadUrl: uploadUrl,
-        fields: fields,
-        filePath: filePath,
-        fileName: fileName,
-      );
+      final response = await networkServices.uploadToR2(presignedUrl: presignedUrl, filePath: filePath);
 
       if (response.statusCode?.isSuccess ?? false) {
-        smPrint('Upload to Cloud Response: Success for file $fileName');
+        smPrint('Upload to R2 Response: Success');
         return Success(response.data);
       } else {
-        smPrint('Upload to Cloud Error: ${response.statusCode}');
+        smPrint('Upload to R2 Error: ${response.statusCode}');
         return Error(ErrorHandler.handle(response));
       }
     } catch (e) {
-      smPrint('Upload to Cloud Error: $e');
+      smPrint('Upload to R2 Error: $e');
       return Error(ErrorHandler.handle(e));
     }
   }

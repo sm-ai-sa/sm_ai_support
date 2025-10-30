@@ -34,10 +34,10 @@ class Apis {
   static String get rateSessionAnonymous => '$baseUrl/rating/session/anonymous';
 
   // Authentication
-  static String get sendOtp => '$baseUrl/verification/send-in-app-code';
-  static String get verifyOtp => '$baseUrl/verification/verify-in-app-code';
+  static String get sendOtp => '$baseUrl/in-app/verification/send-code';
+  static String get verifyOtp => '$baseUrl/in-app/verification/verify-code';
 
   // Storage/Upload
-  static String get storageUpload => '$baseUrl/storage/upload';
+  static String get storageUpload => '$baseUrl/storage/customer-upload';
   static String get storageDownload => '$baseUrl/storage/download';
 }

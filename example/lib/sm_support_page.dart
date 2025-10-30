@@ -16,8 +16,8 @@ class SMSupportPage extends StatelessWidget {
         locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
         tenantId: '1',
         apiKey: '17841476553120002', // Test API key for sandbox
-        secretKey: 'test_secret_key_67890', // Test secret key for HMAC signing
-        baseUrl: 'http://localhost:3000/api/core', // REST API base URL
+        secretKey: 'in-app-default', // Test secret key for HMAC signing
+        baseUrl: 'http://sandbox.unicode.team/api/core', // REST API base URL
         socketBaseUrl: 'wss://sandbox.unicode.team/ws', // WebSocket base URL
       ),
     );
