@@ -12,11 +12,11 @@ class ImageUrlResolver {
   /// Resolves a media file name to its download URL
   /// [fileName] - The file name as stored in the message content (or direct URL)
   /// [sessionId] - The session ID where the media was sent
-  /// [category] - The file category (MESSAGE_IMAGE, SESSION_AUDIO, etc.)
+  /// [category] - The file category (SESSION_MEDIA for all media files)
   static Future<String?> resolveImageUrl({
     required String fileName,
     required String sessionId,
-    FileUploadCategory category = FileUploadCategory.messageImage,
+    FileUploadCategory category = FileUploadCategory.sessionMedia,
   }) async {
     try {
       // If it's already a direct URL, return it immediately (no API call)
@@ -87,10 +87,11 @@ class ImageUrlResolver {
   }
 
   /// Extracts the file name from a URL or returns the input if it's just a file name
+  /// Automatically removes query parameters (everything after '?')
   static String extractFileName(String urlOrFileName) {
-    // If it's already just a file name, return it
+    // If it's already just a file name (no slashes), return it without query params
     if (!urlOrFileName.contains('/')) {
-      return urlOrFileName;
+      return urlOrFileName.split('?').first;
     }
 
     // Extract file name from URL
@@ -98,11 +99,12 @@ class ImageUrlResolver {
     if (uri != null) {
       final segments = uri.pathSegments;
       if (segments.isNotEmpty) {
-        return segments.last;
+        // Get the last segment (filename) without query parameters
+        return segments.last.split('?').first;
       }
     }
 
-    // Fallback: get the last part after the last '/'
+    // Fallback: get the last part after the last '/' and remove query params
     return urlOrFileName.split('/').last.split('?').first;
   }
 
@@ -119,7 +121,7 @@ class ImageUrlResolver {
   static Future<String?> resolveMediaUrl({
     required String fileName,
     required String sessionId,
-    FileUploadCategory category = FileUploadCategory.messageImage,
+    FileUploadCategory category = FileUploadCategory.sessionMedia,
   }) => resolveImageUrl(
         fileName: fileName,
         sessionId: sessionId,

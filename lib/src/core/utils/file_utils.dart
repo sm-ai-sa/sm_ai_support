@@ -5,11 +5,22 @@ class FileUtils {
   FileUtils._();
 
   /// Get file extension from URL or filename
+  /// Handles URLs with query parameters (extracts extension before '?')
   static String getFileExtensionFromUrl(String? fileName) {
     if (fileName == null || fileName.isEmpty) return '';
-    final lastDotIndex = fileName.lastIndexOf('.');
+    
+    // Remove query parameters if present (everything after '?')
+    String cleanFileName = fileName;
+    final queryParamIndex = fileName.indexOf('?');
+    if (queryParamIndex != -1) {
+      cleanFileName = fileName.substring(0, queryParamIndex);
+    }
+    
+    // Extract the extension
+    final lastDotIndex = cleanFileName.lastIndexOf('.');
     if (lastDotIndex == -1) return '';
-    return fileName.substring(lastDotIndex + 1);
+    
+    return cleanFileName.substring(lastDotIndex + 1);
   }
 
   /// Get file icon name based on file extension
@@ -88,11 +99,22 @@ class FileUtils {
     return audioExtensions.contains(fileExtension.toLowerCase());
   }
 
-  /// Get display name from filename (without extension)
+  /// Get display name from filename or URL
+  /// Handles URLs with query parameters (extracts filename before '?')
   static String getFileDisplayName(String? fileName) {
     if (fileName == null || fileName.isEmpty) return 'Unknown File';
-    final lastSlashIndex = fileName.lastIndexOf('/');
-    final nameWithoutPath = lastSlashIndex == -1 ? fileName : fileName.substring(lastSlashIndex + 1);
+    
+    // Remove query parameters if present (everything after '?')
+    String cleanFileName = fileName;
+    final queryParamIndex = fileName.indexOf('?');
+    if (queryParamIndex != -1) {
+      cleanFileName = fileName.substring(0, queryParamIndex);
+    }
+    
+    // Extract filename from path (last segment after '/')
+    final lastSlashIndex = cleanFileName.lastIndexOf('/');
+    final nameWithoutPath = lastSlashIndex == -1 ? cleanFileName : cleanFileName.substring(lastSlashIndex + 1);
+    
     return nameWithoutPath;
   }
 }
