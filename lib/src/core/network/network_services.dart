@@ -1,15 +1,19 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
+import 'package:mime/mime.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/network/api.dart';
 import 'package:sm_ai_support/src/core/network/dio_factory.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 NetworkServices get networkServices => sl<NetworkServices>();
 
 class NetworkServices {
   // Use getter instead of final field to ensure fresh Dio instance
   Dio get dio {
-    final dioInstance = DioFactory.getDio();
+    final dioInstance = DioFactory.ensureDioInstance();
     return dioInstance;
   }
 
@@ -17,7 +21,15 @@ class NetworkServices {
 
   /// Get tenant information by ID
   Future<Response> getTenant({required String tenantId}) async {
-    return await dio.get(Apis.getTenant, queryParameters: {'id': tenantId});
+    smPrint('🌐 Making tenant API request to: ${Apis.getTenant}?id=$tenantId');
+    try {
+      final response = await dio.get(Apis.getTenant, queryParameters: {'id': tenantId});
+      smPrint('🌐 Tenant API response: ${response.statusCode}');
+      return response;
+    } catch (e) {
+      smPrint('🌐 Tenant API error: $e');
+      rethrow;
+    }
   }
 
   /// Get categories for support
@@ -164,26 +176,51 @@ class NetworkServices {
     return await dio.post(Apis.storageDownload, data: request.toJson());
   }
 
-  /// Upload file to cloud storage using presigned URL
-  Future<Response> uploadToCloud({
-    required String uploadUrl,
-    required Map<String, String> fields,
+  /// Upload file to R2 cloud storage using presigned URL
+  /// Uses PUT request with raw file data as per R2 requirements
+  Future<Response> uploadToR2({
+    required String presignedUrl,
     required String filePath,
-    required String fileName,
   }) async {
-    final formData = FormData();
+    try {
+      // Read file as bytes
+      final file = File(filePath);
+      final fileBytes = await file.readAsBytes();
+      
+      // Detect MIME type from file path
+      final mimeType = lookupMimeType(filePath) ?? 'application/octet-stream';
+      
+      smPrint('📤 Uploading to R2: ${file.path}');
+      smPrint('📤 File size: ${fileBytes.length} bytes');
+      smPrint('📤 MIME type: $mimeType');
+      smPrint('📤 Presigned URL: $presignedUrl');
 
-    // Add all the required fields from the upload result
-    fields.forEach((key, value) {
-      formData.fields.add(MapEntry(key, value));
-    });
+      // Create a new Dio instance for cloud upload (no base URL)
+      final cloudDio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+        sendTimeout: const Duration(seconds: 60),
+      ));
 
-    // Add the file as the last field
-    formData.files.add(MapEntry('file', await MultipartFile.fromFile(filePath, filename: fileName)));
+      // Upload using PUT request with raw file bytes
+      final response = await cloudDio.put(
+        presignedUrl,
+        data: fileBytes,
+        options: Options(
+          method: 'PUT',
+          headers: {
+            'Content-Type': mimeType,
+          },
+          contentType: mimeType,
+        ),
+      );
 
-    // Create a new Dio instance for cloud upload with different base URL
-    final cloudDio = Dio();
-    return await cloudDio.post(uploadUrl, data: formData);
+      smPrint('📤 Upload completed with status: ${response.statusCode}');
+      return response;
+    } catch (e) {
+      smPrint('📤 Upload failed: $e');
+      rethrow;
+    }
   }
 
   //! Get User Tickets -----------------------------------

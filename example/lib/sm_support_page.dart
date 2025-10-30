@@ -14,9 +14,13 @@ class SMSupportPage extends StatelessWidget {
       smSupportData: SMSupportData(
         appName: 'UNI-SUPPORT',
         locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
-        tenantId: '3',
-        smSecret: 'your_secret_key_here', // Replace with your actual secret key
+        tenantId: '1',
+        apiKey: '17841476553120002', // Test API key for sandbox
+        secretKey: 'in-app-default', // Test secret key for HMAC signing
+        baseUrl: 'http://sandbox.unicode.team/api/core', // REST API base URL
+        socketBaseUrl: 'wss://sandbox.unicode.team/ws', // WebSocket base URL
       ),
     );
   }
 }
+

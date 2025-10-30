@@ -10,16 +10,22 @@ class ImageUrlResolver {
   static final Map<String, String> _urlCache = {};
 
   /// Resolves a media file name to its download URL
-  /// [fileName] - The file name as stored in the message content
+  /// [fileName] - The file name as stored in the message content (or direct URL)
   /// [sessionId] - The session ID where the media was sent
-  /// [category] - The file category (MESSAGE_IMAGE, SESSION_AUDIO, etc.)
+  /// [category] - The file category (SESSION_MEDIA for all media files)
   static Future<String?> resolveImageUrl({
     required String fileName,
     required String sessionId,
-    FileUploadCategory category = FileUploadCategory.messageImage,
+    FileUploadCategory category = FileUploadCategory.sessionMedia,
   }) async {
     try {
-      // Create a cache key
+      // If it's already a direct URL, return it immediately (no API call)
+      if (isDirectDownloadUrl(fileName)) {
+        smPrint('✅ Using direct URL (no API call): $fileName');
+        return fileName;
+      }
+
+      // Create a cache key for non-direct URLs
       final cacheKey = '${category.value}_${sessionId}_$fileName';
       
       // Check if URL is already cached
@@ -30,7 +36,7 @@ class ImageUrlResolver {
 
       smPrint('Resolving image URL for: $fileName in session: $sessionId');
 
-      // Request download URL from API
+      // Request download URL from API (fallback for file names)
       final downloadResult = await sl<SupportRepo>().requestStorageDownload(
         category: category.value,
         referenceId: sessionId,
@@ -65,20 +71,27 @@ class ImageUrlResolver {
   /// Checks if a URL is already a fully resolved download URL
   /// Returns true if the URL appears to be a direct download URL
   static bool isDirectDownloadUrl(String url) {
+    // Check if it's already a valid HTTP/HTTPS URL
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return true;
+    }
+    
     // Check if URL contains common cloud storage patterns
-    // return url.contains('digitaloceanspaces.com') ||
-    //        url.contains('amazonaws.com') ||
-    //        url.contains('X-Amz-Algorithm') ||
-    //        url.startsWith('https://');
+    if (url.contains('digitaloceanspaces.com') ||
+        url.contains('amazonaws.com') ||
+        url.contains('X-Amz-Algorithm')) {
+      return true;
+    }
 
     return false;
   }
 
   /// Extracts the file name from a URL or returns the input if it's just a file name
+  /// Automatically removes query parameters (everything after '?')
   static String extractFileName(String urlOrFileName) {
-    // If it's already just a file name, return it
+    // If it's already just a file name (no slashes), return it without query params
     if (!urlOrFileName.contains('/')) {
-      return urlOrFileName;
+      return urlOrFileName.split('?').first;
     }
 
     // Extract file name from URL
@@ -86,11 +99,12 @@ class ImageUrlResolver {
     if (uri != null) {
       final segments = uri.pathSegments;
       if (segments.isNotEmpty) {
-        return segments.last;
+        // Get the last segment (filename) without query parameters
+        return segments.last.split('?').first;
       }
     }
 
-    // Fallback: get the last part after the last '/'
+    // Fallback: get the last part after the last '/' and remove query params
     return urlOrFileName.split('/').last.split('?').first;
   }
 
@@ -107,7 +121,7 @@ class ImageUrlResolver {
   static Future<String?> resolveMediaUrl({
     required String fileName,
     required String sessionId,
-    FileUploadCategory category = FileUploadCategory.messageImage,
+    FileUploadCategory category = FileUploadCategory.sessionMedia,
   }) => resolveImageUrl(
         fileName: fileName,
         sessionId: sessionId,

@@ -49,108 +49,128 @@ class StorageUploadResponse extends Equatable {
 
 /// Individual upload result containing presigned URL details
 class UploadResult extends Equatable {
-  final String url;
-  final UploadFields fields;
+  final String presignedUrl;
   final String fileName;
 
   const UploadResult({
-    required this.url,
-    required this.fields,
+    required this.presignedUrl,
     required this.fileName,
   });
 
   factory UploadResult.fromJson(Map<String, dynamic> json) {
     return UploadResult(
-      url: json['url'] as String,
-      fields: UploadFields.fromJson(json['fields'] as Map<String, dynamic>),
+      presignedUrl: json['url'] as String,
       fileName: json['fileName'] as String,
     );
   }
 
   @override
-  List<Object?> get props => [url, fields, fileName];
-}
-
-/// Upload fields containing all the necessary data for cloud upload
-class UploadFields extends Equatable {
-  final String contentType;
-  final String bucket;
-  final String xAmzAlgorithm;
-  final String xAmzCredential;
-  final String xAmzDate;
-  final String key;
-  final String policy;
-  final String xAmzSignature;
-
-  const UploadFields({
-    required this.contentType,
-    required this.bucket,
-    required this.xAmzAlgorithm,
-    required this.xAmzCredential,
-    required this.xAmzDate,
-    required this.key,
-    required this.policy,
-    required this.xAmzSignature,
-  });
-
-  factory UploadFields.fromJson(Map<String, dynamic> json) {
-    return UploadFields(
-      contentType: json['Content-Type'] as String,
-      bucket: json['bucket'] as String,
-      xAmzAlgorithm: json['X-Amz-Algorithm'] as String,
-      xAmzCredential: json['X-Amz-Credential'] as String,
-      xAmzDate: json['X-Amz-Date'] as String,
-      key: json['key'] as String,
-      policy: json['Policy'] as String,
-      xAmzSignature: json['X-Amz-Signature'] as String,
-    );
-  }
-
-  /// Convert to form data fields for the cloud upload
-  Map<String, String> toFormFields() {
-    return {
-      'Content-Type': contentType,
-      'bucket': bucket,
-      'X-Amz-Algorithm': xAmzAlgorithm,
-      'X-Amz-Credential': xAmzCredential,
-      'X-Amz-Date': xAmzDate,
-      'key': key,
-      'Policy': policy,
-      'X-Amz-Signature': xAmzSignature,
-    };
-  }
-
-  @override
-  List<Object?> get props => [
-        contentType,
-        bucket,
-        xAmzAlgorithm,
-        xAmzCredential,
-        xAmzDate,
-        key,
-        policy,
-        xAmzSignature,
-      ];
+  List<Object?> get props => [presignedUrl, fileName];
 }
 
 /// File upload categories as defined in the API
+/// Now simplified to use SESSION_MEDIA for all media uploads
 enum FileUploadCategory {
-  messageImage('MESSAGE_IMAGE'),
-  sessionAudio('SESSION_AUDIO'),
-  profilePicture('PROFILE_PICTURE');
+  sessionMedia('SESSION_MEDIA'),
+  profilePicture('PROFILE_PICTURE'); // Keep for future use (tenant logos)
 
   const FileUploadCategory(this.value);
   final String value;
 
-  /// Get allowed extensions for the category
+  /// Get all allowed media extensions (images, videos, audio, documents)
+  static List<String> get allAllowedExtensions {
+    return [
+      // Images
+      'jpg', 'jpeg', 'png',
+      // Videos
+      'mp4', 'mov', 'avi', 'webm',
+      // Audio
+      'mp3', 'wav',
+      // Documents
+      'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip',
+    ];
+  }
+
+  /// Get all allowed extensions for media picker (images + videos only)
+  static List<String> get allMediaExtensions {
+    return [
+      'jpg', 'jpeg', 'png',
+      'mp4', 'mov', 'avi', 'webm',
+    ];
+  }
+
+  /// Get all allowed file extensions for document picker
+  static List<String> get allFileExtensions {
+    return ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip'];
+  }
+
+  /// Validate file extension - returns the category if valid, null if not supported
+  /// All valid media files use SESSION_MEDIA category
+  static FileUploadCategory? fromExtension(String filePath) {
+    final extension = filePath.split('.').last.toLowerCase();
+    
+    if (allAllowedExtensions.contains(extension)) {
+      return FileUploadCategory.sessionMedia;
+    }
+    
+    return null;
+  }
+
+  /// Check if a file extension is allowed
+  static bool isExtensionAllowed(String filePath) {
+    return fromExtension(filePath) != null;
+  }
+}
+
+/// File media type enum for UI display and validation purposes
+/// Separate from FileUploadCategory which is used for API calls
+enum FileMediaType {
+  image,
+  video,
+  audio,
+  file,
+  unknown;
+
+  /// Detect media type from file extension
+  static FileMediaType fromExtension(String filePath) {
+    final extension = filePath.split('.').last.toLowerCase();
+    
+    // Images
+    if (['jpg', 'jpeg', 'png'].contains(extension)) {
+      return FileMediaType.image;
+    }
+    
+    // Videos
+    if (['mp4', 'mov', 'avi', 'webm'].contains(extension)) {
+      return FileMediaType.video;
+    }
+    
+    // Audio
+    if (['mp3', 'wav'].contains(extension)) {
+      return FileMediaType.audio;
+    }
+    
+    // Documents
+    if (['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip'].contains(extension)) {
+      return FileMediaType.file;
+    }
+    
+    return FileMediaType.unknown;
+  }
+
+  /// Get allowed extensions for this media type
   List<String> get allowedExtensions {
     switch (this) {
-      case FileUploadCategory.messageImage:
-        return ['jpg', 'jpeg', 'png']; // MESSAGE_IMAGE extensions from instructions
-      case FileUploadCategory.sessionAudio:
-        return ['mp3', 'wav']; // SESSION_AUDIO extensions from instructions
-      case FileUploadCategory.profilePicture:
-        return ['jpg', 'jpeg', 'png', 'svg']; // PROFILE_PICTURE extensions (tenant logos)
+      case FileMediaType.image:
+        return ['jpg', 'jpeg', 'png'];
+      case FileMediaType.video:
+        return ['mp4', 'mov', 'avi', 'webm'];
+      case FileMediaType.audio:
+        return ['mp3', 'wav'];
+      case FileMediaType.file:
+        return ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'zip'];
+      case FileMediaType.unknown:
+        return [];
     }
   }
 }

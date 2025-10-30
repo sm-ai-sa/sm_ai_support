@@ -44,7 +44,7 @@ class PickerHelper {
     //* Convert the size to megabytes
     double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
     smPrint('fileSizeInMB : $fileSizeInMB');
-    if (fileSizeInMB > 20) {
+    if (fileSizeInMB > 2) {
       isValid = false;
     } else {
       isValid = true;
@@ -54,7 +54,9 @@ class PickerHelper {
   }
 
   //* Pick File ----------------------------------------------
-  static Future<File?> pickFile() async {
+  /// Pick a file (document) with allowed extensions
+  /// Returns the file along with its detected media type
+  static Future<({File file, FileMediaType mediaType})?> pickFile(BuildContext context) async {
     var status = await Permission.storage.status;
     if (!status.isGranted) {
       status = await Permission.storage.request();
@@ -63,85 +65,71 @@ class PickerHelper {
       }
     }
 
-    File? selectedAttachmentFile;
-    FilePickerResult? selectedFile;
+    final allowedExtensions = FileUploadCategory.allFileExtensions;
 
-    selectedFile = await FilePicker.platform.pickFiles(
+    final selectedFile = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: [
-        'pdf',
-        'docx',
-        'doc',
-      ],
+      allowedExtensions: allowedExtensions,
     );
 
     if (selectedFile != null && selectedFile.files.single.path != null) {
-      selectedAttachmentFile = File(selectedFile.files.single.path!);
-      return selectedAttachmentFile;
-    } else {
-      return null;
+      final file = File(selectedFile.files.single.path!);
+      
+      // Determine media type from extension
+      final mediaType = FileMediaType.fromExtension(file.path);
+      
+      if (mediaType == FileMediaType.unknown) {
+        primarySnackBar(context, message: 'File type not supported. Allowed: ${allowedExtensions.join(", ")}');
+        return null;
+      }
+
+      // Validate file size
+      final isValidSize = await sizeValidation(file: file);
+      if (!isValidSize) {
+        primarySnackBar(context, message: 'File size is too large (max 20MB)');
+        return null;
+      }
+
+      return (file: file, mediaType: mediaType);
     }
+    
+    return null;
   }
 
-  //* Pick Media with Category Validation ----------------------------------------------
-  static Future<File?> pickMediaWithValidation(BuildContext context, {
-    required FileUploadCategory category,
-  }) async {
-    File? selectedFile;
-
-    switch (category) {
-      case FileUploadCategory.messageImage:
-        selectedFile = await pickMedia(context);
-        break;
-      case FileUploadCategory.sessionAudio:
-        selectedFile = await pickAudioFile(context);
-        break;
-      case FileUploadCategory.profilePicture:
-        selectedFile = await pickMedia(context);
-        break;
-    }
-
+  //* Pick Media (Image/Video) with automatic media type detection
+  /// Pick media from gallery with automatic media type detection based on extension
+  /// Returns the file along with its detected media type
+  static Future<({File file, FileMediaType mediaType})?> pickMediaWithValidation(BuildContext context) async {
+    // Use pickMedia for images and videos
+    File? selectedFile = await pickMedia(context);
+    
     if (selectedFile == null) return null;
 
-    // Validate file extension
-    if (!Utils.isValidFileExtension(selectedFile.path, category.allowedExtensions)) {
-      primarySnackBar(context, message: 'File type not allowed. Allowed extensions: ${category.allowedExtensions.join(", ")}');
+    // Determine media type from extension
+    final mediaType = FileMediaType.fromExtension(selectedFile.path);
+    
+    if (mediaType == FileMediaType.unknown) {
+      final allowedExtensions = FileUploadCategory.allMediaExtensions;
+      primarySnackBar(context, message: 'File type not supported. Allowed: ${allowedExtensions.join(", ")}');
       return null;
     }
 
-    // Validate file size
-    final isValidSize = await sizeValidation(file: selectedFile);
-    if (!isValidSize) {
-      primarySnackBar(context, message: 'File size is too large (max 20MB)');
+    // Validate that it's actually media (image or video)
+    if (mediaType != FileMediaType.image && mediaType != FileMediaType.video) {
+      primarySnackBar(context, message: 'Please select an image or video file');
       return null;
     }
 
-    return selectedFile;
+    // Size validation already done in pickMedia
+    return (file: selectedFile, mediaType: mediaType);
   }
 
-  //* Pick Audio File ----------------------------------------------
-  static Future<File?> pickAudioFile(BuildContext context) async {
-    var status = await Permission.storage.status;
-    if (!status.isGranted) {
-      status = await Permission.storage.request();
-      if (!status.isGranted) {
-        return null;
-      }
-    }
-
-    File? selectedAudioFile;
-    FilePickerResult? selectedFile;
-
-    selectedFile = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: FileUploadCategory.sessionAudio.allowedExtensions,
-    );
-
-    if (selectedFile != null && selectedFile.files.single.path != null) {
-      selectedAudioFile = File(selectedFile.files.single.path!);
-      return selectedAudioFile;
-    } else {
-      return null;
-    }
+  //* Pick Image from camera with automatic media type detection
+  /// Returns the file with image media type
+  static Future<({File file, FileMediaType mediaType})?> pickImageFromCameraWithCategory(BuildContext context) async {
+    final File? file = await pickImageFromCamera(context);
+    if (file == null) return null;
+    
+    return (file: file, mediaType: FileMediaType.image);
   }
 }

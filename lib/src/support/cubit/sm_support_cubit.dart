@@ -5,7 +5,6 @@ import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/core/network/dio_factory.dart';
-import 'package:sm_ai_support/src/core/network/network_services.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
 
@@ -19,17 +18,13 @@ class SMSupportCubit extends Cubit<SMSupportState> {
     smPrint('initializeData ---------------: $local');
     emit(state.copyWith(currentLocale: local));
 
-    // Force refresh Dio instance and NetworkServices when locale changes
+    // Only update locale in headers without resetting Dio instance
+    // This prevents "adapter was closed" errors during initialization
     try {
-      DioFactory.resetDio(newLocale: local);
-
-      // Also reset NetworkServices to get fresh Dio instance
-      if (sl.isRegistered<NetworkServices>()) {
-        sl.unregister<NetworkServices>();
-        sl.registerLazySingleton<NetworkServices>(() => NetworkServices());
-      }
+      DioFactory.updateLocale();
+      smPrint('🌐 Locale updated without resetting Dio instance');
     } catch (e) {
-      // Handle reset errors silently
+      smPrint('🌐 Error updating locale: $e');
     }
   }
 

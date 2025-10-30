@@ -70,16 +70,17 @@ class _MessageInputState extends State<MessageInput> {
               __repliedOn(state),
               Row(
                 children: [
-                  InkWell(
-                    onTap: state.uploadFileStatus.isLoading
-                        ? null
-                        : () {
-                            __pickerBottomSheet(context);
-                          },
-                    child: state.uploadFileStatus.isLoading
-                        ? DesignSystem.loadingIndicator()
-                        : DesignSystem.svgIcon('attach', size: 22.rSp),
-                  ),
+                  if (AuthManager.isAuthenticated)
+                    InkWell(
+                      onTap: state.uploadFileStatus.isLoading
+                          ? null
+                          : () {
+                              __pickerBottomSheet(context);
+                            },
+                      child: state.uploadFileStatus.isLoading
+                          ? DesignSystem.loadingIndicator()
+                          : DesignSystem.svgIcon('attach', size: 22.rSp),
+                    ),
                   // TODO: Implement file picker functionality
                   // if (state.pickedFile != null) ...[
                   //   SizedBox(width: 8.rw),
@@ -141,56 +142,78 @@ class _MessageInputState extends State<MessageInput> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 22),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(height: 34.rh),
-            // InkWell(
-            //   onTap: () async {
-            //     //* Pick File
-            //     context.smPop();
-            //     await context.read<SingleSessionCubit>().pickAndUploadMedia(
-            //       context,
-            //       isFile: true,
-            //     );
-            //   },
-            //   child: Row(
-            //     children: [
-            //       DesignSystem.svgIcon('gallery', size: 24.rSp),
-            //       SizedBox(width: 14.rw),
-            //       Text(SMText.attachFile, style: TextStyles.s_13_400),
-            //     ],
-            //   ),
-            // ),
-            // SizedBox(height: 30.rh),
-            InkWell(
+            SizedBox(height: 20.rh),
+
+            // Gallery Option - Pick photos/videos
+            _buildAttachmentOption(
+              context: context,
+              icon: 'gallery',
+              label: SMText.attachFromLibrary,
               onTap: () async {
-                //* Pick From Gallery
+                context.smPop();
+                await context.read<SingleSessionCubit>().pickAndUploadMedia(context, isFile: true);
+              },
+            ),
+            SizedBox(height: 16.rh),
+            // Gallery Option - Pick photos/videos
+            _buildAttachmentOption(
+              context: context,
+              icon: 'gallery',
+              label: SMText.attachFromGallery,
+              onTap: () async {
                 context.smPop();
                 await context.read<SingleSessionCubit>().pickAndUploadMedia(context, isFile: false);
               },
-              child: Row(
-                children: [
-                  DesignSystem.svgIcon('gallery', size: 24.rSp),
-                  SizedBox(width: 14.rw),
-                  Text(SMText.attachFromLibrary, style: TextStyles.s_13_400),
-                ],
-              ),
             ),
-            SizedBox(height: 30.rh),
-            InkWell(
+
+            SizedBox(height: 16.rh),
+
+            // Camera Option - Take photo
+            _buildAttachmentOption(
+              context: context,
+              icon: 'camera',
+              label: SMText.attachFromCamera,
               onTap: () async {
-                //* Pick From Camera
                 context.smPop();
                 await context.read<SingleSessionCubit>().pickAndUploadCameraImage(context);
               },
-              child: Row(
-                children: [
-                  DesignSystem.svgIcon('camera', size: 24.rSp),
-                  SizedBox(width: 14.rw),
-                  Text(SMText.attachFromCamera, style: TextStyles.s_13_400),
-                ],
-              ),
             ),
-            SizedBox(height: 52.rh),
+
+            SizedBox(height: 32.rh),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption({
+    required BuildContext context,
+    required String icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.rh),
+        child: Row(
+          children: [
+            // Container(
+            //   padding: EdgeInsets.all(10.rSp),
+            //   decoration: BoxDecoration(
+            //     color: ColorsPallets.primary0,
+            //     borderRadius: BorderRadius.circular(8),
+            //   ),
+            //   child: DesignSystem.svgIcon(icon, size: 24.rSp, color: ColorsPallets.primaryColor),
+            // ),
+            // SizedBox(width: 16.rw),
+            // Text(label, style: TextStyles.s_14_500),
+            DesignSystem.svgIcon(icon, size: 24.rSp),
+            SizedBox(width: 14.rw),
+            Text(label, style: TextStyles.s_13_400),
           ],
         ),
       ),

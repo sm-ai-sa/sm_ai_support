@@ -1,4 +1,5 @@
 import 'package:example/sm_support_page.dart';
+import 'package:example/webview_support_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -79,6 +80,18 @@ class SupportDemoScreen extends StatelessWidget {
               ),
 
               const SizedBox(height: 16),
+
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportWebViewPage()));
+                },
+                icon: const Icon(Icons.web),
+                label: const Text('Open Support WebView'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  textStyle: const TextStyle(fontSize: 16),
+                ),
+              ),
 
               const SizedBox(height: 32),
 
