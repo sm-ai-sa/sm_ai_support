@@ -1,10 +1,10 @@
 name: sm_ai_support
 description: A comprehensive Flutter package for integrating AI-powered customer support with real-time chat, media sharing, and multi-language support.
-version: 0.0.1
-homepage: https://github.com/unicode-org/sm_ai_support
-repository: https://github.com/unicode-org/sm_ai_support
-issue_tracker: https://github.com/unicode-org/sm_ai_support/issues
-documentation: https://github.com/unicode-org/sm_ai_support/tree/main/docs
+version: 1.0.0
+homepage: https://github.com/sm-ai-sa/sm_ai_support
+repository: https://github.com/sm-ai-sa/sm_ai_support
+issue_tracker: https://github.com/sm-ai-sa/sm_ai_support/issues
+documentation: https://github.com/sm-ai-sa/sm_ai_support/tree/main/docs
 
 environment:
   sdk: ^3.8.1

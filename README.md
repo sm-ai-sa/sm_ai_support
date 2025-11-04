@@ -139,14 +139,6 @@ Navigator.push(
   MaterialPageRoute(builder: (context) => const SupportPage()),
 );
 
-// Or use a floating action button
-FloatingActionButton(
-  onPressed: () => Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const SupportPage()),
-  ),
-  child: const Icon(Icons.support_agent),
-)
 ```
 
 ---
@@ -188,10 +180,10 @@ SMSupport(
     appName: 'My App',
     locale: SMSupportLocale.en,
     tenantId: 'tenant_123',
-    apiKey: 'your_secure_api_key', // Stored securely using flutter_secure_storage
-    secretKey: 'your_hmac_secret', // Required: Enables HMAC request signing
-    baseUrl: 'https://your-api-server.com/api/core', // REST API base URL
-    socketBaseUrl: 'wss://your-api-server.com/ws', // WebSocket base URL
+    apiKey: 'your_secure_api_key', 
+    secretKey: 'your_hmac_secret',
+    baseUrl: 'https://your-api-server.com/api/core', 
+    socketBaseUrl: 'wss://your-api-server.com/ws',
   ),
 )
 ```
