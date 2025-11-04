@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/models/session_messages_model.dart';
 import 'package:sm_ai_support/src/core/models/upload_model.dart';
+import 'package:sm_ai_support/src/core/services/download_helper.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/file_utils.dart';
 import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 /// File message widget with icon, name, size, and download button
 class FileMessageWidget extends StatefulWidget {
@@ -104,47 +104,38 @@ class _FileMessageWidgetState extends State<FileMessageWidget> {
     );
   }
 
-  /// Download or open file using url_launcher
+  /// Download file to device and open it
   Future<void> _downloadFile() async {
     if (_isDownloading) return;
-    
+
     setState(() {
       _isDownloading = true;
     });
 
     try {
       String? fileUrl = widget.message.content;
+      final fileName = FileUtils.getFileDisplayName(widget.message.content);
 
       // Resolve URL if needed
       if (!ImageUrlResolver.isDirectDownloadUrl(widget.message.content)) {
-        final fileName = ImageUrlResolver.extractFileName(widget.message.content);
+        final extractedFileName = ImageUrlResolver.extractFileName(widget.message.content);
         fileUrl = await ImageUrlResolver.resolveMediaUrl(
-          fileName: fileName,
+          fileName: extractedFileName,
           sessionId: widget.sessionId,
           category: FileUploadCategory.sessionMedia,
         );
       }
 
       if (fileUrl != null) {
-        smPrint('📥 Downloading/Opening file: $fileUrl');
+        smPrint('📥 Downloading file: $fileUrl');
 
-        final uri = Uri.parse(fileUrl);
+        // Download the file and open it using DownloadHelper
+        await DownloadHelper.downloadAttachment(
+          url: fileUrl,
+          name: fileName,
+        );
 
-        // Check if the URL can be launched
-        if (await canLaunchUrl(uri)) {
-          final launched = await launchUrl(
-            uri,
-            mode: LaunchMode.externalApplication, // Opens in external app/browser
-          );
-
-          if (launched) {
-            smPrint('✅ File opened successfully');
-          } else {
-            smPrint('❌ Failed to open file');
-          }
-        } else {
-          smPrint('❌ Cannot open file URL: $fileUrl');
-        }
+        smPrint('✅ File downloaded and opened successfully');
       } else {
         smPrint('❌ File URL is null');
       }

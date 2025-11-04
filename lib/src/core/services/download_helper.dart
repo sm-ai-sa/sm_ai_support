@@ -5,12 +5,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
-import 'package:sm_ai_support/main.dart';
 
 class DownloadHelper {
   static Future<void> downloadAttachment({required String url, required String name}) async {
     try {
-      Duration timeOut = const Duration(seconds: 10);
+      smPrint('📥 Starting download: $name');
+      smPrint('📍 URL: $url');
+
+      // Set longer timeout for file downloads (2 minutes)
+      Duration timeOut = const Duration(seconds: 120);
 
       BaseOptions options = BaseOptions(
         connectTimeout: timeOut,
@@ -21,23 +24,44 @@ class DownloadHelper {
 
       // Get the app's documents directory
       String savePath = await getPhoneDownloadsDirectoryPath(name);
+      smPrint('💾 Save path: $savePath');
 
       // Start downloading the file
       await dio.download(url, savePath, onReceiveProgress: (received, total) {
         if (total != -1) {
-          print("${(received / total * 100).toStringAsFixed(0)}%");
+          final progress = (received / total * 100).toStringAsFixed(0);
+          smPrint("📊 Download progress: $progress%");
         }
       });
 
+      smPrint('✅ Download completed, attempting to open file...');
+
       final result = await OpenFilex.open(savePath);
 
-      if (result.type != ResultType.done) {
-        smPrint('Error: ${result.message}');
-        primarySnackBar(smNavigatorKey.currentContext!, message: SMText.somethingWentWrong);
+      if (result.type == ResultType.done) {
+        smPrint('✅ File opened successfully');
+      } else {
+        smPrint('❌ Failed to open file - Type: ${result.type}, Message: ${result.message}');
+        primarySnackBar(smNavigatorKey.currentContext!, message: 'File downloaded but could not be opened');
       }
-    } catch (e) {
-      smPrint('Error: $e');
-      primarySnackBar(smNavigatorKey.currentContext!, message: SMText.somethingWentWrong);
+    } catch (e, stackTrace) {
+      smPrint('❌ Download error: $e');
+      smPrint('📚 Stack trace: $stackTrace');
+
+      String errorMessage = SMText.somethingWentWrong;
+      if (e is DioException) {
+        if (e.type == DioExceptionType.connectionTimeout) {
+          errorMessage = 'Connection timeout. Please check your internet connection.';
+        } else if (e.type == DioExceptionType.receiveTimeout) {
+          errorMessage = 'Download timeout. File may be too large.';
+        } else {
+          errorMessage = 'Download failed: ${e.message}';
+        }
+      }
+
+      if (smNavigatorKey.currentContext != null) {
+        primarySnackBar(smNavigatorKey.currentContext!, message: errorMessage);
+      }
     }
   }
 
@@ -58,7 +82,7 @@ class DownloadHelper {
         }
       }
     } catch (e) {
-      print("Error getting file size: $e");
+      smPrint("❌ Error getting file size: $e");
     }
     return null;
   }

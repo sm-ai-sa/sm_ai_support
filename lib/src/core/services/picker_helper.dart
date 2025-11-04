@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
@@ -57,13 +56,9 @@ class PickerHelper {
   /// Pick a file (document) with allowed extensions
   /// Returns the file along with its detected media type
   static Future<({File file, FileMediaType mediaType})?> pickFile(BuildContext context) async {
-    var status = await Permission.storage.status;
-    if (!status.isGranted) {
-      status = await Permission.storage.request();
-      if (!status.isGranted) {
-        return null;
-      }
-    }
+    // Note: file_picker handles permissions automatically via system picker on Android 13+
+    // For Android 12 and below, the storage permission in manifest is sufficient
+    // No need to request runtime permissions as the system picker is used
 
     final allowedExtensions = FileUploadCategory.allFileExtensions;
 

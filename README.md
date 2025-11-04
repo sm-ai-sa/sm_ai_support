@@ -77,10 +77,32 @@ flutter pub get
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.CAMERA" />
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<!-- Storage permissions for Android 12 and below -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+<!-- Media permissions for Android 13 and above -->
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+<uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+```
+
+**Android Queries** (Add to `android/app/src/main/AndroidManifest.xml` inside `<manifest>` tag):
+```xml
+<queries>
+    <!-- Required for file_picker to pick files -->
+    <intent>
+        <action android:name="android.intent.action.GET_CONTENT"/>
+    </intent>
+    <!-- Required for open_filex to open files -->
+    <intent>
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:mimeType="*/*"/>
+    </intent>
+    <!-- Camera intent -->
+    <intent>
+        <action android:name="android.media.action.IMAGE_CAPTURE"/>
+    </intent>
+</queries>
 ```
 
 **iOS** (`ios/Runner/Info.plist`):
