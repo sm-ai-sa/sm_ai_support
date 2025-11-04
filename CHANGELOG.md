@@ -1,3 +1,8 @@
+## 1.0.3
+
+* Support local time
+
+
 ## 1.0.2
 
 * Fix file download functionality on Android

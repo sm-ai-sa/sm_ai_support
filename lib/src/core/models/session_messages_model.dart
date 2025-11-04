@@ -65,7 +65,7 @@ class SessionMessage extends Equatable {
       isDelivered: json['isDelivered'] as bool,
       isFailed: json['isFailed'] as bool,
       reply: json['reply'] != null ? SessionMessageReply.fromJson(json['reply'] as Map<String, dynamic>) : null,
-      createdAt: DateTime.tryParse(json['createdAt'] as String) ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['createdAt'] as String)?.toLocal() ?? DateTime.now(),
       admin: json['admin'],
       metadata: json['metadata'] as Map<String, dynamic>?,
       isOptimistic: json['_optimistic'] as bool? ?? false,
