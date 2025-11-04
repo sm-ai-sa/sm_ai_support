@@ -69,9 +69,26 @@ class NetworkServices {
     return await dio.get(Apis.myUnreadSessions);
   }
 
-  /// Get messages for a specific session
-  Future<Response> getMySessionMessages({required String sessionId}) async {
-    return await dio.get(Apis.mySessionMessages, queryParameters: {'id': sessionId});
+  /// Get messages for a specific session with cursor-based pagination
+  /// [sessionId] - The session ID to fetch messages for
+  /// [limit] - Maximum number of messages to return (optional)
+  /// [cursorId] - The last message ID from previous fetch, for pagination (optional)
+  Future<Response> getMySessionMessages({
+    required String sessionId,
+    int? limit,
+    String? cursorId,
+  }) async {
+    final queryParams = <String, dynamic>{'id': sessionId};
+
+    if (limit != null) {
+      queryParams['limit'] = limit;
+    }
+
+    if (cursorId != null) {
+      queryParams['cursorId'] = cursorId;
+    }
+
+    return await dio.get(Apis.mySessionMessages, queryParameters: queryParams);
   }
 
   /// Send a message in a customer session

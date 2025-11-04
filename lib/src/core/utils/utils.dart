@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -73,6 +74,12 @@ class Utils {
 void smPrint(dynamic data) {
   if (kDebugMode) {
     debugPrint(data.toString());
+  }
+}
+
+void smLog(dynamic data) {
+  if (kDebugMode) {
+    log(data.toString());
   }
 }
 

@@ -11,7 +11,7 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// File message widget with icon, name, size, and download button
-class FileMessageWidget extends StatelessWidget {
+class FileMessageWidget extends StatefulWidget {
   final SessionMessage message;
   final bool isMyMessage;
   final String sessionId;
@@ -26,19 +26,26 @@ class FileMessageWidget extends StatelessWidget {
   });
 
   @override
+  State<FileMessageWidget> createState() => _FileMessageWidgetState();
+}
+
+class _FileMessageWidgetState extends State<FileMessageWidget> {
+  bool _isDownloading = false;
+
+  @override
   Widget build(BuildContext context) {
-    final fileName = FileUtils.getFileDisplayName(message.content);
-    final fileSize = message.fileSize;
-    final fileIcon = FileUtils.getFileIcon(message.content);
-    final adminBgColor = (tenantColor ?? ColorsPallets.primaryColor).withValues(alpha: .2);
-    final adminBorderColor = (isMyMessage ? ColorsPallets.muted600 : tenantColor ?? ColorsPallets.primaryColor)
+    final fileName = FileUtils.getFileDisplayName(widget.message.content);
+    final fileSize = widget.message.fileSize;
+    final fileIcon = FileUtils.getFileIcon(widget.message.content);
+    final adminBgColor = (widget.tenantColor ?? ColorsPallets.primaryColor).withValues(alpha: .2);
+    final adminBorderColor = (widget.isMyMessage ? ColorsPallets.muted600 : widget.tenantColor ?? ColorsPallets.primaryColor)
         .withValues(alpha: .25);
 
     return Container(
       padding: EdgeInsets.all(10.rSp),
       decoration: BoxDecoration(
-        color: isMyMessage ? ColorsPallets.normal25 : adminBgColor,
-        border: Border.all(color: isMyMessage ? ColorsPallets.borderColor : adminBorderColor),
+        color: widget.isMyMessage ? ColorsPallets.normal25 : adminBgColor,
+        border: Border.all(color: widget.isMyMessage ? ColorsPallets.borderColor : adminBorderColor),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -71,16 +78,16 @@ class FileMessageWidget extends StatelessWidget {
           SizedBox(width: 8.rw),
           // Download/Open button
           InkWell(
-            onTap: message.isOptimistic ? null : () => _downloadFile(),
+            onTap: (widget.message.isOptimistic || _isDownloading) ? null : () => _downloadFile(),
             child: Container(
               padding: EdgeInsets.all(6.rSp),
               decoration: BoxDecoration(
-                // color: message.isOptimistic
+                // color: (widget.message.isOptimistic || _isDownloading)
                 //     ? ColorsPallets.disabled0
                 //     : ColorsPallets.primary25,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: message.isOptimistic
+              child: (widget.message.isOptimistic || _isDownloading)
                   ? SizedBox(
                       width: 16.rSp,
                       height: 16.rSp,
@@ -99,15 +106,21 @@ class FileMessageWidget extends StatelessWidget {
 
   /// Download or open file using url_launcher
   Future<void> _downloadFile() async {
+    if (_isDownloading) return;
+    
+    setState(() {
+      _isDownloading = true;
+    });
+
     try {
-      String? fileUrl = message.content;
+      String? fileUrl = widget.message.content;
 
       // Resolve URL if needed
-      if (!ImageUrlResolver.isDirectDownloadUrl(message.content)) {
-        final fileName = ImageUrlResolver.extractFileName(message.content);
+      if (!ImageUrlResolver.isDirectDownloadUrl(widget.message.content)) {
+        final fileName = ImageUrlResolver.extractFileName(widget.message.content);
         fileUrl = await ImageUrlResolver.resolveMediaUrl(
           fileName: fileName,
-          sessionId: sessionId,
+          sessionId: widget.sessionId,
           category: FileUploadCategory.sessionMedia,
         );
       }
@@ -137,6 +150,12 @@ class FileMessageWidget extends StatelessWidget {
       }
     } catch (e) {
       smPrint('❌ Error downloading/opening file: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDownloading = false;
+        });
+      }
     }
   }
 }

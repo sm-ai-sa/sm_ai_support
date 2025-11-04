@@ -8,18 +8,24 @@ class SingleSessionState extends Equatable {
   
   /// Status for getting session messages
   final BaseStatus getSessionMessagesStatus;
-  
+
+  /// Status for loading more (older) messages via pagination
+  final BaseStatus loadMoreMessagesStatus;
+
   /// Status for sending messages
   final BaseStatus sendMessageStatus;
-  
+
   /// Status for rating session
   final BaseStatus rateSessionStatus;
-  
+
   /// Status for uploading files
   final BaseStatus uploadFileStatus;
-  
+
   /// Status for creating a new session
   final BaseStatus createSessionStatus;
+
+  /// Whether there are more messages to load (false when API returns empty list)
+  final bool hasMoreMessages;
   
   /// ID of the message being replied to
   final String? repliedOn;
@@ -39,10 +45,12 @@ class SingleSessionState extends Equatable {
   const SingleSessionState({
     required this.sessionId,
     this.getSessionMessagesStatus = BaseStatus.initial,
+    this.loadMoreMessagesStatus = BaseStatus.initial,
     this.sendMessageStatus = BaseStatus.initial,
     this.rateSessionStatus = BaseStatus.initial,
     this.uploadFileStatus = BaseStatus.initial,
     this.createSessionStatus = BaseStatus.initial,
+    this.hasMoreMessages = true,
     this.repliedOn,
     this.sessionMessages = const [],
     this.sessionMessageDoc = const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false),
@@ -53,10 +61,12 @@ class SingleSessionState extends Equatable {
   SingleSessionState copyWith({
     String? sessionId,
     BaseStatus? getSessionMessagesStatus,
+    BaseStatus? loadMoreMessagesStatus,
     BaseStatus? sendMessageStatus,
     BaseStatus? rateSessionStatus,
     BaseStatus? uploadFileStatus,
     BaseStatus? createSessionStatus,
+    bool? hasMoreMessages,
     String? repliedOn,
     bool? isResetRepliedOn,
     List<SessionMessage>? sessionMessages,
@@ -68,10 +78,12 @@ class SingleSessionState extends Equatable {
     return SingleSessionState(
       sessionId: sessionId ?? this.sessionId,
       getSessionMessagesStatus: getSessionMessagesStatus ?? this.getSessionMessagesStatus,
+      loadMoreMessagesStatus: loadMoreMessagesStatus ?? this.loadMoreMessagesStatus,
       sendMessageStatus: sendMessageStatus ?? this.sendMessageStatus,
       rateSessionStatus: rateSessionStatus ?? this.rateSessionStatus,
       uploadFileStatus: uploadFileStatus ?? this.uploadFileStatus,
       createSessionStatus: createSessionStatus ?? this.createSessionStatus,
+      hasMoreMessages: hasMoreMessages ?? this.hasMoreMessages,
       repliedOn: repliedOn ?? (isResetRepliedOn == true ? null : this.repliedOn),
       sessionMessages: sessionMessages ?? this.sessionMessages,
       sessionMessageDoc: sessionMessageDoc ?? this.sessionMessageDoc,
@@ -84,10 +96,12 @@ class SingleSessionState extends Equatable {
   List<Object?> get props => [
         sessionId,
         getSessionMessagesStatus,
+        loadMoreMessagesStatus,
         sendMessageStatus,
         rateSessionStatus,
         uploadFileStatus,
         createSessionStatus,
+        hasMoreMessages,
         repliedOn,
         sessionMessages,
         sessionMessageDoc,

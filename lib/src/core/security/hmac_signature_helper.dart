@@ -154,8 +154,27 @@ class HmacSignatureHelper {
   /// Check if HMAC signature should be applied to request
   /// This can be customized based on endpoint patterns or other criteria
   static bool shouldApplyHmacSignature(String path) {
-    // Apply HMAC to all API requests by default
-    // You can customize this logic based on your needs
+    // Skip HMAC for video URLs (common video file extensions)
+    final videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.flv', '.m4v'];
+    final lowerPath = path.toLowerCase();
+
+    if (videoExtensions.any((ext) => lowerPath.contains(ext))) {
+      smPrint('🔐 Skipping HMAC for video file: $path');
+      return false;
+    }
+
+    // Skip HMAC for presigned URLs (R2/Cloudflare Workers, S3, etc.)
+    // These URLs already have their own authentication via query parameters
+    if (path.contains('workers.dev') ||
+        path.contains('r2.dev') ||
+        path.contains('cloudflare') ||
+        path.contains('accessToken=') ||
+        path.contains('X-Amz-Signature=')) {
+      smPrint('🔐 Skipping HMAC for presigned URL: $path');
+      return false;
+    }
+
+    // Apply HMAC to all other API requests by default
     return true;
   }
 

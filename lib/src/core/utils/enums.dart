@@ -152,14 +152,21 @@ enum GeneralStatus {
 enum SessionStatus {
   active,
   closed,
+  closedBySystem,
   failed;
 
   bool get isActive => this == SessionStatus.active;
   bool get isClosed => this == SessionStatus.closed;
+  bool get isClosedBySystem => this == SessionStatus.closedBySystem;
   bool get isFailed => this == SessionStatus.failed;
 
+  bool get isGeneralClosed => this == SessionStatus.closed || this == SessionStatus.closedBySystem;
   static SessionStatus fromString(String status) {
-    return SessionStatus.values.firstWhere((e) => e.name == status.toLowerCase());
+    final normalizedStatus = status.toLowerCase().replaceAll('_', '');
+    return SessionStatus.values.firstWhere(
+      (e) => e.name.toLowerCase() == normalizedStatus,
+      orElse: () => SessionStatus.active, // Default fallback
+    );
   }
 }
 

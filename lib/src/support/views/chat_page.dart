@@ -47,11 +47,14 @@ class _ChatPageState extends State<ChatPage> {
   final String ticketId = Utils.getUID;
   late SingleSessionCubit _sessionCubit;
   bool _streamStarted = false;
+  bool _isFirstLoad = true;
+  DateTime? _lastPaginationTrigger;
 
   @override
   void initState() {
     super.initState();
     _initializeSession();
+    _setupScrollListener();
     _setupPostFrameCallback();
   }
 
@@ -67,6 +70,41 @@ class _ChatPageState extends State<ChatPage> {
 
     if (widget.isNewSession && widget.category != null) {
       _sessionCubit.setCategoryForNewSession(widget.category!);
+    }
+  }
+
+  /// Setup scroll listener for pagination
+  void _setupScrollListener() {
+    _scrollController.addListener(_onScroll);
+  }
+
+  /// Handle scroll events for pagination
+  void _onScroll() {
+    // Don't trigger if already loading or no more messages
+    if (_sessionCubit.state.loadMoreMessagesStatus.isLoading || !_sessionCubit.state.hasMoreMessages) {
+      return;
+    }
+
+    // Prevent rapid consecutive pagination calls - wait at least 1 second between triggers
+    final now = DateTime.now();
+    if (_lastPaginationTrigger != null) {
+      final timeSinceLastTrigger = now.difference(_lastPaginationTrigger!);
+      if (timeSinceLastTrigger.inMilliseconds < 1000) {
+        return;
+      }
+    }
+
+    // With reverse: true, scrolling up (to older messages) means moving toward maxScrollExtent
+    // Check if user scrolled near the end (top of visible content)
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    final threshold = 100.0;
+
+    if (maxScroll - currentScroll <= threshold) {
+      smPrint('📜 User scrolled to top, triggering pagination (current: $currentScroll, max: $maxScroll)');
+      _lastPaginationTrigger = now;
+      // Load more messages when near the top
+      _sessionCubit.loadMoreMessages();
     }
   }
 
@@ -126,14 +164,8 @@ class _ChatPageState extends State<ChatPage> {
   /// Scroll to bottom of messages list
   void _scrollToBottom({double plus = 0}) {
     if (_scrollController.hasClients) {
-      final maxScrollExtent = _scrollController.position.maxScrollExtent;
-      if (maxScrollExtent > 0) {
-        _scrollController.animateTo(
-          maxScrollExtent + plus,
-          duration: Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
+      // With reverse: true, bottom is at position 0
+      _scrollController.animateTo(0.0, duration: Duration(milliseconds: 300), curve: Curves.easeOut);
     }
   }
 
@@ -245,13 +277,51 @@ class _ChatPageState extends State<ChatPage> {
   /// Build messages list
   Widget _buildMessagesList() {
     return BlocConsumer<SingleSessionCubit, SingleSessionState>(
-      listener: (context, sessionState) {
-        // Auto-scroll when new messages arrive
-        if (sessionState.sessionMessages.isNotEmpty) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            _scrollToBottom();
-          });
+      listenWhen: (previous, current) {
+        // Only scroll to bottom when:
+        // 1. Initial load completes (first time loading messages)
+        // 2. New message added to the end (last message ID changed)
+        // DO NOT scroll during pagination (loading older messages)
+
+        final isInitialLoadComplete =
+            previous.getSessionMessagesStatus.isLoading && current.getSessionMessagesStatus.isSuccess;
+
+        // Check if pagination just completed
+        final paginationJustCompleted =
+            previous.loadMoreMessagesStatus.isLoading && current.loadMoreMessagesStatus.isSuccess;
+
+        // New message added: last message changed (but not during pagination)
+        final newMessageAdded =
+            !paginationJustCompleted &&
+            previous.sessionMessages.isNotEmpty &&
+            current.sessionMessages.isNotEmpty &&
+            previous.sessionMessages.last.id != current.sessionMessages.last.id;
+
+        final shouldScrollToBottom = (isInitialLoadComplete && _isFirstLoad) || newMessageAdded;
+
+        if (shouldScrollToBottom) {
+          smPrint(
+            '📜 WILL SCROLL TO BOTTOM - InitialLoad: ${isInitialLoadComplete && _isFirstLoad}, NewMessage: $newMessageAdded',
+          );
+        } else if (paginationJustCompleted) {
+          smPrint('📜 PAGINATION COMPLETED - Scroll position automatically preserved by reverse ListView');
         }
+
+        // Only trigger listener for scroll-to-bottom events
+        return shouldScrollToBottom;
+      },
+      listener: (context, sessionState) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          // With reverse: true ListView, scroll position is automatically preserved during pagination
+          // We only need to scroll to bottom for initial load and new messages
+          smPrint('📜 SCROLLING TO BOTTOM');
+          _scrollToBottom();
+
+          // Mark that first load is complete
+          if (_isFirstLoad) {
+            _isFirstLoad = false;
+          }
+        });
       },
       builder: (context, sessionState) {
         smPrint('🖥️ UI REBUILD - Messages count: ${sessionState.sessionMessages.length}');
@@ -262,58 +332,65 @@ class _ChatPageState extends State<ChatPage> {
         }
 
         // Combine dummy messages with real messages for testing
-        // final dummyMessages = DummyMessages.getAllDummyMessages();
-        final dummyMessages = [];
-        final realMessages = sessionState.sessionMessages;
-        final messagesList = [...dummyMessages, ...realMessages];
 
-        smPrint(
-          '📋 Total messages (${messagesList.length}): ${dummyMessages.length} dummy + ${realMessages.length} real',
-        );
+        final realMessages = sessionState.sessionMessages;
+        final messagesList = [...realMessages];
+
+        smPrint('📋 Total messages (${messagesList.length}): ${realMessages.length} real');
 
         return Expanded(
-          child: ListView(
+          child: ListView.builder(
             controller: _scrollController,
+            reverse: true, // This makes newest messages at bottom and preserves scroll on pagination
             addAutomaticKeepAlives: false,
-            padding: EdgeInsets.symmetric(horizontal: 22.rw).copyWith(bottom: 20.rh),
-            children: [
-              // Show dummy messages info banner
-              if (dummyMessages.isNotEmpty) _buildDummyMessagesBanner(dummyMessages.length),
+            padding: EdgeInsets.symmetric(horizontal: 22.rw).copyWith(top: 20.rh),
+            itemCount:
+                messagesList.length +
+                (sessionState.loadMoreMessagesStatus.isLoading ? 1 : 0) +
+                (!sessionState.hasMoreMessages && messagesList.isNotEmpty ? 1 : 0) +
+                (messagesList.isEmpty ? 1 : 0) +
+                1, // +1 for spacing
+            itemBuilder: (context, index) {
+              // Since reverse: true, indices are flipped
+              // First item (bottom) = last message, last item (top) = first message
 
-              if (messagesList.isEmpty) _buildEmptyState(),
-              SizedBox(height: 16.rh),
-              ...messagesList.map((message) {
-                return ChatMessageItem(message: message, sessionId: widget.sessionId);
-              }),
-            ],
+              // Bottom spacing
+              if (index == 0) {
+                return SizedBox(height: 16.rh);
+              }
+
+              int adjustedIndex = index - 1;
+
+              // Messages (reversed order)
+              if (adjustedIndex < messagesList.length) {
+                final messageIndex = messagesList.length - 1 - adjustedIndex;
+                return ChatMessageItem(message: messagesList[messageIndex], sessionId: widget.sessionId);
+              }
+
+              adjustedIndex -= messagesList.length;
+
+              // Empty state
+              if (messagesList.isEmpty && adjustedIndex == 0) {
+                return _buildEmptyState();
+              }
+
+              // // "No more messages" indicator (at the top)
+              // if (!sessionState.hasMoreMessages && messagesList.isNotEmpty && adjustedIndex == 0) {
+              //   return _buildNoMoreMessagesIndicator();
+              // }
+
+              if (!sessionState.hasMoreMessages && messagesList.isNotEmpty) adjustedIndex--;
+
+              // Loading indicator (at the top)
+              if (sessionState.loadMoreMessagesStatus.isLoading && adjustedIndex == 0) {
+                return Center(child: DesignSystem.loadingIndicator());
+              }
+
+              return const SizedBox.shrink();
+            },
           ),
         );
       },
-    );
-  }
-
-  /// Build dummy messages info banner
-  Widget _buildDummyMessagesBanner(int count) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 16.rh),
-      padding: EdgeInsets.all(12.rSp),
-      decoration: BoxDecoration(
-        color: ColorsPallets.yellow0,
-        border: Border.all(color: ColorsPallets.yellow25),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline, color: ColorsPallets.yellow300, size: 20.rSp),
-          SizedBox(width: 8.rw),
-          Expanded(
-            child: Text(
-              '🎨 Demo Mode: Showing $count test messages for all media types',
-              style: TextStyles.s_12_400.copyWith(color: ColorsPallets.yellow300),
-            ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -15,11 +15,7 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
 
 /// Media type enum for file picker dialog
-enum MediaFileType {
-  video,
-  audio,
-  document,
-}
+enum MediaFileType { video, audio, document }
 
 class SingleSessionCubit extends Cubit<SingleSessionState> {
   StreamSubscription<SessionMessage>? _messageStreamSubscription;
@@ -28,28 +24,32 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   SingleSessionCubit({required String sessionId}) : super(SingleSessionState(sessionId: sessionId));
 
-  /// Get messages for the current session
-  Future<void> getSessionMessages() async {
+  /// Get messages for the current session (initial load with pagination)
+  Future<void> getSessionMessages({int limit = Constants.MESSAGES_LIMIT}) async {
     smPrint('Get Session Messages for: ${state.sessionId}');
-    emit(state.copyWith(getSessionMessagesStatus: BaseStatus.loading));
+    emit(state.copyWith(getSessionMessagesStatus: BaseStatus.loading, hasMoreMessages: true));
     try {
-      final result = await sl<SupportRepo>().getMySessionMessages(sessionId: state.sessionId);
+      final result = await sl<SupportRepo>().getMySessionMessages(sessionId: state.sessionId, limit: limit);
       result.when(
         success: (data) {
-          smPrint('Get Session Messages Success: ${data.result.messages.length} message documents');
+          smPrint('Get Session Messages Success: ${data.result.messages.length} messages');
 
-          // Flatten all messages from all documents
+          // Get all messages
           final List<SessionMessage> allMessages = [];
           allMessages.addAll(data.result.messages);
 
-          // Sort messages by creation time
+          // Sort messages by creation time (oldest first)
           allMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+          // Check if we received less than limit, meaning no more messages to load
+          final hasMore = data.result.messages.length >= limit;
 
           emit(
             state.copyWith(
               getSessionMessagesStatus: BaseStatus.success,
               sessionMessages: allMessages,
               sessionMessageDoc: data.result,
+              hasMoreMessages: hasMore,
             ),
           );
         },
@@ -61,6 +61,71 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     } catch (e) {
       primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
       emit(state.copyWith(getSessionMessagesStatus: BaseStatus.failure));
+    }
+  }
+
+  /// Load more (older) messages using cursor-based pagination
+  Future<void> loadMoreMessages({int limit = Constants.MESSAGES_LIMIT}) async {
+    // Don't load if already loading or no more messages
+    if (state.loadMoreMessagesStatus.isLoading || !state.hasMoreMessages) {
+      smPrint('Skip loading more: loading=${state.loadMoreMessagesStatus.isLoading}, hasMore=${state.hasMoreMessages}');
+      return;
+    }
+
+    // Get the oldest message ID as cursor
+    if (state.sessionMessages.isEmpty) {
+      smPrint('No messages to use as cursor, skipping load more');
+      return;
+    }
+
+    final cursorId = state.sessionMessages.first.id;
+    smPrint('Load More Messages - cursor: $cursorId, limit: $limit');
+
+    emit(state.copyWith(loadMoreMessagesStatus: BaseStatus.loading));
+
+    try {
+      final result = await sl<SupportRepo>().getMySessionMessages(
+        sessionId: state.sessionId,
+        limit: limit,
+        cursorId: cursorId,
+      );
+
+      result.when(
+        success: (data) {
+          smPrint('Load More Messages Success: ${data.result.messages.length} messages');
+
+          // If empty list, we've reached the end
+          if (data.result.messages.isEmpty) {
+            smPrint('Reached end of messages');
+            emit(state.copyWith(loadMoreMessagesStatus: BaseStatus.success, hasMoreMessages: false));
+            return;
+          }
+
+          // Combine old messages with new (older) messages
+          final List<SessionMessage> allMessages = [...data.result.messages, ...state.sessionMessages];
+
+          // Sort messages by creation time (oldest first)
+          allMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+          // Check if we received less than limit, meaning no more messages
+          final hasMore = data.result.messages.length >= limit;
+
+          emit(
+            state.copyWith(
+              loadMoreMessagesStatus: BaseStatus.success,
+              sessionMessages: allMessages,
+              hasMoreMessages: hasMore,
+            ),
+          );
+        },
+        error: (error) {
+          smPrint('Load More Messages Error: ${error.failure.error}');
+          emit(state.copyWith(loadMoreMessagesStatus: BaseStatus.failure));
+        },
+      );
+    } catch (e) {
+      smPrint('Load More Messages Error: $e');
+      emit(state.copyWith(loadMoreMessagesStatus: BaseStatus.failure));
     }
   }
 
@@ -76,7 +141,9 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
         sessionMessages: const [],
         sessionMessageDoc: const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false),
         getSessionMessagesStatus: BaseStatus.initial,
+        loadMoreMessagesStatus: BaseStatus.initial,
         rateSessionStatus: BaseStatus.initial,
+        hasMoreMessages: true,
         repliedOn: null,
         isResetRepliedOn: true,
         isRatingRequiredFromSocket: false,
@@ -86,7 +153,14 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   /// Update session ID and clear previous data
   void updateSessionId(String newSessionId) {
-    emit(state.copyWith(sessionId: newSessionId, sessionMessages: [], sessionMessageDoc: const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false), isResetCategory: true));
+    emit(
+      state.copyWith(
+        sessionId: newSessionId,
+        sessionMessages: [],
+        sessionMessageDoc: const SessionMessagesDoc(id: '', messages: [], isRatingRequired: false),
+        isResetCategory: true,
+      ),
+    );
   }
 
   /// Set category for new session creation
@@ -174,10 +248,10 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   /// Mark messages as read with debounce to prevent multiple rapid calls
   void markMessagesAsReadDebounced({Duration delay = const Duration(seconds: 10)}) {
     smPrint('Debounced mark messages as read triggered for session: ${state.sessionId}');
-    
+
     // Cancel previous timer if it exists
     _markAsReadDebounceTimer?.cancel();
-    
+
     // Set new timer
     _markAsReadDebounceTimer = Timer(delay, () {
       smPrint('Executing debounced mark messages as read after delay');
@@ -529,25 +603,19 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   /// Pick Media From Gallery and upload
   /// Automatically detects file type and category from extension
-  Future<String?> pickAndUploadMedia(
-    BuildContext context, {
-    bool isFile = false,
-  }) async {
+  Future<String?> pickAndUploadMedia(BuildContext context, {bool isFile = false}) async {
     try {
       final result = isFile
           ? await PickerHelper.pickFile(context)
           : await PickerHelper.pickMediaWithValidation(context);
-      
+
       if (result == null) return null;
 
       emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
 
       //* Upload file to storage provider using new API
       // All files now use SESSION_MEDIA category
-      final String? fileUrl = await MediaUpload.uploadFile(
-        file: result.file, 
-        sessionId: state.sessionId,
-      );
+      final String? fileUrl = await MediaUpload.uploadFile(file: result.file, sessionId: state.sessionId);
 
       if (fileUrl != null) {
         emit(state.copyWith(uploadFileStatus: BaseStatus.success));
@@ -578,10 +646,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
       //* Upload file to storage provider using new API
       // All files now use SESSION_MEDIA category
-      final String? fileUrl = await MediaUpload.uploadFile(
-        file: result.file,
-        sessionId: state.sessionId,
-      );
+      final String? fileUrl = await MediaUpload.uploadFile(file: result.file, sessionId: state.sessionId);
 
       if (fileUrl != null) {
         emit(state.copyWith(uploadFileStatus: BaseStatus.success));
@@ -620,10 +685,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
     // Send the media message
     // TODO: Add fileSize metadata support when sendMessage accepts it
-    await sendMessage(
-      message: fileName, 
-      contentType: contentType,
-    );
+    await sendMessage(message: fileName, contentType: contentType);
   }
 
   /// Check if currently uploading a file
@@ -639,10 +701,10 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   Future<void> close() async {
     // Stop message stream before closing cubit
     await stopMessageStream();
-    
+
     // Cancel debounce timer
     _markAsReadDebounceTimer?.cancel();
-    
+
     return super.close();
   }
 }

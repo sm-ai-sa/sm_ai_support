@@ -38,6 +38,6 @@ class Apis {
   static String get verifyOtp => '$baseUrl/in-app/verification/verify-code';
 
   // Storage/Upload
-  static String get storageUpload => '$baseUrl/storage/customer-upload';
+  static String get storageUpload => '$baseUrl/in-app/storage/upload';
   static String get storageDownload => '$baseUrl/storage/download';
 }

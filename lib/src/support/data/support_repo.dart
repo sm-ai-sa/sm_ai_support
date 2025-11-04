@@ -125,7 +125,8 @@ class SupportRepo {
       final response = await networkServices.getMySessions();
 
       if (response.statusCode?.isSuccess ?? false) {
-        final sessionsResponse = MySessionsResponse.fromJson(response.data);
+         smPrint('Get My Sessions Response:==>>> ${response.data}');
+        final sessionsResponse = MySessionsResponse.fromJson(response.data as Map<String, dynamic>);
         smPrint('Get My Sessions Response: Success - ${sessionsResponse.result.length} sessions');
         return Success(sessionsResponse);
       } else {
@@ -133,7 +134,7 @@ class SupportRepo {
         return Error(ErrorHandler.handle(response));
       }
     } catch (e) {
-      smPrint('Get My Sessions Error: $e');
+      smPrint('Get My Sessions Error:: $e');
       return Error(ErrorHandler.handle(e));
     }
   }
@@ -158,17 +159,28 @@ class SupportRepo {
     }
   }
 
-  /// Get messages for a specific session
-  /// Returns all messages for the specified session ID
+  /// Get messages for a specific session with cursor-based pagination
+  /// Returns messages for the specified session ID with optional pagination
   /// [sessionId] - The ID of the session to get messages for
-  Future<NetworkResult<SessionMessagesResponse>> getMySessionMessages({required String sessionId}) async {
+  /// [limit] - Maximum number of messages to return (optional)
+  /// [cursorId] - The last message ID from previous fetch, for pagination (optional)
+  Future<NetworkResult<SessionMessagesResponse>> getMySessionMessages({
+    required String sessionId,
+    int? limit,
+    String? cursorId,
+  }) async {
     try {
-      final response = await networkServices.getMySessionMessages(sessionId: sessionId);
+      final response = await networkServices.getMySessionMessages(
+        sessionId: sessionId,
+        limit: limit,
+        cursorId: cursorId,
+      );
 
       if (response.statusCode?.isSuccess ?? false) {
         final messagesResponse = SessionMessagesResponse.fromJson(response.data);
         smPrint(
-          'Get My Session Messages Response: Success - ${messagesResponse.result.messages.length} message documents',
+          'Get My Session Messages Response: Success - ${messagesResponse.result.messages.length} messages'
+          '${cursorId != null ? ' (cursor: $cursorId)' : ' (initial load)'}',
         );
         return Success(messagesResponse);
       } else {

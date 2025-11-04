@@ -11,8 +11,10 @@ class HmacInterceptor extends InterceptorsWrapper {
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     try {
       // Check if HMAC signature should be applied to this request
-      if (!HmacSignatureHelper.shouldApplyHmacSignature(options.path)) {
-        smPrint('🔐 HMAC Interceptor: Skipping signature for path: ${options.path}');
+      // Use full URI to check for external domains and video URLs
+      final fullUrl = options.uri.toString();
+      if (!HmacSignatureHelper.shouldApplyHmacSignature(fullUrl)) {
+        smPrint('🔐 HMAC Interceptor: Skipping signature for URL: $fullUrl');
         handler.next(options);
         return;
       }
@@ -43,8 +45,15 @@ class HmacInterceptor extends InterceptorsWrapper {
       }
 
       // Get request body as string for HMAC signature
+      // For GET requests, use "GET" + query string instead of body
       String requestBody = '';
-      if (options.data != null) {
+      if (options.method.toUpperCase() == 'GET') {
+        // Extract query string from URI
+        final uri = options.uri;
+        final queryString = uri.query.isEmpty ? '' : uri.query;
+        requestBody = 'GET$queryString';
+        smPrint('🔐 HMAC Interceptor: Using "GET$queryString" for signature (GET request)');
+      } else if (options.data != null) {
         if (options.data is String) {
           requestBody = options.data as String;
         } else if (options.data is Map || options.data is List) {

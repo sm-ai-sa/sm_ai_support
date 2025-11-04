@@ -65,30 +65,41 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
 
       smPrint('🎬 Loading video thumbnail for: $videoUrl');
 
-      // Get cached video file for thumbnail
+      // For thumbnail, check cache first, otherwise download in background
       final fileInfo = await DefaultCacheManager().getFileFromCache(videoUrl);
 
       if (fileInfo != null && fileInfo.file.existsSync()) {
         smPrint('✅ Using cached video for thumbnail');
         _videoController = VideoPlayerController.file(fileInfo.file);
+
+        await _videoController!.initialize();
+        await _videoController!.seekTo(Duration.zero);
+        await _videoController!.pause();
+
+        if (mounted) {
+          setState(() {
+            _isInitialized = true;
+          });
+        }
+        smPrint('✅ Video thumbnail loaded from cache');
       } else {
-        smPrint('📡 Loading video from network for thumbnail');
-        _videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
-      }
-
-      await _videoController!.initialize();
-
-      // Seek to first frame to ensure thumbnail is visible
-      await _videoController!.seekTo(Duration.zero);
-      await _videoController!.pause();
-
-      if (mounted) {
-        setState(() {
-          _isInitialized = true;
+        // Video not cached - start background download but don't wait
+        smPrint('📥 Video not cached, downloading in background...');
+        DefaultCacheManager().getSingleFile(videoUrl).then((file) {
+          smPrint('✅ Video downloaded to cache');
+        }).catchError((e) {
+          smPrint('⚠️ Failed to cache video: $e');
         });
-      }
 
-      smPrint('✅ Video thumbnail loaded successfully');
+        // Show placeholder instead of trying to load thumbnail from network
+        if (mounted) {
+          setState(() {
+            _hasError = false;
+            _isInitialized = false; // Keep showing loading state
+          });
+        }
+        smPrint('ℹ️ Thumbnail will be available after video is cached');
+      }
     } catch (e) {
       smPrint('❌ Error loading video thumbnail: $e');
       if (mounted) {

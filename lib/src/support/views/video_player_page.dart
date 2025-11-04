@@ -33,26 +33,16 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     try {
       smPrint('🎬 Initializing video player for: ${widget.videoUrl}');
 
-      // Check if video is cached
-      final fileInfo = await DefaultCacheManager().getFileFromCache(widget.videoUrl);
+      // Always download and cache first to avoid byte-range issues with R2/presigned URLs
+      // This ensures the video player works with a local file
+      smPrint('📥 Downloading video to cache...');
+      final file = await DefaultCacheManager().getSingleFile(widget.videoUrl);
 
-      if (fileInfo != null && fileInfo.file.existsSync()) {
-        smPrint('✅ Video found in cache - using local file');
-        _videoPlayerController = VideoPlayerController.file(fileInfo.file);
+      if (file.existsSync()) {
+        smPrint('✅ Video downloaded successfully - playing from local file');
+        _videoPlayerController = VideoPlayerController.file(file);
       } else {
-        smPrint('📡 Streaming video from network (will cache in background)');
-        // Use networkUrl for streaming - shows video while loading
-        _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
-
-        // Cache in background (non-blocking)
-        DefaultCacheManager()
-            .getSingleFile(widget.videoUrl)
-            .then((_) {
-              smPrint('✅ Video cached for future playback');
-            })
-            .catchError((e) {
-              smPrint('⚠️ Failed to cache video: $e');
-            });
+        throw Exception('Failed to download video file');
       }
 
       await _videoPlayerController!.initialize();

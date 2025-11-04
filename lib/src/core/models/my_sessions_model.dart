@@ -146,8 +146,10 @@ class MySessionsResponse extends Equatable {
 
   factory MySessionsResponse.fromJson(Map<String, dynamic> json) {
     return MySessionsResponse(
-      result: (json['result'] as List).map((e) => MySessionModel.fromJson(e as Map<String, dynamic>)).toList(),
-      statusCode: json['statusCode'] as int,
+      result: json['result'] != null
+          ? (json['result'] as List).map((e) => MySessionModel.fromJson(e as Map<String, dynamic>)).toList()
+          : [],
+      statusCode: json['statusCode'] != null ? json['statusCode'] as int : 0,
     );
   }
 

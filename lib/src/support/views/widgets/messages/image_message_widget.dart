@@ -42,7 +42,7 @@ class ImageMessageWidget extends StatelessWidget {
           sessionId: sessionId,
           width: 200.rw,
           height: 150.rh,
-          fit: BoxFit.cover,
+          fit: BoxFit.contain,
           borderRadius: BorderRadius.circular(8),
           category: FileUploadCategory.sessionMedia,
         ),

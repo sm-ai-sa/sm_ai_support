@@ -4,6 +4,7 @@
 library;
 
 export 'main.dart';
+export 'src/constant/const.dart';
 /// enums
 export 'src/constant/texts.dart';
 export 'src/core/models/auth_model.dart';

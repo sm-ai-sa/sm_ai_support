@@ -40,7 +40,7 @@ class SessionItem extends StatelessWidget {
                   children: [
                     DesignSystem.categorySvg(
                       session.category.categoryIcon,
-                      color: session.status.isClosed ? ColorsPallets.disabled300 : null,
+                      color: session.status.isGeneralClosed ? ColorsPallets.disabled300 : null,
                     ),
                     SizedBox(width: 14.rw),
                     Expanded(
@@ -50,7 +50,7 @@ class SessionItem extends StatelessWidget {
                           Text(
                             session.category.categoryName,
                             style: TextStyles.s_13_500.copyWith(
-                              color: session.status.isClosed ? ColorsPallets.disabled300 : null,
+                              color: session.status.isGeneralClosed ? ColorsPallets.disabled300 : null,
                             ),
                           ),
                           SizedBox(height: 4.rh),
@@ -86,7 +86,7 @@ class SessionItem extends StatelessWidget {
                     ),
                     Visibility(
                       //* closed chat
-                      visible: session.status.isClosed,
+                      visible: session.status.isGeneralClosed,
                       child: BlocBuilder<SMSupportCubit, SMSupportState>(
                         builder: (context, state) {
                          
