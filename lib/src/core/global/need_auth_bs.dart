@@ -7,6 +7,7 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/features/auth/views/login_by_phone.dart';
+import 'package:sm_ai_support/src/features/auth/views/register.dart';
 
 class NeedAuthBS extends StatelessWidget {
   const NeedAuthBS({super.key});
@@ -54,7 +55,7 @@ class NeedAuthBS extends StatelessWidget {
             title: SMText.login,
             onPressed: () {
               smNavigatorKey.currentState?.pop();
-              primaryCupertinoBottomSheet(child: LoginByPhone(isCreateAccount: false));
+              primaryCupertinoBottomSheet(child: LoginByPhone());
             },
             backgroundColor: ColorsPallets.primaryColor,
             width: double.infinity,
@@ -83,7 +84,7 @@ class NeedAuthBS extends StatelessWidget {
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
                       smNavigatorKey.currentState?.pop();
-                      primaryCupertinoBottomSheet(child: LoginByPhone(isCreateAccount: true));
+                      primaryCupertinoBottomSheet(child: Register());
                     },
                 ),
               ],

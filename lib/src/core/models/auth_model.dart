@@ -39,19 +39,27 @@ class CustomerModel extends Equatable {
 /// Send OTP request model
 class SendOtpRequest extends Equatable {
   final String phone;
+  final String? name; // Optional name parameter for registration
 
   const SendOtpRequest({
     required this.phone,
+    this.name,
   });
 
   Map<String, dynamic> toJson() {
-    return {
+    final data = {
       'phone': phone,
     };
+
+    if (name != null && name!.isNotEmpty) {
+      data['name'] = name!;
+    }
+
+    return data;
   }
 
   @override
-  List<Object?> get props => [phone];
+  List<Object?> get props => [phone, name];
 }
 
 /// Send OTP response model
@@ -168,3 +176,4 @@ class VerifyOtpResponse extends Equatable {
   @override
   List<Object?> get props => [result, statusCode];
 }
+

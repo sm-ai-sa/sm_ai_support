@@ -112,6 +112,9 @@ class SMText {
   static String get loginNow => isEnglish ? "Login Now" : "تسجيل الدخول الآن";
   static String get loginNow2 => isEnglish ? "Login Now" : "سجل الدخول الآن";
 
+  static String get thisNumberDoesNotExistPleaseRegisterFirst =>
+      isEnglish ? "This number doesn't exist, please register first" : "هذا الرقم غير موجود، يرجى التسجيل أولاً";
+
   static String get dontHaveAccount => isEnglish ? "Don't have an account," : "ليس لدي حساب,";
   static String get createNewAccount => isEnglish ? "Create New Account" : "إنشاء حساب جديد";
 
@@ -194,4 +197,37 @@ class SMText {
   static String get failedToLoadVideo => isEnglish ? "Failed to load video" : "فشل تحميل الفيديو";
   static String get retry => isEnglish ? "Retry" : "إعادة المحاولة";
   static String get videoPlayerNotAvailable => isEnglish ? "Video player not available" : "مشغل الفيديو غير متاح";
+
+  static String get requiredField => isEnglish ? "This field is required" : "هذا الحقل مطلوب";
+
+  static String get phoneNumber => isEnglish ? "Phone Number" : "رقم الهاتف";
+
+  static String get example => isEnglish ? "Example" : "مثال";
+
+  static String get pleaseCheckTheEnteredNumber =>
+      isEnglish ? "Please check the entered number." : "يرجى التحقق من الرقم المدخل.";
+
+  static String get enterValidName => isEnglish ? "Please enter a valid name." : "يرجى إدخال اسم صالح.";
+
+  static String get specialCharactersAreNotAllowed =>
+      isEnglish ? "Special characters are not allowed in the name." : "الأحرف الخاصة غير مسموح بها في الاسم.";
+
+  static String get fullName => isEnglish ? "Full Name" : "الاسم الكامل";
+
+  static String get followUp => isEnglish ? "Follow Up" : "المتابعة";
+
+  static String get pleaseEnterAllDetailsToCreateYourAccount =>
+      isEnglish ? "Please enter all details to create your account." : "يرجى إدخال جميع التفاصيل لإنشاء حسابك.";
+
+  static String get enjoyableExperience => isEnglish ? "Enjoyable Experience!" : "تجربة ممتعة!";
+
+  static String get congratulationsYourAccountIsNowReadyForUse =>
+      isEnglish ? "Congratulations! Your account\nis now ready for use" : "تهانينا! حسابك\nجاهز للاستخدام الآن";
+
+  static String get yourAccountHasBeenCreatedOnSmPlatform =>
+      isEnglish ? "Your account has been created on the Sm platform." : "تم إنشاء حساب خاص بك في منصة سّم.";
+
+
+  static String get welcomeOnSm =>
+      isEnglish ? "Welcome to SM AI! \n Happy to see you again!" : "مرحبًا بك في سم\n نسعد برؤيتك مجدداً!";
 }

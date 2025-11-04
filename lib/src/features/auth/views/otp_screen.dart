@@ -6,7 +6,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
-import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/components/hidden_otp/hidden_otp_progress.dart';
 import 'package:sm_ai_support/src/core/global/components/key_board/hard_coded_keyboard.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
@@ -14,6 +13,7 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_state.dart';
 
@@ -23,8 +23,16 @@ class OtpScreen extends StatefulWidget {
   String? phoneNumber;
   String? countryCode;
   String? sessionId;
+  final AuthCubit authCubit; // Receive AuthCubit from parent
 
-  OtpScreen({super.key, required this.isCreateAccount, this.phoneNumber, this.countryCode, this.sessionId});
+  OtpScreen({
+    super.key,
+    required this.isCreateAccount,
+    required this.authCubit, // Required parameter
+    this.phoneNumber,
+    this.countryCode,
+    this.sessionId
+  });
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
@@ -36,6 +44,9 @@ class _OtpScreenState extends State<OtpScreen> {
   final ValueNotifier<int> seconds = ValueNotifier<int>(60);
   final ValueNotifier<String> otp = ValueNotifier<String>("");
   String sms = "";
+
+  // Use the AuthCubit from the widget (passed from parent)
+  AuthCubit get _authCubit => widget.authCubit;
 
   @override
   void initState() {
@@ -68,11 +79,16 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void otpListener() {
-    if (otp.value.length == 6) {
-      sl<AuthCubit>().verifyOtp(
-        otp: otp.value,
-        sessionId: widget.sessionId,
-      );
+    if (otp.value.length == 6 && mounted) {
+      // Check if the cubit is still open before calling methods on it
+      if (!_authCubit.isClosed) {
+        _authCubit.verifyOtp(
+          otp: otp.value,
+          sessionId: widget.sessionId,
+        );
+      } else {
+        smPrint('AuthCubit is closed, cannot verify OTP');
+      }
     }
   }
 
@@ -89,19 +105,31 @@ class _OtpScreenState extends State<OtpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthCubit>(
-      create: (context) => sl<AuthCubit>(),
-      child: BlocConsumer<AuthCubit, AuthState>(
-      listenWhen: (prevState, state) => 
+    return BlocConsumer<AuthCubit, AuthState>(
+      bloc: _authCubit, // Use the cubit passed from parent
+      listenWhen: (prevState, state) =>
           state.verifyOtpStatus != prevState.verifyOtpStatus ||
           state.sendOtpStatus != prevState.sendOtpStatus,
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state.verifyOtpStatus.isSuccess) {
-          // Close the OTP screen and trigger auth refresh
-          Navigator.of(context).pop();
-          
-          // Trigger refresh of support state to update authentication status
-          _refreshSupportState();
+          if (widget.isCreateAccount) {
+            // For registration flow: Return success to Register screen
+            if (!mounted) return;
+
+            // Pop OTP bottom sheet with success result (true)
+            // This signals Register screen to close itself and show Congratulations
+            Navigator.of(context).pop(true);
+
+            // Trigger refresh of support state to update authentication status
+            _refreshSupportState();
+          } else {
+            // For login flow: Close the OTP screen and trigger auth refresh
+            if (!mounted) return;
+            Navigator.of(context).pop();
+
+            // Trigger refresh of support state to update authentication status
+            _refreshSupportState();
+          }
         } else if (state.verifyOtpStatus.isFailure) {
           // Clear OTP input on failure to allow retry
           otp.value = '';
@@ -158,10 +186,13 @@ class _OtpScreenState extends State<OtpScreen> {
                           style: TextStyles.s_13_400.copyWith(color: ColorsPallets.primaryColor),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () async {
-                              sl<AuthCubit>().sendOtp(
-                                phone: widget.phoneNumber!,
-                                countryCode: widget.countryCode ?? '+966',
-                              );
+                              // Check if cubit is still valid before sending OTP
+                              if (!_authCubit.isClosed) {
+                                _authCubit.sendOtp(
+                                  phone: widget.phoneNumber!,
+                                  countryCode: widget.countryCode ?? '+966',
+                                );
+                              }
                             },
                         ),
                       } else ...{
@@ -197,7 +228,6 @@ class _OtpScreenState extends State<OtpScreen> {
           ],
         );
       },
-      ),
     );
   }
 }

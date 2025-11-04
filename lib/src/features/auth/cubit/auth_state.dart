@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:sm_ai_support/src/core/models/auth_model.dart';
+import 'package:sm_ai_support/src/core/models/user_model.dart';
 import 'package:sm_ai_support/src/core/utils/enums.dart';
 
 /// Authentication state that manages all auth-related UI states
@@ -19,6 +20,15 @@ class AuthState extends Equatable {
   final String? sessionId;
   final bool isResetSessionId;
 
+  //! Registration Properties -----------------------------------
+
+  /// Registration body containing user data for registration
+  final UserModel? registrationBody;
+  final bool isResetRegistrationBody;
+
+  /// Current step in registration process (0 = step 1, 1 = step 2)
+  final int currentRegistrationStep;
+
   //! Authentication Status Properties -----------------------------------
 
   /// Status for sending OTP request
@@ -29,6 +39,9 @@ class AuthState extends Equatable {
 
   /// Status for logout operation
   final BaseStatus logoutStatus;
+
+  /// Status for registration request
+  final BaseStatus registerStatus;
 
   /// Error message for authentication operations
   final String? errorMessage;
@@ -41,10 +54,16 @@ class AuthState extends Equatable {
     this.sessionId,
     this.isResetSessionId = false,
 
+    // Registration Properties
+    this.registrationBody,
+    this.isResetRegistrationBody = false,
+    this.currentRegistrationStep = 0,
+
     // Authentication Status Properties
     this.sendOtpStatus = BaseStatus.initial,
     this.verifyOtpStatus = BaseStatus.initial,
     this.logoutStatus = BaseStatus.initial,
+    this.registerStatus = BaseStatus.initial,
 
     // Error message
     this.errorMessage,
@@ -64,10 +83,16 @@ class AuthState extends Equatable {
     String? sessionId,
     bool? isResetSessionId,
 
+    // Registration Properties
+    UserModel? registrationBody,
+    bool? isResetRegistrationBody,
+    int? currentRegistrationStep,
+
     // Authentication Status Properties
     BaseStatus? sendOtpStatus,
     BaseStatus? verifyOtpStatus,
     BaseStatus? logoutStatus,
+    BaseStatus? registerStatus,
 
     // Error message
     String? errorMessage,
@@ -80,10 +105,16 @@ class AuthState extends Equatable {
       sessionId: isResetSessionId == true ? null : sessionId ?? this.sessionId,
       isResetSessionId: false,
 
+      // Registration Properties
+      registrationBody: isResetRegistrationBody == true ? null : registrationBody ?? this.registrationBody,
+      isResetRegistrationBody: false,
+      currentRegistrationStep: currentRegistrationStep ?? this.currentRegistrationStep,
+
       // Authentication Status Properties
       sendOtpStatus: sendOtpStatus ?? this.sendOtpStatus,
       verifyOtpStatus: verifyOtpStatus ?? this.verifyOtpStatus,
       logoutStatus: logoutStatus ?? this.logoutStatus,
+      registerStatus: registerStatus ?? this.registerStatus,
 
       // Error message
       errorMessage: errorMessage ?? this.errorMessage,
@@ -116,10 +147,16 @@ class AuthState extends Equatable {
     sessionId,
     isResetSessionId,
 
+    // Registration Properties
+    registrationBody,
+    isResetRegistrationBody,
+    currentRegistrationStep,
+
     // Authentication Status Properties
     sendOtpStatus,
     verifyOtpStatus,
     logoutStatus,
+    registerStatus,
 
     // Error message
     errorMessage,
@@ -130,10 +167,12 @@ class AuthState extends Equatable {
     return '''AuthState(
       phoneNumber: $phoneNumber,
       sessionId: $sessionId,
+      currentRegistrationStep: $currentRegistrationStep,
       sendOtpStatus: $sendOtpStatus,
       verifyOtpStatus: $verifyOtpStatus,
       logoutStatus: $logoutStatus,
-     
+      registerStatus: $registerStatus,
+
     )''';
   }
 }

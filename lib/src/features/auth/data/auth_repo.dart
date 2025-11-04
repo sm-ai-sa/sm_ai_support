@@ -12,13 +12,14 @@ class AuthRepo {
   /// Send OTP to phone number
   /// Sends a verification code to the provided phone number
   /// [phone] - The phone number to send OTP to (with country code)
+  /// [name] - Optional name parameter for registration flow
   ///
   /// Returns [NetworkResult<SendOtpResponse>] containing:
   /// - Success: SendOtpResponse with temporary token
   /// - Error: ErrorModel with failure details
-  Future<NetworkResult<SendOtpResponse>> sendOtp({required String phone}) async {
+  Future<NetworkResult<SendOtpResponse>> sendOtp({required String phone, String? name}) async {
     try {
-      final response = await networkServices.sendOtp(phone: phone);
+      final response = await networkServices.sendOtp(phone: phone, name: name);
 
       if (response.statusCode?.isSuccess ?? false) {
         final otpResponse = SendOtpResponse.fromJson(response.data);
@@ -65,4 +66,5 @@ class AuthRepo {
       return Error(ErrorHandler.handle(e));
     }
   }
+
 }

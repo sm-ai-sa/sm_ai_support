@@ -35,6 +35,89 @@ class AuthCubit extends Cubit<AuthState> {
   //   }
   // }
 
+  //! Registration Methods -----------------------------------
+
+  /// Reset authentication state and initialize registration
+  /// Clears all auth data and sets up initial registration body
+  void reset() {
+    smPrint('Resetting authentication state for registration');
+    emit(
+      state.copyWith(
+        registrationBody: const UserModel(),
+        currentRegistrationStep: 0,
+        registerStatus: BaseStatus.initial,
+        sendOtpStatus: BaseStatus.initial,
+        verifyOtpStatus: BaseStatus.initial,
+        tempToken: null,
+        isResetTempToken: true,
+        phoneNumber: null,
+        isResetPhoneNumber: true,
+      ),
+    );
+  }
+
+  /// Navigate to registration step 1
+  void toRegistrationStep1() {
+    smPrint('Navigating to registration step 1');
+    emit(state.copyWith(currentRegistrationStep: 0));
+  }
+
+  /// Update registration body
+  void updateRegistrationBody(UserModel registrationBody) {
+    smPrint('Updating registration body');
+    emit(state.copyWith(registrationBody: registrationBody));
+  }
+
+  /// Register new customer
+  /// Sends OTP with name parameter for registration
+  /// [sessionId] - Optional session ID to link with existing session
+  ///
+  /// On success: Updates state with temp token and proceeds to OTP verification
+  /// On error: Shows error message and updates status to failure
+  Future<void> register({String? sessionId}) async {
+    final registrationBody = state.registrationBody;
+
+    if (registrationBody == null) {
+      smPrint('Register Error: Registration body is null');
+      primarySnackBar(smNavigatorKey.currentContext!, message: 'Registration data is missing');
+      return;
+    }
+
+    smPrint('Registering user: ${registrationBody.fullName} - ${registrationBody.fullPhoneNumber}');
+    emit(state.copyWith(registerStatus: BaseStatus.loading));
+
+    try {
+      // Use sendOtp with name parameter for registration
+      final result = await sl<AuthRepo>().sendOtp(
+        phone: registrationBody.fullPhoneNumber,
+        name: registrationBody.fullName,
+      );
+
+      result.when(
+        success: (data) {
+          smPrint('Register Success - Temp token received');
+          emit(
+            state.copyWith(
+              registerStatus: BaseStatus.success,
+              tempToken: data.token,
+              phoneNumber: registrationBody.fullPhoneNumber,
+              sessionId: sessionId,
+            ),
+          );
+        },
+        error: (error) {
+          smPrint('Register Error: ${error.failure.error}');
+          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
+          emit(state.copyWith(registerStatus: BaseStatus.failure, errorMessage: error.failure.error));
+        },
+      );
+    } catch (e) {
+      smPrint('Register Exception: $e');
+      primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
+      emit(state.copyWith(registerStatus: BaseStatus.failure, errorMessage: e.toString()));
+    }
+  }
+
   //! Authentication API Methods -----------------------------------
 
   /// Send OTP to phone number
@@ -70,8 +153,17 @@ class AuthCubit extends Cubit<AuthState> {
         },
         error: (error) {
           smPrint('Send OTP Error: ${error.failure.error}');
-          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
-          emit(state.copyWith(sendOtpStatus: BaseStatus.failure, errorMessage: error.failure.error));
+
+          // Check if error is about customer needing to register
+          String errorMessage = error.failure.error;
+          // Check both errorCode and error message for the error code
+          if (error.failure.errorCode == 'IN_APP_CUSTOMER_NEED_REGISTER' ||
+              errorMessage.contains('IN_APP_CUSTOMER_NEED_REGISTER')) {
+            errorMessage = SMText.thisNumberDoesNotExistPleaseRegisterFirst;
+          }
+
+          primarySnackBar(smNavigatorKey.currentContext!, message: errorMessage);
+          emit(state.copyWith(sendOtpStatus: BaseStatus.failure, errorMessage: errorMessage));
         },
       );
     } catch (e) {
@@ -139,8 +231,17 @@ class AuthCubit extends Cubit<AuthState> {
         },
         error: (error) {
           smPrint('Verify OTP Error: ${error.failure.error}');
-          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
-          emit(state.copyWith(verifyOtpStatus: BaseStatus.failure, errorMessage: error.failure.error));
+
+          // Check if the error is "customer needs to register"
+          String errorMessage = error.failure.error;
+          // Check both errorCode and error message for the error code
+          if (error.failure.errorCode == 'IN_APP_CUSTOMER_NEED_REGISTER' ||
+              errorMessage.contains('IN_APP_CUSTOMER_NEED_REGISTER')) {
+            errorMessage = SMText.thisNumberDoesNotExistPleaseRegisterFirst;
+          }
+
+          primarySnackBar(smNavigatorKey.currentContext!, message: errorMessage);
+          emit(state.copyWith(verifyOtpStatus: BaseStatus.failure, errorMessage: errorMessage));
         },
       );
     } catch (e) {
@@ -194,6 +295,20 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   //! State Management Helpers -----------------------------------
+
+  /// Sync registration data from local cubit instance to global instance
+  /// Used when transitioning from registration to OTP verification
+  void syncRegistrationData({
+    required String? phoneNumber,
+    required String? tempToken,
+    String? sessionId,
+  }) {
+    emit(state.copyWith(
+      phoneNumber: phoneNumber,
+      tempToken: tempToken,
+      sessionId: sessionId,
+    ));
+  }
 
   /// Reset OTP sending status
   /// Resets the send OTP status to initial state

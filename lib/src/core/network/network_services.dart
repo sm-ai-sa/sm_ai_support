@@ -153,8 +153,9 @@ class NetworkServices {
   //! Authentication API Methods -----------------------------------
 
   /// Send OTP to phone number
-  Future<Response> sendOtp({required String phone}) async {
-    final request = SendOtpRequest(phone: phone);
+  /// [name] - Optional parameter for registration flow
+  Future<Response> sendOtp({required String phone, String? name}) async {
+    final request = SendOtpRequest(phone: phone, name: name);
     return await dio.post(Apis.sendOtp, data: request.toJson());
   }
 

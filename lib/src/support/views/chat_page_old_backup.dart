@@ -150,7 +150,7 @@ class _ChatPageState extends State<ChatPage> {
   void _startMessageStream() {
     try {
       // Get tenant ID from SMSupportCubit
-      
+
       final tenantId = smCubit.state.currentTenant?.tenantId;
 
       if (tenantId == null) {
@@ -209,7 +209,11 @@ class _ChatPageState extends State<ChatPage> {
                   builder: (context, state) {
                     return Row(
                       children: [
-                        DesignSystem.categorySvg(widget.sessionCategory?.categoryIcon ?? '', width: 24.rSp, height: 24.rSp),
+                        DesignSystem.categorySvg(
+                          widget.sessionCategory?.categoryIcon ?? '',
+                          width: 24.rSp,
+                          height: 24.rSp,
+                        ),
                         SizedBox(width: 14.rw),
                         Expanded(
                           child: Text(
@@ -579,10 +583,10 @@ class _ChatPageState extends State<ChatPage> {
     } else if (message.contentType.isAuthorized || message.contentType.isUnauthorized) {
       return _buildAuthResultMessage(message, isMyMessage);
     }
-    
+
     // Handle system action messages
-    if (message.contentType.isReopenSession || 
-        message.contentType.isCloseSession || 
+    if (message.contentType.isReopenSession ||
+        message.contentType.isCloseSession ||
         message.contentType.isCloseSessionBySystem) {
       return SystemActionMessageWidget(message: message);
     }
@@ -593,23 +597,12 @@ class _ChatPageState extends State<ChatPage> {
     } else if (message.contentType.isImage) {
       return _buildImageMessage(message, isMyMessage);
     } else if (message.contentType.isVideo) {
-      return VideoMessageWidget(
-        message: message,
-        isMyMessage: isMyMessage,
-        sessionId: widget.sessionId,
-      );
+      return VideoMessageWidget(message: message, isMyMessage: isMyMessage, sessionId: widget.sessionId);
     } else if (message.contentType.isAudio) {
       // Audio files are now treated as unsupported media
-      return UnsupportedMediaWidget(
-        message: message,
-        isMyMessage: isMyMessage,
-      );
+      return UnsupportedMediaWidget(message: message, isMyMessage: isMyMessage);
     } else if (message.contentType.isFile) {
-      return FileMessageWidget(
-        message: message,
-        isMyMessage: isMyMessage,
-        sessionId: widget.sessionId,
-      );
+      return FileMessageWidget(message: message, isMyMessage: isMyMessage, sessionId: widget.sessionId);
     } else if (message.contentType.isUnsupportedMedia) {
       return UnsupportedMediaWidget(message: message, isMyMessage: isMyMessage);
     }
@@ -661,12 +654,11 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-
   //! Need Auth Message
   Widget _buildNeedAuthMessage(SessionMessage message, bool isMyMessage) {
     return InkWell(
       onTap: () {
-        primaryCupertinoBottomSheet(child: LoginByPhone(isCreateAccount: false, sessionId: widget.sessionId));
+        primaryCupertinoBottomSheet(child: LoginByPhone(sessionId: widget.sessionId));
       },
       child: Container(
         padding: EdgeInsets.all(10.rSp),

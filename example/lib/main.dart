@@ -1,5 +1,4 @@
 import 'package:example/sm_support_page.dart';
-import 'package:example/webview_support_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,7 +13,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SM AI Support Demo',
-      theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue), useMaterial3: true),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2563EB), primary: const Color(0xFF2563EB)),
+        useMaterial3: true,
+      ),
       home: const SupportDemoScreen(),
     );
   }
@@ -27,91 +29,175 @@ class SupportDemoScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(title: const Text('SM AI Support Demo'), backgroundColor: Colors.white),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        title: const Text(
+          'SM AI Support',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const SizedBox(height: 20),
+
+            // Logo
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: const Color(0xFF2563EB).withValues(alpha: 0.1), shape: BoxShape.circle),
+              child: const Icon(Icons.support_agent_rounded, size: 64, color: Color(0xFF2563EB)),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Version
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Text(
+                'VERSION 7.0',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF2563EB), letterSpacing: 1),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Description
+            const Text(
+              'AI-Powered Customer Support',
+              style: TextStyle(fontSize: 16, color: Color(0xFF64748B)),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 40),
+
+            // Demo Buttons
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Try Demo',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildDemoButton(
+              context,
+              icon: Icons.chat_bubble_outline_rounded,
+              title: 'Open Support',
+              subtitle: 'Arabic interface',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage())),
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildDemoButton(
+              context,
+              icon: Icons.language_rounded,
+              title: 'Open Support EN',
+              subtitle: 'English interface',
+              onTap: () =>
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage(isEnglish: true))),
+            ),
+
+            const SizedBox(height: 40),
+
+            // Features
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Features',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildFeature('Tenant-based configuration'),
+            _buildFeature('Auto-fetched categories'),
+            _buildFeature('Real-time chat'),
+            _buildFeature('Media upload'),
+            _buildFeature('Session management'),
+            _buildFeature('Bilingual support (EN/AR)'),
+            _buildFeature('Customizable theme', isLast: true),
+
+            const SizedBox(height: 40),
+
+            // Footer
+            Text(
+              'Powered by SM Platform',
+              style: TextStyle(fontSize: 12, color: const Color(0xFF64748B).withValues(alpha: 0.7)),
+            ),
+
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDemoButton(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
             children: [
-              const Icon(Icons.support_agent, size: 100, color: Colors.blue),
-              const Text(
-                'VERSION 7',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'SM AI Support Package Demo',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Click the button below to open the support interface and test the package functionality.',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-
-              // Full Screen Support Button
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage()));
-                },
-                icon: const Icon(Icons.help_outline),
-                label: const Text('Open Support'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16),
+              Icon(icon, color: const Color(0xFF2563EB), size: 24),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF1E293B)),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+                  ],
                 ),
               ),
-              const SizedBox(height: 44),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage(isEnglish: true)));
-                },
-                icon: const Icon(Icons.help_outline),
-                label: const Text('Open Support EN'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SupportWebViewPage()));
-                },
-                icon: const Icon(Icons.web),
-                label: const Text('Open Support WebView'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  textStyle: const TextStyle(fontSize: 16),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              const Text('Package Features:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 12),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('• Tenant-based configuration system'),
-                  Text('• Auto-fetched categories and branding'),
-                  Text('• Real-time chat interface'),
-                  Text('• Media upload support'),
-                  Text('• Session management'),
-                  Text('• Bilingual support (EN/AR)'),
-                  Text('• Customizable theme via API'),
-                ],
-              ),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF94A3B8), size: 16),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeature(String text, {bool isLast = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 18),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(text, style: const TextStyle(fontSize: 14, color: Color(0xFF475569))),
+          ),
+        ],
       ),
     );
   }

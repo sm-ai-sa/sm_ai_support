@@ -5,4 +5,5 @@ class SMAssetsPath {
   static String gif = "assets/gif";
   static String packageIcons = "assets/icons";
   static String icons = "assets/icons";
+  static String lottie = "assets/lottie";
 }

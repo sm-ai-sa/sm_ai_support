@@ -2,7 +2,6 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:uuid/uuid.dart';
 
@@ -67,6 +66,31 @@ class Utils {
   static bool isValidFileExtension(String filePath, List<String> allowedExtensions) {
     final extension = getFileExtension(filePath);
     return allowedExtensions.contains(extension);
+  }
+
+
+  /// Phone number validator
+  static String? phoneValidator(String? value, String? country) {
+    smLog('phoneValidator: country: $country  value: $value');
+    if (value == null || value.isEmpty) {
+      return SMText.pleaseCheckTheEnteredNumber;
+    } else if (value.length < 9) {
+      return SMText.pleaseCheckTheEnteredNumber;
+    }
+    return null;
+  }
+
+
+  /// Name validator
+  static String? nameValidator(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return SMText.enterValidName;
+    } else if (value.trim().length < 2) {
+      return SMText.enterValidName;
+    } else if (value.contains(RegExp(r'[!@#<>?":_`~;[\]\\|=+)(*&^%0-9-]'))) {
+      return SMText.specialCharactersAreNotAllowed;
+    }
+    return null;
   }
 }
 

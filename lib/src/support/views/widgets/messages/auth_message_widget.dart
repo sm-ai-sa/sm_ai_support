@@ -15,12 +15,7 @@ class AuthMessageWidget extends StatelessWidget {
   final String sessionId;
   final Color? tenantColor;
 
-  const AuthMessageWidget({
-    super.key,
-    required this.message,
-    required this.sessionId,
-    this.tenantColor,
-  });
+  const AuthMessageWidget({super.key, required this.message, required this.sessionId, this.tenantColor});
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +31,7 @@ class AuthMessageWidget extends StatelessWidget {
   Widget _buildNeedAuthMessage(BuildContext context) {
     return InkWell(
       onTap: () {
-        primaryCupertinoBottomSheet(
-          child: LoginByPhone(isCreateAccount: false, sessionId: sessionId),
-        );
+        primaryCupertinoBottomSheet(child: LoginByPhone(sessionId: sessionId));
       },
       child: Container(
         padding: EdgeInsets.all(10.rSp),
@@ -65,7 +58,7 @@ class AuthMessageWidget extends StatelessWidget {
   /// Authentication result message - shows success or failure
   Widget _buildAuthResultMessage() {
     final isAuthSuccess = message.contentType.isAuthorized;
-    
+
     return Container(
       padding: EdgeInsets.all(10.rSp),
       decoration: BoxDecoration(
@@ -84,13 +77,10 @@ class AuthMessageWidget extends StatelessWidget {
           SizedBox(width: 8.rw),
           Text(
             isAuthSuccess ? SMText.identityConfirmed : SMText.identityNotConfirmed,
-            style: TextStyles.s_13_400.copyWith(
-              color: isAuthSuccess ? ColorsPallets.green300 : ColorsPallets.red300,
-            ),
+            style: TextStyles.s_13_400.copyWith(color: isAuthSuccess ? ColorsPallets.green300 : ColorsPallets.red300),
           ),
         ],
       ),
     );
   }
 }
-

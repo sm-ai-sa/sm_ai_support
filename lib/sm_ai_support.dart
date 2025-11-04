@@ -17,6 +17,7 @@ export 'src/core/models/session_model.dart';
 export 'src/core/models/sm_support_data.dart';
 export 'src/core/models/tenant_model.dart';
 export 'src/core/models/upload_model.dart';
+export 'src/core/models/user_model.dart';
 /// Network
 export 'src/core/network/network_result.dart';
 /// Services

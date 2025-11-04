@@ -8,6 +8,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 // import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gif/gif.dart';
+import 'package:lottie/lottie.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/constant/path.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
@@ -255,7 +256,7 @@ class DesignSystem {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: isButtonDisabled ? ColorsPallets.fillColor : (backgroundColor ?? ColorsPallets.primaryColor),
-          borderRadius: (borderRadius ?? 10).br,
+          borderRadius: (borderRadius ?? 14).br,
         ),
         child: Visibility(
           visible: showLoading,
@@ -558,6 +559,15 @@ class DesignSystem {
       image: AssetImage("${SMAssetsPath.gif}/chat.gif", package: SMAssetsPath.packageName),
       autostart: Autostart.loop,
       placeholder: (context) => const SizedBox(),
+    );
+  }
+
+  static Widget lottieIcon({required String icon, double? height, double? width, double? size}) {
+    return Lottie.asset(
+      '${SMAssetsPath.lottie}/$icon.json',
+      width: size ?? (width ?? 24.rSp),
+      height: size ?? (height ?? 24.rSp),
+      package: SMAssetsPath.packageName,
     );
   }
 }

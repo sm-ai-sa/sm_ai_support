@@ -53,7 +53,9 @@ dependencies:
   http: ^1.2.2
   webview_flutter: ^4.9.0
   url_launcher: ^6.3.1
+  lottie: ^3.1.2
 
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,8 +74,10 @@ flutter:
     - assets/icons/files/
     - assets/gif/
     - assets/fonts/
+    - assets/lottie/
     - assets/fonts/hacen-maghreb/Hacen-Maghreb-Lt.ttf
     - assets/fonts/hacen-maghreb/Hacen-Maghreb-Bd.ttf
+
 
   fonts:
     - family: HacenMaghreb

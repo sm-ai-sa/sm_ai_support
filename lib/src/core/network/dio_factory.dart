@@ -242,11 +242,19 @@ class DioFactory {
       language = _pendingLocale!;
       _pendingLocale = null; // Clear it after use
     } else {
-      // Fall back to smCubit state
+      // Try to get from SMConfig first (most reliable during initialization)
       try {
-        language = smCubit.state.currentLocale ?? 'ar';
+        language = SMConfig.smData.locale.localeCode;
+        smPrint('🌐 Using locale from SMConfig: $language');
       } catch (e) {
-        // Use default fallback if smCubit not ready
+        // Fall back to smCubit state
+        try {
+          language = smCubit.state.currentLocale ?? 'ar';
+          smPrint('🌐 Using locale from smCubit: $language');
+        } catch (e) {
+          smPrint('🌐 Using default locale: $language');
+          // Use default fallback if both fail
+        }
       }
     }
 
@@ -270,7 +278,7 @@ class DioFactory {
 class AppInterceptors extends InterceptorsWrapper {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Get current language from headers first, then fallback to smCubit state
+    // Get current language from headers first, then fallback to SMConfig/smCubit
     String language = 'ar'; // Default fallback
 
     // Try to get from existing headers first (preferred)
@@ -278,11 +286,16 @@ class AppInterceptors extends InterceptorsWrapper {
     if (headerLanguage != null && headerLanguage.isNotEmpty) {
       language = headerLanguage;
     } else {
-      // Fall back to smCubit state if no header exists
+      // Try to get from SMConfig first (most reliable during initialization)
       try {
-        language = smCubit.state.currentLocale ?? 'ar';
+        language = SMConfig.smData.locale.localeCode;
       } catch (e) {
-        // Use default fallback if smCubit not available
+        // Fall back to smCubit state if SMConfig not available
+        try {
+          language = smCubit.state.currentLocale ?? 'ar';
+        } catch (e) {
+          // Use default fallback if both fail
+        }
       }
     }
 
