@@ -655,16 +655,6 @@ For runtime permissions:
 - Ensure your server's upload size limits are sufficient
 - For large files, the package automatically uses chunked upload
 
-### Getting Help
-
-- 📖 [Full Documentation](https://github.com/unicode-org/sm_ai_support/tree/main/docs)
-  - [Integration Guide](https://github.com/unicode-org/sm_ai_support/blob/main/docs/INTEGRATION_GUIDE.md)
-  - [HMAC Signature Documentation](https://github.com/unicode-org/sm_ai_support/blob/main/docs/HMAC_SIGNATURE_DOCUMENTATION.md)
-  - [Media Upload Guide](https://github.com/unicode-org/sm_ai_support/blob/main/MEDIA_UPLOAD.md)
-  - [Support API Documentation](https://github.com/unicode-org/sm_ai_support/blob/main/docs/SUPPORT_API_DOCUMENTATION.md)
-  - [WebSocket Streaming](https://github.com/unicode-org/sm_ai_support/blob/main/docs/WEBSOCKET_STREAMING.md)
-- 🐛 [Issue Tracker](https://github.com/unicode-org/sm_ai_support/issues)
-- 💬 [Discussions](https://github.com/unicode-org/sm_ai_support/discussions)
 
 ---
 
@@ -676,7 +666,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Built with ❤️ by the [Unicode Team]
 - Powered by Flutter and Dart
-- Icons by [Material Design Icons](https://materialdesignicons.com/)
 
 ---
 
