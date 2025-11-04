@@ -62,7 +62,7 @@ class SupportDemoScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Text(
-                'VERSION 7.0',
+                'VERSION 1.0.0',
                 style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF2563EB), letterSpacing: 1),
               ),
             ),
