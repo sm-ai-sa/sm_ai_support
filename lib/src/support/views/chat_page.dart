@@ -341,7 +341,7 @@ class _ChatPageState extends State<ChatPage> {
         return Expanded(
           child: ListView.builder(
             controller: _scrollController,
-            reverse: true, // This makes newest messages at bottom and preserves scroll on pagination
+            reverse: messagesList.isNotEmpty, // This makes newest messages at bottom and preserves scroll on pagination
             addAutomaticKeepAlives: false,
             padding: EdgeInsets.symmetric(horizontal: 22.rw).copyWith(top: 20.rh),
             itemCount:

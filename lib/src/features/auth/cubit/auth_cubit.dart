@@ -43,7 +43,7 @@ class AuthCubit extends Cubit<AuthState> {
     smPrint('Resetting authentication state for registration');
     emit(
       state.copyWith(
-        registrationBody: const UserModel(),
+        registrationBody: const UserModel(countryCode: '+966'), // Set default country code
         currentRegistrationStep: 0,
         registerStatus: BaseStatus.initial,
         sendOtpStatus: BaseStatus.initial,

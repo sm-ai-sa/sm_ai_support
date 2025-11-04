@@ -18,6 +18,8 @@ class ChatEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisSize: MainAxisSize.max,
       children: [
         SizedBox(height: 140.rh),
         TenantLogoHelper.standard(logoFileName: logoFileName, tenantId: tenantId, size: 80),

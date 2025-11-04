@@ -30,21 +30,24 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
+    // Initialize registration body with default country code
+    registrationBody = registrationBody.copyWith(countryCode: '+966');
+
     // Initialize controllers
     nameController = TextEditingController(text: registrationBody.fullName);
     phoneController = TextEditingController(text: registrationBody.phoneNumber);
 
-    // Get the cubit from context after the first frame
+    // Run initial validation
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authCubit = context.read<AuthCubit>();
       if (authCubit.state.registrationBody != null) {
         setState(() {
           registrationBody = authCubit.state.registrationBody!;
           nameController.text = registrationBody.fullName;
           phoneController.text = registrationBody.phoneNumber;
         });
-        validate();
       }
+      // Always validate after initialization
+      validate();
     });
   }
 
@@ -62,11 +65,19 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
   }
 
   void validate() {
+    smPrint('🔍 RegisterForm.validate() called:');
+    smPrint('  fullName: "${registrationBody.fullName}" (isEmpty: ${registrationBody.fullName.isEmpty})');
+    smPrint('  countryCode: "${registrationBody.countryCode}" (isEmpty: ${registrationBody.countryCode.isEmpty})');
+    smPrint('  phoneNumber: "${registrationBody.phoneNumber}" (isEmpty: ${registrationBody.phoneNumber.isEmpty})');
+
     final bool allFieldsFilled =
         registrationBody.fullName.isNotEmpty &&
         registrationBody.countryCode.isNotEmpty &&
         registrationBody.phoneNumber.isNotEmpty;
+
+    smPrint('  ✅ allFieldsFilled: $allFieldsFilled');
     isButtonEnabled.value = allFieldsFilled;
+    smPrint('  🔘 isButtonEnabled.value: ${isButtonEnabled.value}');
   }
 
   @override
@@ -90,7 +101,7 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
           ),
           SizedBox(height: 20.rh),
           PhoneTextField(
-            initCountryCode: registrationBody.countryCode.isEmpty ? null : registrationBody.countryCode,
+            initCountryCode: registrationBody.countryCode.isEmpty ? "+966" : registrationBody.countryCode,
             controller: phoneController,
             onCountryChanged: (country) {
               registrationBody = registrationBody.copyWith(countryCode: country.dialCode);
@@ -113,12 +124,12 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
                   showLoading: state.registerStatus.isLoading,
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
-
+    
                     final authCubit = context.read<AuthCubit>();
-
+    
                     // Update authCubit with registration body
                     authCubit.updateRegistrationBody(registrationBody);
-
+    
                     // Call register method
                     await authCubit.register();
                   },

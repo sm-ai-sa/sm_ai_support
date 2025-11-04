@@ -1,6 +1,9 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sm_ai_support/src/constant/texts.dart';
+import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
@@ -23,30 +26,31 @@ class Register extends StatefulWidget {
 
 class _RegisterState extends State<Register> with SingleTickerProviderStateMixin {
   bool _isOtpSheetShown = false;
+  late final AuthCubit authCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    authCubit = sl<AuthCubit>();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthCubit>(
-      create: (context) => AuthCubit()..reset(),
+    return BlocProvider<AuthCubit>.value(
+      value: authCubit..reset(),
       child: BlocConsumer<AuthCubit, AuthState>(
         listenWhen: (prevState, state) => state.registerStatus != prevState.registerStatus,
         listener: (context, state) async {
           if (state.registerStatus.isSuccess && !_isOtpSheetShown) {
             _isOtpSheetShown = true;
 
-            // Update the global AuthCubit with registration data before showing OTP screen
-            authCubit.syncRegistrationData(
-              phoneNumber: state.phoneNumber,
-              tempToken: state.tempToken,
-              sessionId: state.sessionId,
-            );
-
+            // No need to sync - using the same global instance
             final result = await primaryCupertinoBottomSheet(
               child: OtpScreen(
                 isCreateAccount: true,
-                authCubit: context.read<AuthCubit>(), // Pass the parent's AuthCubit
+                authCubit: authCubit, // Use the global instance directly
                 phoneNumber: state.registrationBody?.phoneNumber,
-                countryCode: state.registrationBody?.countryCode,
+                countryCode: state.registrationBody?.countryCode ?? '+966',
                 sessionId: state.sessionId,
               ),
             );
@@ -64,9 +68,10 @@ class _RegisterState extends State<Register> with SingleTickerProviderStateMixin
               if (!mounted) return;
 
               // Show Congratulations page
-              await Navigator.of(context, rootNavigator: true).push(
-                MaterialPageRoute(builder: (_) => const Congratulations()),
-              );
+              await Navigator.of(
+                context,
+                rootNavigator: true,
+              ).push(MaterialPageRoute(builder: (_) => const Congratulations()));
             }
           }
         },

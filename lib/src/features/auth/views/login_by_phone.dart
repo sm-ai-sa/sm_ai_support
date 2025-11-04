@@ -41,8 +41,8 @@ class _LoginByPhoneState extends State<LoginByPhone> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AuthCubit>(
-      create: (context) => sl<AuthCubit>(),
+    return BlocProvider<AuthCubit>.value(
+      value: sl<AuthCubit>(),
       child: Column(
         children: [
           SizedBox(height: 50.rh),
