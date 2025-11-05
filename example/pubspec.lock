@@ -880,7 +880,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "1.0.3"
+    version: "1.0.4"
   socket_io_client:
     dependency: transitive
     description:

@@ -219,20 +219,6 @@ class WebSocketService {
       smLog('WebSocketService: Socket.IO error: $error');
       _messageController?.addError(error);
     });
-
-    // Catch any channel-specific events
-    _socket!.onAny((event, data) {
-      // Only log non-system events for debugging
-      if (!['connect', 'disconnect', 'ping', 'pong'].contains(event)) {
-        smLog('WebSocketService: Received event: "$event"');
-      }
-
-      // Check if this event is our channel and contains message data
-      if (event == channelName || event.startsWith('message_')) {
-        smLog('WebSocketService: Processing channel event: "$event"');
-        _onMessageReceived(data);
-      }
-    });
   }
 
   /// Wait for Socket.IO connection to establish
