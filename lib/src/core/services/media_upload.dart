@@ -99,7 +99,7 @@ class MediaUpload {
       smPrint('File size: ${fileSizeInMB.toStringAsFixed(2)} MB');
       
       // 50 MB limit for all media files
-      return fileSizeInMB <= 50.0;
+      return fileSizeInMB <= 10.0;
     } catch (e) {
       smPrint('Error checking file size: $e');
       return false;

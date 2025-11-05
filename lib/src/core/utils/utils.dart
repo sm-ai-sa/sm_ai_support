@@ -33,7 +33,10 @@ class Utils {
   static bool isVideoUrl(String url) => url.endsWith('.mp4') || url.endsWith('.mov');
 
   static bool isImageUrl(String url) => url.endsWith('.jpg') || url.endsWith('.png');
-  static bool isFileUrl(String url) => url.endsWith('.pdf') || url.endsWith('.docx') || url.endsWith('.doc');
+
+
+
+  static bool isFileUrl(String url) => url.endsWith('.pdf') || url.endsWith('.docx') || url.endsWith('.doc') || url.endsWith('.xlsx') || url.endsWith('.xls') || url.endsWith('.pptx') || url.endsWith('.ppt') || url.endsWith('.txt') || url.endsWith('.zip') || url.endsWith('.csv'); 
 
   static MediaType getMediaType(File file) {
     if (isVideoFile(file)) {

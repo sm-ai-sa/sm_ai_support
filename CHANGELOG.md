@@ -1,3 +1,8 @@
+## 1.0.4
+
+* Enhanced reply indicator UI with curved lines and better visual feedback
+* Extended file type support for additional formats (xlsx, xls, pptx, ppt, txt, zip, csv)
+
 ## 1.0.3
 
 * Support local time

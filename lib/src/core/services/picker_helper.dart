@@ -43,7 +43,7 @@ class PickerHelper {
     //* Convert the size to megabytes
     double fileSizeInMB = fileSizeInBytes / (1024 * 1024);
     smPrint('fileSizeInMB : $fileSizeInMB');
-    if (fileSizeInMB > 2) {
+    if (fileSizeInMB > 10) {
       isValid = false;
     } else {
       isValid = true;

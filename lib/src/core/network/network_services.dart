@@ -73,11 +73,7 @@ class NetworkServices {
   /// [sessionId] - The session ID to fetch messages for
   /// [limit] - Maximum number of messages to return (optional)
   /// [cursorId] - The last message ID from previous fetch, for pagination (optional)
-  Future<Response> getMySessionMessages({
-    required String sessionId,
-    int? limit,
-    String? cursorId,
-  }) async {
+  Future<Response> getMySessionMessages({required String sessionId, int? limit, String? cursorId}) async {
     final queryParams = <String, dynamic>{'id': sessionId};
 
     if (limit != null) {
@@ -196,41 +192,34 @@ class NetworkServices {
 
   /// Upload file to R2 cloud storage using presigned URL
   /// Uses PUT request with raw file data as per R2 requirements
-  Future<Response> uploadToR2({
-    required String presignedUrl,
-    required String filePath,
-  }) async {
+  Future<Response> uploadToR2({required String presignedUrl, required String filePath}) async {
     try {
       // Read file as bytes
       final file = File(filePath);
       final fileBytes = await file.readAsBytes();
-      
+
       // Detect MIME type from file path
       final mimeType = lookupMimeType(filePath) ?? 'application/octet-stream';
-      
+
       smPrint('📤 Uploading to R2: ${file.path}');
-      smPrint('📤 File size: ${fileBytes.length} bytes');
+      smPrint('📤 File size: ${(fileBytes.length) / (1024 * 1024)} MB');
       smPrint('📤 MIME type: $mimeType');
       smPrint('📤 Presigned URL: $presignedUrl');
 
       // Create a new Dio instance for cloud upload (no base URL)
-      final cloudDio = Dio(BaseOptions(
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
-        sendTimeout: const Duration(seconds: 60),
-      ));
+      final cloudDio = Dio(
+        BaseOptions(
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 60),
+        ),
+      );
 
       // Upload using PUT request with raw file bytes
       final response = await cloudDio.put(
         presignedUrl,
         data: fileBytes,
-        options: Options(
-          method: 'PUT',
-          headers: {
-            'Content-Type': mimeType,
-          },
-          contentType: mimeType,
-        ),
+        options: Options(method: 'PUT', headers: {'Content-Type': mimeType}, contentType: mimeType),
       );
 
       smPrint('📤 Upload completed with status: ${response.statusCode}');

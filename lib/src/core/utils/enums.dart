@@ -11,11 +11,13 @@ enum SMSupportLocale {
       this == SMSupportLocale.ar ? LocalizationsData.supportLocale.first : LocalizationsData.supportLocale.last;
 
   /// Check if the locale is `Arabic`
-  bool get isArabic => this == SMSupportLocale.ar;
+  bool get bic => this == SMSupportLocale.ar;
 
   /// Check if the locale is `English`
   bool get isEnglish => this == SMSupportLocale.en;
 
+  /// Check if the locale is `Arabic`
+  bool get isArabic => this == SMSupportLocale.ar;
   /// Get the locale code
   String get localeCode {
     switch (this) {
