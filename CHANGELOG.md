@@ -1,3 +1,8 @@
+## 1.0.5
+
+* Updated SDK constraints to support Flutter 3.27.0 and Dart 3.6.0+
+* Downgraded intl package to ^0.19.0 for compatibility with Flutter 3.27.0
+
 ## 1.0.4
 
 * Enhanced reply indicator UI with curved lines and better visual feedback

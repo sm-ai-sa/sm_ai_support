@@ -30,4 +30,7 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 build/
 
+# FVM Version Manager
+.fvm/flutter_sdk
+
 instructions.txt
