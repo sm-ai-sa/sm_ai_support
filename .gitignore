@@ -32,5 +32,7 @@ build/
 
 # FVM Version Manager
 .fvm/flutter_sdk
-
+.fvm
 instructions.txt
+
+docs/

@@ -8,6 +8,7 @@ import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/network/hmac_interceptor.dart';
+import 'package:sm_ai_support/src/core/network/device_id_interceptor.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 class DioFactory {
@@ -44,10 +45,11 @@ class DioFactory {
 
       addDioHeaders();
       addHmacInterceptor(); // Add HMAC signature interceptor (includes API key)
+      addDeviceIdInterceptor(); // Add device ID interceptor for anonymous user tracking
       addAuthInterceptor(); // Add auth interceptor (for Bearer token)
       addDioInterceptor(); // Add logging interceptor AFTER headers are set
       addAppInterceptor();
-      
+
       smPrint('🌐 Dio instance created with all interceptors');
       return dio!;
     } else {
@@ -222,12 +224,21 @@ class DioFactory {
   //* ADD : HMAC SIGNATURE INTERCEPTOR -------------------------------------
   /// HMAC Interceptor handles:
   /// - API Key (x-api-key)
-  /// - Timestamp (x-t) 
+  /// - Timestamp (x-t)
   /// - HMAC Signature (x-signature)
   /// No separate API key interceptor needed - HMAC includes it
   static void addHmacInterceptor() {
     dio?.interceptors.add(HmacInterceptor());
     smPrint('🔐 HMAC Signature Interceptor added to Dio (includes API key)');
+  }
+
+  //* ADD : DEVICE ID INTERCEPTOR -------------------------------------
+  /// Device ID Interceptor handles:
+  /// - Device ID header (device-id) for anonymous user tracking
+  /// Adds unique device UUID to all requests for user analytics
+  static void addDeviceIdInterceptor() {
+    dio?.interceptors.add(DeviceIdInterceptor());
+    smPrint('🆔 Device ID Interceptor added to Dio');
   }
 
   //* ADD : DIO HEADERS -------------------------------------

@@ -37,7 +37,7 @@ class SMSupportState extends Equatable {
 
   // New support data
   final List<CategoryModel> categories;
-  final SessionModel? currentSession;
+  final MySessionModel? currentSession;
   final List<MySessionModel> mySessions;
   final int myUnreadSessionsCount;
   final bool isGetSessionsBefore;
@@ -135,7 +135,7 @@ class SMSupportState extends Equatable {
 
     // New support data
     List<CategoryModel>? categories,
-    SessionModel? currentSession,
+    MySessionModel? currentSession,
     bool? isResetCurrentSession,
     List<MySessionModel>? mySessions,
     int? myUnreadSessionsCount,
@@ -282,7 +282,6 @@ class SMSupportState extends Equatable {
 
   String? get currentSessionId => currentSession?.id;
 
-  String? get currentSessionViewId => currentSession?.viewId;
 
   CategoryModel? getCategoryById(int categoryId) {
     return categories.firstWhereOrNull((category) => category.id == categoryId);

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:sm_ai_support/src/core/models/session_messages_model.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/auth_message_widget.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/file_message_widget.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/image_message_widget.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/system_action_message_widget.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/text_message_widget.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/unsupported_media_widget.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/video_message_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/auth_message_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/file_message_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/image_message_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/system_action_message_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/text_message_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/unsupported_media_widget.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/video_message_widget.dart';
 
 /// Factory class for creating message widgets based on content type
 /// Handles routing and instantiation of appropriate message widget

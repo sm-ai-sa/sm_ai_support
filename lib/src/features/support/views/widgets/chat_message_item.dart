@@ -7,11 +7,11 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension/days_extensions.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
-import 'package:sm_ai_support/src/support/cubit/single_session_cubit.dart';
-import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_cubit.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
-import 'package:sm_ai_support/src/support/views/widgets/messages/message_factory.dart';
+import 'package:sm_ai_support/src/features/support/cubit/single_session_cubit.dart';
+import 'package:sm_ai_support/src/features/support/cubit/single_session_state.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_cubit.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/messages/message_factory.dart';
 
 /// Individual message item widget with reply functionality and metadata
 class ChatMessageItem extends StatelessWidget {

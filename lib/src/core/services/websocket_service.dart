@@ -128,6 +128,9 @@ class WebSocketService {
   Future<void> _attemptSocketIOConnection(String channelName) async {
     // smLog('WebSocketService: Connecting to Socket.IO server: $_baseUrl/customer/room');
 
+    // Get device ID for anonymous user tracking
+    final deviceId = DeviceIdManager.instance.getDeviceIdSync();
+
     // Create Socket.IO client with proper configuration
     _socket = IO.io(
       '$_baseUrl/customer/room',
@@ -139,6 +142,7 @@ class WebSocketService {
           .setReconnectionDelay(1000)
           .setTimeout(20000)
           .setPath('/socket.io/')
+          .setExtraHeaders(deviceId != null ? {'device-id': deviceId} : {})
           .build(),
     );
 
@@ -599,6 +603,9 @@ class WebSocketService {
     try {
       smLog('WebSocketService: Connecting to Socket.IO server for additional streams');
 
+      // Get device ID for anonymous user tracking
+      final deviceId = DeviceIdManager.instance.getDeviceIdSync();
+
       // Create Socket.IO client with proper configuration
       _socket = IO.io(
         '$_baseUrl/customer/room',
@@ -610,6 +617,7 @@ class WebSocketService {
             .setReconnectionDelay(1000)
             .setTimeout(20000)
             .setPath('/socket.io/')
+            .setExtraHeaders(deviceId != null ? {'device-id': deviceId} : {})
             .build(),
       );
 

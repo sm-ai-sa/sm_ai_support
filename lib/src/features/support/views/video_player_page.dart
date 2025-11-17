@@ -2,6 +2,7 @@ import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:sm_ai_support/src/constant/texts.dart';
+import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:video_player/video_player.dart';
 
@@ -108,7 +109,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => context.smPop(),
         ),
       ),
       body: SafeArea(

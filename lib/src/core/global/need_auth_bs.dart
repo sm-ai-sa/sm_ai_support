@@ -5,6 +5,7 @@ import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.da
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
+import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/features/auth/views/login_by_phone.dart';
 import 'package:sm_ai_support/src/features/auth/views/register.dart';
@@ -54,8 +55,10 @@ class NeedAuthBS extends StatelessWidget {
             borderRadius: 14,
             title: SMText.login,
             onPressed: () {
-              smNavigatorKey.currentState?.pop();
-              primaryCupertinoBottomSheet(child: LoginByPhone());
+              context.smPopSheet();
+              primaryCupertinoBottomSheet(
+                child: LoginByPhone(),
+              );
             },
             backgroundColor: ColorsPallets.primaryColor,
             width: double.infinity,
@@ -77,13 +80,12 @@ class NeedAuthBS extends StatelessWidget {
                   text: ' ',
                   style: TextStyles.s_12_400.copyWith(color: ColorsPallets.subdued400),
                 ),
-
                 TextSpan(
                   text: SMText.createNewAccount,
                   style: TextStyles.s_12_400.copyWith(color: ColorsPallets.primaryColor),
                   recognizer: TapGestureRecognizer()
                     ..onTap = () {
-                      smNavigatorKey.currentState?.pop();
+                      context.smPopSheet();
                       primaryCupertinoBottomSheet(child: Register());
                     },
                 ),

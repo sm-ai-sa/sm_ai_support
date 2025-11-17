@@ -4,6 +4,8 @@
 library;
 
 export 'main.dart';
+/// Legacy full-screen mode (backward compatibility)
+export 'src/features/support/legacy/sm_support_legacy.dart';
 export 'src/constant/const.dart';
 /// enums
 export 'src/constant/texts.dart';
@@ -22,12 +24,13 @@ export 'src/core/models/user_model.dart';
 export 'src/core/network/network_result.dart';
 /// Services
 export 'src/core/services/auth_manager.dart';
+export 'src/core/services/device_id_manager.dart';
 export 'src/core/services/secure_storage_helper.dart';
 export 'src/core/services/shared_pref_helper.dart';
 export 'src/core/services/websocket_service.dart';
 export 'src/core/utils/enums.dart';
 /// Cubit
-export 'src/support/cubit/single_session_cubit.dart';
-export 'src/support/cubit/sm_support_cubit.dart';
+export 'src/features/support/cubit/single_session_cubit.dart';
+export 'src/features/support/cubit/sm_support_cubit.dart';
 /// Repos
-export 'src/support/data/support_repo.dart';
+export 'src/features/support/data/support_repo.dart';

@@ -1,118 +1,118 @@
 import 'package:equatable/equatable.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 
-class SessionModel extends Equatable {
-  final String createdAt;
-  final String updatedAt;
-  final String id;
-  final SessionStatus status;
-  final bool isEscalated;
-  final bool isReopened;
-  final String? customerId;
-  final int tenantId;
-  final int categoryId;
-  final String channel;
-  final String direction;
-  final String viewId;
-  final String? adminId;
-  final String? conversationEndedAt;
-  final dynamic intakes;
-  final String? deletedAt;
+// class SessionModel extends Equatable {
+//   final String createdAt;
+//   final String updatedAt;
+//   final String id;
+//   final SessionStatus status;
+//   final bool isEscalated;
+//   final bool isReopened;
+//   final String? customerId;
+//   final int tenantId;
+//   final int categoryId;
+//   final String channel;
+//   final String direction;
+//   final String viewId;
+//   final String? adminId;
+//   final String? conversationEndedAt;
+//   final dynamic intakes;
+//   final String? deletedAt;
 
-  const SessionModel({
-    required this.createdAt,
-    required this.updatedAt,
-    required this.id,
-    required this.status,
-    required this.isEscalated,
-    required this.isReopened,
-    this.customerId,
-    required this.tenantId,
-    required this.categoryId,
-    required this.channel,
-    required this.direction,
-    required this.viewId,
-    this.adminId,
-    this.conversationEndedAt,
-    this.intakes,
-    this.deletedAt,
-  });
+//   const SessionModel({
+//     required this.createdAt,
+//     required this.updatedAt,
+//     required this.id,
+//     required this.status,
+//     required this.isEscalated,
+//     required this.isReopened,
+//     this.customerId,
+//     required this.tenantId,
+//     required this.categoryId,
+//     required this.channel,
+//     required this.direction,
+//     required this.viewId,
+//     this.adminId,
+//     this.conversationEndedAt,
+//     this.intakes,
+//     this.deletedAt,
+//   });
 
-  factory SessionModel.fromJson(Map<String, dynamic> json) {
-    return SessionModel(
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String,
-      id: json['id'] as String,
-      status: SessionStatus.fromString(json['status'] as String),
-      isEscalated: json['isEscalated'] as bool,
-      isReopened: json['isReopened'] as bool,
-      customerId: json['customerId'] as String?,
-      tenantId: json['tenantId'] as int,
-      categoryId: json['categoryId'] as int,
-      channel: json['channel'] as String,
-      direction: json['direction'] as String,
-      viewId: json['viewId'] as String,
-      adminId: json['adminId'] as String?,
-      conversationEndedAt: json['conversationEndedAt'] as String?,
-      intakes: json['intakes'],
-      deletedAt: json['deletedAt'] as String?,
-    );
-  }
+//   factory SessionModel.fromJson(Map<String, dynamic> json) {
+//     return SessionModel(
+//       createdAt: json['createdAt'] as String,
+//       updatedAt: json['updatedAt'] as String,
+//       id: json['id'] as String,
+//       status: SessionStatus.fromString(json['status'] as String),
+//       isEscalated: json['isEscalated'] as bool,
+//       isReopened: json['isReopened'] as bool,
+//       customerId: json['customerId'] as String?,
+//       tenantId: json['tenantId'] as int,
+//       categoryId: json['categoryId'] as int,
+//       channel: json['channel'] as String,
+//       direction: json['direction'] as String,
+//       viewId: json['viewId'] as String,
+//       adminId: json['adminId'] as String?,
+//       conversationEndedAt: json['conversationEndedAt'] as String?,
+//       intakes: json['intakes'],
+//       deletedAt: json['deletedAt'] as String?,
+//     );
+//   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-      'id': id,
-      'status': status,
-      'isEscalated': isEscalated,
-      'isReopened': isReopened,
-      'customerId': customerId,
-      'tenantId': tenantId,
-      'categoryId': categoryId,
-      'channel': channel,
-      'direction': direction,
-      'viewId': viewId,
-      'adminId': adminId,
-      'conversationEndedAt': conversationEndedAt,
-      'intakes': intakes,
-      'deletedAt': deletedAt,
-    };
-  }
+//   Map<String, dynamic> toJson() {
+//     return {
+//       'createdAt': createdAt,
+//       'updatedAt': updatedAt,
+//       'id': id,
+//       'status': status,
+//       'isEscalated': isEscalated,
+//       'isReopened': isReopened,
+//       'customerId': customerId,
+//       'tenantId': tenantId,
+//       'categoryId': categoryId,
+//       'channel': channel,
+//       'direction': direction,
+//       'viewId': viewId,
+//       'adminId': adminId,
+//       'conversationEndedAt': conversationEndedAt,
+//       'intakes': intakes,
+//       'deletedAt': deletedAt,
+//     };
+//   }
 
-  @override
-  List<Object?> get props => [
-    createdAt,
-    updatedAt,
-    id,
-    status,
-    isEscalated,
-    isReopened,
-    customerId,
-    tenantId,
-    categoryId,
-    channel,
-    direction,
-    viewId,
-    adminId,
-    conversationEndedAt,
-    intakes,
-    deletedAt,
-  ];
+//   @override
+//   List<Object?> get props => [
+//     createdAt,
+//     updatedAt,
+//     id,
+//     status,
+//     isEscalated,
+//     isReopened,
+//     customerId,
+//     tenantId,
+//     categoryId,
+//     channel,
+//     direction,
+//     viewId,
+//     adminId,
+//     conversationEndedAt,
+//     intakes,
+//     deletedAt,
+//   ];
 
-  // Category model from categories list in smSupportState
-  CategoryModel? get category => smCubit.state.categories.firstWhere((element) => element.id == categoryId);
-}
+//   // Category model from categories list in smSupportState
+//   CategoryModel? get category => smCubit.state.categories.firstWhere((element) => element.id == categoryId);
+// }
 
 class SessionResponse extends Equatable {
-  final SessionModel result;
+  final MySessionModel result;
   final int statusCode;
 
   const SessionResponse({required this.result, required this.statusCode});
 
   factory SessionResponse.fromJson(Map<String, dynamic> json) {
     return SessionResponse(
-      result: SessionModel.fromJson(json['result'] as Map<String, dynamic>),
+      result: MySessionModel.fromJson(json['result'] as Map<String, dynamic>),
       statusCode: json['statusCode'] as int,
     );
   }

@@ -21,13 +21,19 @@ class MySessionModel extends Equatable {
 
   factory MySessionModel.fromJson(Map<String, dynamic> json) {
     return MySessionModel(
-      id: json['id'] as String,
-      status: SessionStatus.fromString(json['status'] as String),
-      createdAt: json['createdAt'] as String,
-      isRatingRequired: json['isRatingRequired'] as bool? ?? false,
-      category: CategoryModel.fromJson(json['category'] as Map<String, dynamic>),
-      metadata: MySessionMetadata.fromJson(json['metadata'] as Map<String, dynamic>),
-    );
+        id: json['id'] as String,
+        status: json['status'] != null ? SessionStatus.fromString(json['status'] as String) : SessionStatus.closed,
+        createdAt: json['createdAt'] != null ? json['createdAt'] as String : '',
+        isRatingRequired: json['isRatingRequired'] != null ? json['isRatingRequired'] as bool? ?? false : false,
+        category: json['category'] != null
+            ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)
+            : json['categoryId'] != null
+                ? CategoryModel(
+                    id: json['categoryId'] as int, description: '', name: '', icon: '', iconInfo: IconInfo(name: ''))
+                : CategoryModel(id: 0, description: '', name: '', icon: '', iconInfo: IconInfo(name: '')),
+        metadata: json['metadata'] != null
+            ? MySessionMetadata.fromJson(json['metadata'] as Map<String, dynamic>)
+            : MySessionMetadata(id: '', lastMessageContent: '', lastMessageAt: null, unreadCount: 0));
   }
 
   Map<String, dynamic> toJson() {
@@ -59,8 +65,7 @@ class MySessionModel extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       isRatingRequired: isRatingRequired ?? this.isRatingRequired,
       category: category ?? this.category,
-      metadata:
-          metadata?.copyWith(
+      metadata: metadata?.copyWith(
             id: metadata.id,
             lastMessageContent: metadata.lastMessageContent,
             unreadCount: metadata.unreadCount,
@@ -70,26 +75,26 @@ class MySessionModel extends Equatable {
   }
 
   // Convert MySessionModel to SessionModel for compatibility
-  SessionModel toSessionModel() {
-    return SessionModel(
-      id: id,
-      createdAt: createdAt,
-      updatedAt: createdAt, // Use createdAt as fallback
-      status: status,
-      isEscalated: false, // Default values for missing fields
-      isReopened: false,
-      customerId: null,
-      tenantId: int.tryParse(smCubit.state.currentTenant?.tenantId ?? '0') ?? 0,
-      categoryId: category.id,
-      channel: 'WEB', // Default channel
-      direction: 'INBOUND', // Default direction
-      viewId: '', // Default viewId
-      adminId: null,
-      conversationEndedAt: null,
-      intakes: null,
-      deletedAt: null,
-    );
-  }
+  // SessionModel toSessionModel() {
+  //   return SessionModel(
+  //     id: id,
+  //     createdAt: createdAt,
+  //     updatedAt: createdAt, // Use createdAt as fallback
+  //     status: status,
+  //     isEscalated: false, // Default values for missing fields
+  //     isReopened: false,
+  //     customerId: null,
+  //     tenantId: int.tryParse(smCubit.state.currentTenant?.tenantId ?? '0') ?? 0,
+  //     categoryId: category.id,
+  //     channel: 'WEB', // Default channel
+  //     direction: 'INBOUND', // Default direction
+  //     viewId: '', // Default viewId
+  //     adminId: null,
+  //     conversationEndedAt: null,
+  //     intakes: null,
+  //     deletedAt: null,
+  //   );
+  // }
 }
 
 /// Metadata for a session containing last message and unread count

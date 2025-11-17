@@ -8,6 +8,7 @@ import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.da
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
+import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
@@ -107,7 +108,7 @@ class _LoginByPhoneState extends State<LoginByPhone> {
                     }
                     if (state.verifyOtpStatus.isSuccess) {
                       // Close the login by phone bottom sheet after successful verification
-                      Navigator.of(context).pop();
+                      context.smPop();
                     }
                   },
                   buildWhen: (prevState, state) => state.sendOtpStatus != prevState.sendOtpStatus,
@@ -137,7 +138,7 @@ class _LoginByPhoneState extends State<LoginByPhone> {
 
                 DesignSystem.noAccCreateOne(
                   onPressed: () {
-                    smNavigatorKey.currentState?.pop();
+                    context.smPopSheet();
                     primaryCupertinoBottomSheet(child: Register());
                   },
                 ),
