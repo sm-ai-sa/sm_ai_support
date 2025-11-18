@@ -5,6 +5,8 @@ import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/components/country_codes.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
+import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
 
 /// Handles all initialization tasks before showing the bottom sheet
 class InitializationHandler {
@@ -31,5 +33,20 @@ class InitializationHandler {
     // Initialize countries (can be async)
     initializeDefaultCountry();
     getCountries();
+
+    // Perform auto-login if customer data is provided
+    if (smSupportData.customer != null && !AuthManager.isAuthenticated) {
+      await _performAutoLogin(smSupportData.customer!);
+    }
+  }
+
+  /// Perform auto-login with customer data
+  static Future<void> _performAutoLogin(CustomerData customer) async {
+    try {
+      await sl<AuthCubit>().autoLogin(customer: customer);
+    } catch (e) {
+      // Log error but don't block initialization
+      smPrint('Auto-login failed: $e');
+    }
   }
 }

@@ -36,6 +36,7 @@ class Apis {
   // Authentication
   static String get sendOtp => '$baseUrl/in-app/verification/send-code';
   static String get verifyOtp => '$baseUrl/in-app/verification/verify-code';
+  static String get autoLogin => '$baseUrl/in-app/auto-login';
 
   // Storage/Upload
   static String get storageUpload => '$baseUrl/in-app/storage/upload';

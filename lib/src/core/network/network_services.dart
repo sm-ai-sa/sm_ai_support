@@ -168,6 +168,12 @@ class NetworkServices {
     return await dio.post(Apis.verifyOtp, data: request.toJson(), options: options);
   }
 
+  /// Auto-login with customer data
+  /// [customer] - Customer data containing phone and name
+  Future<Response> autoLogin({required CustomerData customer}) async {
+    return await dio.post(Apis.autoLogin, data: customer.toJson());
+  }
+
   //! Storage/Upload API Methods -----------------------------------
 
   /// Request upload URL and presigned data

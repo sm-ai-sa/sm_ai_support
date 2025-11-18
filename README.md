@@ -28,7 +28,8 @@
   - Support for multiple file types (PDF, DOC, DOCX, XLS, XLSX, images, videos)
   - Upload progress tracking with cancellation support
 - 🌍 **Multi-language** - Built-in English and Arabic support with RTL layout
-- 👤 **Flexible Authentication** - Anonymous and authenticated user flows
+- 👤 **Flexible Authentication** - Anonymous and authenticated user flows with auto-login support
+- 🚀 **Auto-Login** - Seamless authentication for existing app users without OTP
 - 📊 **Session Management** - Organized conversation history with persistence and search
 
 ### 🏢 **Enterprise Ready**
@@ -180,6 +181,7 @@ Navigator.push(
 | `secretKey` | `String` | ✅ | Secret key for HMAC request signing (stored securely) | - |
 | `baseUrl` | `String` | ✅ | Base URL for REST API endpoints (e.g., `https://api.example.com/api/core`) | - |
 | `socketBaseUrl` | `String` | ✅ | Base URL for WebSocket connections (e.g., `wss://api.example.com/ws`) | - |
+| `customer` | `CustomerData?` | ❌ | Optional customer data for automatic login | `null` |
 
 #### Available Locales
 
@@ -249,6 +251,100 @@ The signature is sent in the `X-Signature` header, and the timestamp in the `X-T
 - Request authenticity
 - Protection against replay attacks
 - Request integrity verification
+
+#### Auto-Login Feature
+
+The package supports automatic user authentication without requiring OTP verification. This is useful when you already have authenticated users in your app and want to seamlessly integrate the support system.
+
+**Basic Auto-Login:**
+
+```dart
+import 'package:sm_ai_support/sm_ai_support.dart';
+
+SMSupport(
+  parentContext: context,
+  smSupportData: SMSupportData(
+    appName: 'My App',
+    locale: SMSupportLocale.en,
+    tenantId: 'tenant_123',
+    apiKey: 'your_api_key',
+    secretKey: 'your_secret_key',
+    baseUrl: 'https://your-api-server.com/api/core',
+    socketBaseUrl: 'wss://your-api-server.com/ws',
+    // Auto-login with customer data
+    customer: CustomerData(
+      countryCode: '+966',  // Country code (e.g., +1, +44, +966)
+      phone: '501234567',   // Phone number without country code
+      name: 'John Doe',     // Customer name
+    ),
+  ),
+)
+```
+
+**How Auto-Login Works:**
+
+1. When you provide `customer` data in `SMSupportData`, the package automatically authenticates the user during initialization
+2. The API endpoint `/in-app/auto-login` is called with:
+   - `phone`: Combined country code + phone number (e.g., "+966501234567")
+   - `name`: Customer name
+3. On successful authentication:
+   - User receives an authentication token (same as OTP verification)
+   - Token is securely stored for future sessions
+   - Any anonymous sessions are automatically assigned to the authenticated user
+   - User can immediately access all authenticated features
+4. If auto-login fails:
+   - Error is logged but doesn't block initialization
+   - User can still use the support system as an anonymous user
+
+**Real-World Example:**
+
+```dart
+class UserSupportPage extends StatelessWidget {
+  final User currentUser; // Your app's user model
+
+  const UserSupportPage({super.key, required this.currentUser});
+
+  @override
+  Widget build(BuildContext context) {
+    return SMSupport(
+      parentContext: context,
+      smSupportData: SMSupportData(
+        appName: 'My App',
+        locale: SMSupportLocale.en,
+        tenantId: 'tenant_123',
+        apiKey: 'your_api_key',
+        secretKey: 'your_secret_key',
+        baseUrl: 'https://your-api-server.com/api/core',
+        socketBaseUrl: 'wss://your-api-server.com/ws',
+        // Seamlessly login with existing user data
+        customer: CustomerData(
+          countryCode: currentUser.countryCode,
+          phone: currentUser.phoneNumber,
+          name: currentUser.fullName,
+        ),
+      ),
+    );
+  }
+}
+```
+
+**Benefits:**
+
+- 🚀 **Seamless Experience**: No need for users to authenticate again
+- 🔄 **Session Continuity**: Preserves conversation history across sessions
+- 🔐 **Secure**: Uses the same authentication mechanism as OTP verification
+- ⚡ **Fast**: Instant authentication without user interaction
+- 🎯 **Flexible**: Falls back gracefully if authentication fails
+
+**CustomerData Model:**
+
+```dart
+CustomerData({
+  required String countryCode,  // Country code with + (e.g., "+1", "+966")
+  required String phone,        // Phone number without country code
+  required String name,         // Customer's full name
+})
+```
 
 ---
 
@@ -551,7 +647,30 @@ SMSupportData({
   required String secretKey,        // HMAC signing secret key
   required String baseUrl,          // REST API base URL (e.g., 'https://api.example.com/api/core')
   required String socketBaseUrl,    // WebSocket base URL (e.g., 'wss://api.example.com/ws')
+  CustomerData? customer,           // Optional: Auto-login customer data
 })
+```
+
+#### CustomerData Model
+
+Customer data for automatic authentication.
+
+```dart
+CustomerData({
+  required String countryCode,  // Country code with + (e.g., "+1", "+966")
+  required String phone,        // Phone number without country code
+  required String name,         // Customer's full name
+})
+
+// Example:
+const customer = CustomerData(
+  countryCode: '+966',
+  phone: '501234567',
+  name: 'John Doe',
+);
+
+// Provides fullPhoneNumber getter: "+966501234567"
+print(customer.fullPhoneNumber);
 ```
 
 ### Services
