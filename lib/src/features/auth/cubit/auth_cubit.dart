@@ -151,9 +151,9 @@ class AuthCubit extends Cubit<AuthState> {
             // Assign anonymous sessions to the authenticated user
             await _assignAnonymousSessionsToUser(anonymousSessionIds);
 
-            // Clear the stored anonymous session IDs after assignment
-            await SharedPrefHelper.clearAnonymousSessionIds();
-            smPrint('Cleared anonymous session IDs from storage');
+            // Clear the stored anonymous session IDs and category mappings after assignment
+            await SharedPrefHelper.clearAnonymousSessionCategoryMap();
+            smPrint('Cleared anonymous session IDs and category mappings from storage');
           }
 
           emit(
@@ -274,9 +274,9 @@ class AuthCubit extends Cubit<AuthState> {
             // Assign anonymous sessions to the authenticated user
             await _assignAnonymousSessionsToUser(anonymousSessionIds);
 
-            // Clear the stored anonymous session IDs after assignment
-            await SharedPrefHelper.clearAnonymousSessionIds();
-            smPrint('Cleared anonymous session IDs from storage');
+            // Clear the stored anonymous session IDs and category mappings after assignment
+            await SharedPrefHelper.clearAnonymousSessionCategoryMap();
+            smPrint('Cleared anonymous session IDs and category mappings from storage');
           }
 
           emit(

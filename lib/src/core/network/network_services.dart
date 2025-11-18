@@ -87,6 +87,24 @@ class NetworkServices {
     return await dio.get(Apis.mySessionMessages, queryParameters: queryParams);
   }
 
+  /// Get messages for an anonymous session with cursor-based pagination
+  /// [sessionId] - The anonymous session ID to fetch messages for
+  /// [limit] - Maximum number of messages to return (optional)
+  /// [cursorId] - The last message ID from previous fetch, for pagination (optional)
+  Future<Response> getAnonymousMessages({required String sessionId, int? limit, String? cursorId}) async {
+    final queryParams = <String, dynamic>{'id': sessionId};
+
+    if (limit != null) {
+      queryParams['limit'] = limit;
+    }
+
+    if (cursorId != null) {
+      queryParams['cursorId'] = cursorId;
+    }
+
+    return await dio.get(Apis.getAnonymousMessages, queryParameters: queryParams);
+  }
+
   /// Send a message in a customer session
   Future<Response> customerSendMessage({
     required String sessionId,

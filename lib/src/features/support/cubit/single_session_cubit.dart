@@ -25,10 +25,15 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   /// Get messages for the current session (initial load with pagination)
   Future<void> getSessionMessages({int limit = Constants.MESSAGES_LIMIT}) async {
-    smPrint('Get Session Messages for: ${state.sessionId}');
+    final isAuthenticated = AuthManager.isAuthenticated;
+    smPrint('Get Session Messages for: ${state.sessionId}, isAuthenticated: $isAuthenticated');
     emit(state.copyWith(getSessionMessagesStatus: BaseStatus.loading, hasMoreMessages: true));
     try {
-      final result = await sl<SupportRepo>().getMySessionMessages(sessionId: state.sessionId, limit: limit);
+      // Call appropriate API based on authentication status
+      final result = isAuthenticated
+          ? await sl<SupportRepo>().getMySessionMessages(sessionId: state.sessionId, limit: limit)
+          : await sl<SupportRepo>().getAnonymousMessages(sessionId: state.sessionId, limit: limit);
+
       result.when(
         success: (data) {
           smPrint('Get Session Messages Success: ${data.result.messages.length} messages');
@@ -78,16 +83,24 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     }
 
     final cursorId = state.sessionMessages.first.id;
-    smPrint('Load More Messages - cursor: $cursorId, limit: $limit');
+    final isAuthenticated = AuthManager.isAuthenticated;
+    smPrint('Load More Messages - cursor: $cursorId, limit: $limit, isAuthenticated: $isAuthenticated');
 
     emit(state.copyWith(loadMoreMessagesStatus: BaseStatus.loading));
 
     try {
-      final result = await sl<SupportRepo>().getMySessionMessages(
-        sessionId: state.sessionId,
-        limit: limit,
-        cursorId: cursorId,
-      );
+      // Call appropriate API based on authentication status
+      final result = isAuthenticated
+          ? await sl<SupportRepo>().getMySessionMessages(
+              sessionId: state.sessionId,
+              limit: limit,
+              cursorId: cursorId,
+            )
+          : await sl<SupportRepo>().getAnonymousMessages(
+              sessionId: state.sessionId,
+              limit: limit,
+              cursorId: cursorId,
+            );
 
       result.when(
         success: (data) {
@@ -193,10 +206,13 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
         success: (data) async {
           smPrint('Session created successfully: ${data.result.id}');
 
-          // Save anonymous session ID to SharedPreferences if anonymous
+          // Save anonymous session ID with category mapping to SharedPreferences if anonymous
           if (!isAuthenticated) {
-            await SharedPrefHelper.addAnonymousSessionId(data.result.id);
-            smPrint('Saved anonymous session ID: ${data.result.id}');
+            await SharedPrefHelper.addAnonymousSessionWithCategory(
+              sessionId: data.result.id,
+              categoryId: category.id,
+            );
+            smPrint('Saved anonymous session ID: ${data.result.id} for category: ${category.id}');
           }
 
           // Update state with new session
@@ -218,6 +234,36 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
       emit(state.copyWith(createSessionStatus: BaseStatus.failure));
       return null;
+    }
+  }
+
+  /// Attempt to reopen a closed anonymous session (silent, no user feedback)
+  /// Returns true if reopen was successful, false otherwise
+  /// This method is used for background session restoration
+  Future<bool> attemptReopenSession(String sessionId, int categoryId) async {
+    smPrint('Attempting to reopen session: $sessionId for category: $categoryId');
+    try {
+      final result = await sl<SupportRepo>().reopenSession(sessionId: sessionId);
+
+      return result.when(
+        success: (_) {
+          smPrint('Session reopened successfully: $sessionId');
+          // Update local storage status to active
+          SharedPrefHelper.updateSessionStatus(categoryId, sessionId, 'active');
+          return true;
+        },
+        error: (error) {
+          smPrint('Failed to reopen session: ${error.failure.error}');
+          // Update local storage status to failed
+          SharedPrefHelper.updateSessionStatus(categoryId, sessionId, 'failed');
+          return false;
+        },
+      );
+    } catch (e) {
+      smPrint('Exception reopening session: $e');
+      // Update local storage status to failed
+      SharedPrefHelper.updateSessionStatus(categoryId, sessionId, 'failed');
+      return false;
     }
   }
 

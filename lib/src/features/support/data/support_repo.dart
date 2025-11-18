@@ -193,6 +193,40 @@ class SupportRepo {
     }
   }
 
+  /// Get messages for an anonymous session with cursor-based pagination
+  /// Returns messages for the specified anonymous session ID with optional pagination
+  /// [sessionId] - The ID of the anonymous session to get messages for
+  /// [limit] - Maximum number of messages to return (optional)
+  /// [cursorId] - The last message ID from previous fetch, for pagination (optional)
+  Future<NetworkResult<SessionMessagesResponse>> getAnonymousMessages({
+    required String sessionId,
+    int? limit,
+    String? cursorId,
+  }) async {
+    try {
+      final response = await networkServices.getAnonymousMessages(
+        sessionId: sessionId,
+        limit: limit,
+        cursorId: cursorId,
+      );
+
+      if (response.statusCode?.isSuccess ?? false) {
+        final messagesResponse = SessionMessagesResponse.fromJson(response.data);
+        smPrint(
+          'Get Anonymous Messages Response: Success - ${messagesResponse.result.messages.length} messages'
+          '${cursorId != null ? ' (cursor: $cursorId)' : ' (initial load)'}',
+        );
+        return Success(messagesResponse);
+      } else {
+        smPrint('Get Anonymous Messages Error: ${response.statusCode}');
+        return Error(ErrorHandler.handle(response));
+      }
+    } catch (e) {
+      smPrint('Get Anonymous Messages Error: $e');
+      return Error(ErrorHandler.handle(e));
+    }
+  }
+
   /// Send a message in a customer session
   /// Sends a message from the customer to the support team
   /// [sessionId] - The ID of the session to send the message to

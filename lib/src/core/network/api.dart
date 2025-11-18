@@ -5,7 +5,7 @@ class Apis {
   static String get baseUrl => SMConfig.smData.baseUrl;
 
   static const String categoryIconUrl = 'https://sm-public-space.blr1.cdn.digitaloceanspaces.com';
-  
+
   // Tenant
   static String get getTenant => '$baseUrl/tenant/info';
 
@@ -21,6 +21,7 @@ class Apis {
   static String get mySessions => '$baseUrl/in-app/my-sessions';
   static String get myUnreadSessions => '$baseUrl/in-app/customer-unread-sessions';
   static String get mySessionMessages => '$baseUrl/in-app/my-session-messages';
+  static String get getAnonymousMessages => '$baseUrl/in-app/my-anonymous-session-messages';
   static String get reopenSession => '$baseUrl/in-app/reopen-session';
 
   // Messaging
@@ -36,7 +37,7 @@ class Apis {
   // Authentication
   static String get sendOtp => '$baseUrl/in-app/verification/send-code';
   static String get verifyOtp => '$baseUrl/in-app/verification/verify-code';
-  static String get autoLogin => '$baseUrl/in-app/auto-login';
+  static String get autoLogin => '$baseUrl/in-app/verification/auto-login';
 
   // Storage/Upload
   static String get storageUpload => '$baseUrl/in-app/storage/upload';
