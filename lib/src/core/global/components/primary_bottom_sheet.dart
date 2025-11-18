@@ -164,11 +164,11 @@ Future primaryCupertinoBottomSheet({
             child: Container(
               width: 24.rw,
               height: 4.rh,
-              margin: EdgeInsets.only(bottom: 0.rh),
+              margin: EdgeInsets.only(top: 10),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 borderRadius: 100.br,
-                // color: ColorsPallets.gray30,
+                color: ColorsPallets.neutralSolid100,
               ),
             ),
           ),

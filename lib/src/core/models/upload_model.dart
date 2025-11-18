@@ -83,7 +83,7 @@ enum FileUploadCategory {
       // Images
       'jpg', 'jpeg', 'png',
       // Videos
-      'mp4', 'mov', 'avi', 'webm',
+      'mp4', 'avi', 'webm',
       // Audio
       'mp3', 'wav',
       // Documents
@@ -95,7 +95,7 @@ enum FileUploadCategory {
   static List<String> get allMediaExtensions {
     return [
       'jpg', 'jpeg', 'png',
-      'mp4', 'mov', 'avi', 'webm',
+      'mp4', 'avi', 'webm',
     ];
   }
 

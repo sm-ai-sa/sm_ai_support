@@ -13,6 +13,9 @@ class Utils {
   ///* Generate `UUID` for document or files
   static String get getUID => _uuid.v4();
 
+  ///* Generate temporary message ID for optimistic UI updates
+  static String get getTempMessageId => 'temp_${_uuid.v4()}';
+
   static String getMessage({required String en, required String ar}) {
     return (SMText.isEnglish) ? en : ar;
   }

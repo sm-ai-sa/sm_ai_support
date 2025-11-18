@@ -108,9 +108,8 @@ class ChatMessageItem extends StatelessWidget {
                     child: DesignSystem.svgIcon('replay', size: 17, color: tenantColor ?? ColorsPallets.primaryColor),
                   ),
                   secondChild: SizedBox.shrink(),
-                  crossFadeState: sessionState.repliedOn == message.id
-                      ? CrossFadeState.showFirst
-                      : CrossFadeState.showSecond,
+                  crossFadeState:
+                      sessionState.repliedOn == message.id ? CrossFadeState.showFirst : CrossFadeState.showSecond,
                 ),
 
                 if (isSystemMessage)
@@ -119,7 +118,6 @@ class ChatMessageItem extends StatelessWidget {
                   Transform(
                     alignment: Alignment.center,
                     transform: SMConfig.smData.locale.isEnglish ? Matrix4.rotationY(3.14159) : Matrix4.identity(),
-
                     child: DesignSystem.svgIcon('curve', width: 19.rw, height: 21.rh),
                   ),
                   SizedBox(width: 8.rw),
@@ -149,18 +147,57 @@ class ChatMessageItem extends StatelessWidget {
               ],
             ),
 
-            // Timestamp and read status
+            // Timestamp and status indicators (sent, failed, read)
             if (!isSystemMessage) ...[
               SizedBox(height: 4.rh),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  DesignSystem.svgIcon(message.isRead ? 'read' : 'read1', size: 18.rSp),
-                  SizedBox(width: 4.rw),
-                  Text(
-                    '${message.createdAt.monthNameDay}, ${message.createdAt.timeFormat}',
-                    style: TextStyles.s_10_500.copyWith(color: ColorsPallets.subdued400),
-                  ),
+                  // Status indicator
+                  if (message.isFailed)
+                    // Failed state - show error icon with retry option
+                    InkWell(
+                      onTap: () {
+                        context.read<SingleSessionCubit>().retryFailedMessage(message);
+                      },
+                      child: Row(
+                        children: [
+                          Icon(Icons.error_outline, size: 18.rSp, color: Colors.red),
+                          SizedBox(width: 4.rw),
+                          Text(
+                            'Tap to retry',
+                            style: TextStyles.s_10_500.copyWith(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    // Show read/delivered/sent status (including optimistic messages)
+                    // Optimistic messages show as "sent" (read1) while sending in background
+                    Row(
+                      children: [
+                        DesignSystem.svgIcon(
+                          message.isRead ? 'read' : 'read1',
+                          size: 18.rSp,
+                          color: message.isRead ? ColorsPallets.primaryColor : ColorsPallets.subdued400,
+                        ),
+                        SizedBox(width: 4.rw),
+                        Text(
+                          '${message.createdAt.monthNameDay}, ${message.createdAt.timeFormat}',
+                          style: TextStyles.s_10_500.copyWith(color: ColorsPallets.subdued400),
+                        ),
+                      ],
+                    ),
+                  // Delete button for failed messages
+                  if (message.isFailed) ...[
+                    SizedBox(width: 8.rw),
+                    InkWell(
+                      onTap: () {
+                        context.read<SingleSessionCubit>().deleteFailedMessage(message.id);
+                      },
+                      child: Icon(Icons.close, size: 16.rSp, color: Colors.red),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -200,9 +237,8 @@ class ChatMessageItem extends StatelessWidget {
                             SizedBox(width: 5),
                             Transform(
                               alignment: Alignment.center,
-                              transform: SMConfig.smData.locale.isArabic
-                                  ? Matrix4.rotationY(3.14159)
-                                  : Matrix4.identity(),
+                              transform:
+                                  SMConfig.smData.locale.isArabic ? Matrix4.rotationY(3.14159) : Matrix4.identity(),
                               child: DesignSystem.svgIcon('replay', size: 14.rh, color: ColorsPallets.disabled300),
                             ),
                           ],
@@ -218,7 +254,6 @@ class ChatMessageItem extends StatelessWidget {
                           )
                         else
                           SizedBox(width: 50.rw),
-
                         Flexible(
                           flex: 3,
                           child: InkWell(
@@ -241,9 +276,8 @@ class ChatMessageItem extends StatelessWidget {
                           SizedBox(width: 8.rw),
                           Transform(
                             alignment: Alignment.center,
-                            transform: SMConfig.smData.locale.isArabic
-                                ? Matrix4.rotationY(3.14159)
-                                : Matrix4.identity(),
+                            transform:
+                                SMConfig.smData.locale.isArabic ? Matrix4.rotationY(3.14159) : Matrix4.identity(),
                             child: DesignSystem.svgIcon('curve', width: 19.rw, height: 21.rh),
                           ),
                         ],
@@ -280,9 +314,8 @@ class ChatMessageItem extends StatelessWidget {
                   child: DesignSystem.svgIcon('replay', size: 17, color: tenantColor ?? ColorsPallets.primaryColor),
                 ),
                 secondChild: SizedBox.shrink(),
-                crossFadeState: sessionState.repliedOn == message.id
-                    ? CrossFadeState.showFirst
-                    : CrossFadeState.showSecond,
+                crossFadeState:
+                    sessionState.repliedOn == message.id ? CrossFadeState.showFirst : CrossFadeState.showSecond,
               ),
             ],
           ),

@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
@@ -63,6 +66,16 @@ class _DynamicNetworkImageState extends State<DynamicNetworkImage> {
     });
 
     try {
+      // Check if the image source is a local file path (for optimistic uploads)
+      if (widget.imageSource.startsWith('/')) {
+        smPrint('Using local file path: ${widget.imageSource}');
+        setState(() {
+          _resolvedUrl = widget.imageSource;
+          _isLoading = false;
+        });
+        return;
+      }
+
       // Check if the image source is already a direct URL
       if (ImageUrlResolver.isDirectDownloadUrl(widget.imageSource)) {
         smPrint('Using direct URL: ${widget.imageSource}');
@@ -111,14 +124,25 @@ class _DynamicNetworkImageState extends State<DynamicNetworkImage> {
       return _buildErrorWidget();
     }
 
+    // Check if this is a local file path
+    final isLocalFile = _resolvedUrl!.startsWith('/');
+
     return ClipRRect(
       borderRadius: widget.borderRadius ?? BorderRadius.zero,
-      child: DesignSystem.internetImage(
-        imageUrl: _resolvedUrl!,
-        width: widget.width,
-        height: widget.height,
-        fit: widget.fit ?? BoxFit.cover,
-      ),
+      child: isLocalFile
+          ? Image.file(
+              File(_resolvedUrl!),
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit ?? BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => _buildErrorWidget(),
+            )
+          : DesignSystem.internetImage(
+              imageUrl: _resolvedUrl!,
+              width: widget.width,
+              height: widget.height,
+              fit: widget.fit ?? BoxFit.cover,
+            ),
     );
   }
 
@@ -127,20 +151,21 @@ class _DynamicNetworkImageState extends State<DynamicNetworkImage> {
       return widget.placeholder!;
     }
 
-    return Container(
-      width: widget.width,
-      height: widget.height,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: widget.borderRadius,
-      ),
-      child: Center(
-        child: SizedBox(
-          width: 20.rSp,
-          height: 20.rSp,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.grey[400]!),
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: widget.width,
+        height: widget.height,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: widget.borderRadius,
+        ),
+        child: Center(
+          child: Icon(
+            Icons.image,
+            size: 32.rSp,
+            color: Colors.white,
           ),
         ),
       ),

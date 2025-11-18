@@ -10,7 +10,6 @@ import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/core/services/media_upload.dart';
 import 'package:sm_ai_support/src/core/services/picker_helper.dart';
-import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/features/support/cubit/single_session_state.dart';
 
@@ -265,6 +264,52 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     smPrint('Send typing indicator for session: ${state.sessionId}, isTyping: $isTyping');
   }
 
+  /// Update message delivery status for a specific message
+  void updateMessageDeliveryStatus(String messageId, {required bool isDelivered}) {
+    final updatedMessages = state.sessionMessages.map((msg) {
+      if (msg.id == messageId) {
+        return msg.copyWith(isDelivered: isDelivered);
+      }
+      return msg;
+    }).toList();
+
+    emit(state.copyWith(sessionMessages: updatedMessages));
+    smPrint('📬 Updated delivery status for message: $messageId to $isDelivered');
+  }
+
+  /// Update message read status for a specific message
+  void updateMessageReadStatus(String messageId, {required bool isRead}) {
+    final updatedMessages = state.sessionMessages.map((msg) {
+      if (msg.id == messageId) {
+        return msg.copyWith(isRead: isRead, isDelivered: true); // If read, it's also delivered
+      }
+      return msg;
+    }).toList();
+
+    emit(state.copyWith(sessionMessages: updatedMessages));
+    smPrint('👁️ Updated read status for message: $messageId to $isRead');
+  }
+
+  /// Batch update multiple message statuses (useful after reconnection)
+  void batchUpdateMessageStatuses(List<String> messageIds, {bool? isRead, bool? isDelivered}) {
+    var updatedMessages = state.sessionMessages;
+
+    for (final messageId in messageIds) {
+      updatedMessages = updatedMessages.map((msg) {
+        if (msg.id == messageId) {
+          return msg.copyWith(
+            isRead: isRead ?? msg.isRead,
+            isDelivered: isDelivered ?? msg.isDelivered,
+          );
+        }
+        return msg;
+      }).toList();
+    }
+
+    emit(state.copyWith(sessionMessages: updatedMessages));
+    smPrint('📦 Batch updated ${messageIds.length} message statuses');
+  }
+
   /// Get last message in the session
   SessionMessage? get lastMessage {
     if (state.sessionMessages.isEmpty) return null;
@@ -287,6 +332,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   /// Send a message in the current session
   /// If no session exists and category is set, creates session first
+  /// Uses optimistic UI updates - message appears immediately before API response
   Future<void> sendMessage({required String message, required String contentType}) async {
     final isAuthenticated = AuthManager.isAuthenticated;
     smPrint('🚀 STARTING SEND MESSAGE PROCESS');
@@ -313,13 +359,46 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       return;
     }
 
+    // Get replied on message for reply functionality
+    final repliedOnMessage = state.sessionMessages.firstWhereOrNull((element) => element.id == state.repliedOn);
+
+    // Create optimistic message with temporary ID
+    final tempMessageId = Utils.getTempMessageId;
+    final optimisticMessage = SessionMessage(
+      id: tempMessageId,
+      content: message,
+      contentType: SessionMessageContentType.fromString(contentType),
+      senderType: SessionMessageSenderType.customer,
+      isRead: false,
+      isDelivered: false,
+      isFailed: false,
+      createdAt: DateTime.now(),
+      isOptimistic: true,
+      reply: state.repliedOn != null
+          ? SessionMessageReply(
+              message: repliedOnMessage?.content ?? '',
+              messageId: state.repliedOn!,
+              contentType: repliedOnMessage?.contentType.name.toUpperCase() ?? '',
+            )
+          : null,
+    );
+
+    smPrint('💫 Created optimistic message with temp ID: $tempMessageId');
+
+    // Add optimistic message to UI immediately
+    final List<SessionMessage> messagesWithOptimistic = List.from(state.sessionMessages);
+    messagesWithOptimistic.add(optimisticMessage);
+    messagesWithOptimistic.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+    emit(state.copyWith(
+      sendMessageStatus: BaseStatus.loading,
+      sessionMessages: messagesWithOptimistic,
+    ));
+
     smPrint('📤 Sending message to session: ${state.sessionId}');
-    emit(state.copyWith(sendMessageStatus: BaseStatus.loading));
     try {
       final NetworkResult<CustomerSendMessageResponse> result;
 
-      // get replied on message
-      final repliedOnMessage = state.sessionMessages.firstWhereOrNull((element) => element.id == state.repliedOn);
       if (isAuthenticated) {
         result = await sl<SupportRepo>().customerSendMessage(
           sessionId: state.sessionId,
@@ -355,16 +434,19 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
           smPrint('👤 Sender type: ${data.result.senderType}');
           smPrint('📅 Created at: ${data.result.createdAt}');
 
-          // Append the new message to the current list
+          // Replace optimistic message with real message from server
           final List<SessionMessage> updatedMessages = List.from(state.sessionMessages);
-          smPrint('📋 Current message count before adding: ${updatedMessages.length}');
+          smPrint('📋 Replacing optimistic message $tempMessageId with real message ${data.result.id}');
 
+          // Remove the optimistic message
+          updatedMessages.removeWhere((msg) => msg.id == tempMessageId);
+
+          // Add the real message
           updatedMessages.add(data.result);
-          smPrint('📋 Message count after adding: ${updatedMessages.length}');
 
           // Sort messages by creation time
           updatedMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-          smPrint('📋 Messages sorted by time');
+          smPrint('📋 Message replacement complete. Total messages: ${updatedMessages.length}');
 
           emit(
             state.copyWith(
@@ -375,16 +457,51 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
             ),
           );
 
-          smPrint('🎯 STATE UPDATED WITH NEW MESSAGE - UI should show ${updatedMessages.length} messages');
+          smPrint('🎯 STATE UPDATED WITH REAL MESSAGE - UI should show ${updatedMessages.length} messages');
         },
         error: (error) {
+          smPrint('❌ Send Message Failed: ${error.failure.error}');
+
+          // Mark optimistic message as failed instead of removing it
+          final List<SessionMessage> updatedMessages = List.from(state.sessionMessages);
+          final failedMessageIndex = updatedMessages.indexWhere((msg) => msg.id == tempMessageId);
+
+          if (failedMessageIndex != -1) {
+            updatedMessages[failedMessageIndex] = updatedMessages[failedMessageIndex].copyWith(
+              isFailed: true,
+              isOptimistic: false, // No longer optimistic, now a failed message
+            );
+            smPrint('💥 Marked message as failed: $tempMessageId');
+          }
+
+          emit(state.copyWith(
+            sendMessageStatus: BaseStatus.failure,
+            sessionMessages: updatedMessages,
+          ));
+
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
-          emit(state.copyWith(sendMessageStatus: BaseStatus.failure));
         },
       );
     } catch (e) {
+      smPrint('💥 Send Message Exception: $e');
+
+      // Mark optimistic message as failed
+      final List<SessionMessage> updatedMessages = List.from(state.sessionMessages);
+      final failedMessageIndex = updatedMessages.indexWhere((msg) => msg.id == tempMessageId);
+
+      if (failedMessageIndex != -1) {
+        updatedMessages[failedMessageIndex] = updatedMessages[failedMessageIndex].copyWith(
+          isFailed: true,
+          isOptimistic: false,
+        );
+      }
+
+      emit(state.copyWith(
+        sendMessageStatus: BaseStatus.failure,
+        sessionMessages: updatedMessages,
+      ));
+
       primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
-      emit(state.copyWith(sendMessageStatus: BaseStatus.failure));
     }
   }
 
@@ -396,6 +513,128 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   /// Check if send message failed
   bool get sendMessageFailed => state.sendMessageStatus.isFailure;
+
+  /// Retry sending a failed message
+  /// Takes the failed message and attempts to resend it
+  Future<void> retryFailedMessage(SessionMessage failedMessage) async {
+    if (!failedMessage.isFailed) {
+      smPrint('⚠️ Cannot retry message that is not marked as failed');
+      return;
+    }
+
+    smPrint('🔄 Retrying failed message: ${failedMessage.id}');
+
+    // Mark the message as sending again (optimistic)
+    final List<SessionMessage> updatedMessages = List.from(state.sessionMessages);
+    final messageIndex = updatedMessages.indexWhere((msg) => msg.id == failedMessage.id);
+
+    if (messageIndex == -1) {
+      smPrint('❌ Failed message not found in state');
+      return;
+    }
+
+    // Update message to show it's being retried
+    updatedMessages[messageIndex] = failedMessage.copyWith(
+      isFailed: false,
+      isOptimistic: true,
+    );
+
+    emit(state.copyWith(
+      sendMessageStatus: BaseStatus.loading,
+      sessionMessages: updatedMessages,
+    ));
+
+    final isAuthenticated = AuthManager.isAuthenticated;
+
+    try {
+      final NetworkResult<CustomerSendMessageResponse> result;
+
+      if (isAuthenticated) {
+        result = await sl<SupportRepo>().customerSendMessage(
+          sessionId: state.sessionId,
+          message: failedMessage.content,
+          contentType: failedMessage.contentType.name.toUpperCase(),
+          reply: failedMessage.reply,
+        );
+      } else {
+        result = await sl<SupportRepo>().anonymousCustomerSendMessage(
+          sessionId: state.sessionId,
+          message: failedMessage.content,
+          contentType: failedMessage.contentType.name.toUpperCase(),
+          reply: failedMessage.reply,
+        );
+      }
+
+      result.when(
+        success: (data) {
+          smPrint('✅ Retry Success: ${data.result.id}');
+
+          // Replace failed message with real message from server
+          final List<SessionMessage> finalMessages = List.from(state.sessionMessages);
+          finalMessages.removeWhere((msg) => msg.id == failedMessage.id);
+          finalMessages.add(data.result);
+          finalMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+          emit(
+            state.copyWith(
+              sendMessageStatus: BaseStatus.success,
+              sessionMessages: finalMessages,
+            ),
+          );
+
+          smPrint('🎯 Retry completed successfully');
+        },
+        error: (error) {
+          smPrint('❌ Retry Failed: ${error.failure.error}');
+
+          // Mark message as failed again
+          final List<SessionMessage> failedMessages = List.from(state.sessionMessages);
+          final failedIndex = failedMessages.indexWhere((msg) => msg.id == failedMessage.id);
+
+          if (failedIndex != -1) {
+            failedMessages[failedIndex] = failedMessages[failedIndex].copyWith(
+              isFailed: true,
+              isOptimistic: false,
+            );
+          }
+
+          emit(state.copyWith(
+            sendMessageStatus: BaseStatus.failure,
+            sessionMessages: failedMessages,
+          ));
+
+          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
+        },
+      );
+    } catch (e) {
+      smPrint('💥 Retry Exception: $e');
+
+      // Mark message as failed
+      final List<SessionMessage> failedMessages = List.from(state.sessionMessages);
+      final failedIndex = failedMessages.indexWhere((msg) => msg.id == failedMessage.id);
+
+      if (failedIndex != -1) {
+        failedMessages[failedIndex] = failedMessages[failedIndex].copyWith(
+          isFailed: true,
+          isOptimistic: false,
+        );
+      }
+
+      emit(state.copyWith(
+        sendMessageStatus: BaseStatus.failure,
+        sessionMessages: failedMessages,
+      ));
+
+      primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
+    }
+  }
+
+  /// Delete a failed message from the list
+  void deleteFailedMessage(String messageId) {
+    final updatedMessages = state.sessionMessages.where((msg) => msg.id != messageId).toList();
+    emit(state.copyWith(sessionMessages: updatedMessages));
+    smPrint('🗑️ Deleted failed message: $messageId');
+  }
 
   /// Rate the current session
   Future<void> rateSession({required int rating, String? comment}) async {
@@ -503,10 +742,44 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     smPrint('Sender Type: ${newMessage.senderType}');
     smPrint('Created At: ${newMessage.createdAt}');
 
-    // Check if message already exists to avoid duplicates
+    // Check if message already exists by ID to avoid duplicates
     final existingMessage = findMessageById(newMessage.id);
     if (existingMessage != null) {
-      smPrint('⚠️ Message already exists, skipping: ${newMessage.id}');
+      smPrint('⚠️ Message with ID already exists, checking if it needs update: ${newMessage.id}');
+
+      // Check if existing message needs status update (e.g., delivery/read receipts)
+      if (existingMessage.isRead != newMessage.isRead ||
+          existingMessage.isDelivered != newMessage.isDelivered) {
+        smPrint('📝 Updating message status: isRead=${newMessage.isRead}, isDelivered=${newMessage.isDelivered}');
+
+        final updatedMessages = state.sessionMessages.map((msg) {
+          if (msg.id == newMessage.id) {
+            return msg.copyWith(
+              isRead: newMessage.isRead,
+              isDelivered: newMessage.isDelivered,
+            );
+          }
+          return msg;
+        }).toList();
+
+        emit(state.copyWith(sessionMessages: updatedMessages));
+        return;
+      }
+
+      smPrint('⏭️ Message unchanged, skipping: ${newMessage.id}');
+      return;
+    }
+
+    // Check for duplicate by content and timestamp (edge case: same message sent multiple times)
+    final isDuplicateByContent = state.sessionMessages.any((msg) =>
+        msg.content == newMessage.content &&
+        msg.senderType == newMessage.senderType &&
+        msg.createdAt.difference(newMessage.createdAt).abs().inSeconds < 2 &&
+        !msg.isTemporary // Don't match against temporary optimistic messages
+    );
+
+    if (isDuplicateByContent) {
+      smPrint('⚠️ Duplicate message detected by content and timestamp, skipping');
       return;
     }
 
@@ -601,7 +874,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
   //! Media Upload Methods -----------------------------------
 
-  /// Pick Media From Gallery and upload
+  /// Pick Media From Gallery and upload with optimistic UI
   /// Automatically detects file type and category from extension
   Future<String?> pickAndUploadMedia(BuildContext context, {bool isFile = false}) async {
     try {
@@ -611,57 +884,172 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
 
       if (result == null) return null;
 
-      emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
+      // Determine content type
+      String contentType = 'IMAGE';
+      final filePath = result.file.path;
+      if (Utils.isImageFile(result.file)) {
+        contentType = 'IMAGE';
+      } else if (Utils.isVideoFile(result.file)) {
+        contentType = 'VIDEO';
+      } else if (filePath.endsWith('.mp3') || filePath.endsWith('.wav') || filePath.endsWith('.m4a')) {
+        contentType = 'AUDIO';
+      } else {
+        contentType = 'FILE';
+      }
+
+      final fileName = result.file.path.split('/').last;
+      final localFilePath = result.file.path;
+
+      // Create optimistic message with temporary ID showing upload in progress
+      final tempMessageId = Utils.getTempMessageId;
+      final optimisticMessage = SessionMessage(
+        id: tempMessageId,
+        content: localFilePath, // Use local file path so it can be displayed as preview
+        contentType: SessionMessageContentType.fromString(contentType),
+        senderType: SessionMessageSenderType.customer,
+        isRead: false,
+        isDelivered: false,
+        isFailed: false,
+        createdAt: DateTime.now(),
+        isOptimistic: true,
+        metadata: {
+          'uploading': true,
+          'progress': 0.0,
+          'localPath': localFilePath,
+          'fileName': fileName,
+        },
+      );
+
+      // Add optimistic message to UI immediately
+      final messagesWithOptimistic = List<SessionMessage>.from(state.sessionMessages);
+      messagesWithOptimistic.add(optimisticMessage);
+      messagesWithOptimistic.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+      emit(state.copyWith(
+        uploadFileStatus: BaseStatus.loading,
+        uploadProgress: 0.0,
+        sessionMessages: messagesWithOptimistic,
+      ));
 
       //* Upload file to storage provider using new API
       // All files now use SESSION_MEDIA category
-      final String? fileUrl = await MediaUpload.uploadFile(file: result.file, sessionId: state.sessionId);
+      // TODO: Add progress callback support to MediaUpload.uploadFile for real-time progress
+      final String? fileUrl = await MediaUpload.uploadFile(
+        file: result.file,
+        sessionId: state.sessionId,
+      );
 
       if (fileUrl != null) {
-        emit(state.copyWith(uploadFileStatus: BaseStatus.success));
+        emit(state.copyWith(uploadFileStatus: BaseStatus.success, uploadProgress: 1.0));
+
+        // Remove optimistic message (will be replaced by actual message from sendMessage)
+        final messagesWithoutOptimistic = state.sessionMessages.where((msg) => msg.id != tempMessageId).toList();
+        emit(state.copyWith(sessionMessages: messagesWithoutOptimistic));
 
         // Automatically send the media message
         await _sendMediaMessage(fileUrl);
 
         return fileUrl;
       } else {
-        emit(state.copyWith(uploadFileStatus: BaseStatus.failure));
+        // Mark optimistic message as failed
+        final failedMessages = state.sessionMessages.map((msg) {
+          if (msg.id == tempMessageId) {
+            return msg.copyWith(isFailed: true, isOptimistic: false);
+          }
+          return msg;
+        }).toList();
+
+        emit(state.copyWith(
+          uploadFileStatus: BaseStatus.failure,
+          uploadProgress: 0.0,
+          sessionMessages: failedMessages,
+        ));
+
         primarySnackBar(context, message: 'Failed to upload file. Please try again.');
         return null;
       }
     } catch (e) {
-      emit(state.copyWith(uploadFileStatus: BaseStatus.failure));
+      emit(state.copyWith(uploadFileStatus: BaseStatus.failure, uploadProgress: 0.0));
       primarySnackBar(context, message: 'Error uploading file: ${e.toString()}');
       return null;
     }
   }
 
-  /// Pick Image From camera and upload
+  /// Pick Image From camera and upload with optimistic UI
   Future<String?> pickAndUploadCameraImage(BuildContext context) async {
     try {
       final result = await PickerHelper.pickImageFromCameraWithCategory(context);
       if (result == null) return null;
 
-      emit(state.copyWith(uploadFileStatus: BaseStatus.loading));
+      final fileName = result.file.path.split('/').last;
+      final localFilePath = result.file.path;
+
+      // Create optimistic message with temporary ID showing upload in progress
+      final tempMessageId = Utils.getTempMessageId;
+      final optimisticMessage = SessionMessage(
+        id: tempMessageId,
+        content: localFilePath, // Use local file path for preview
+        contentType: SessionMessageContentType.image,
+        senderType: SessionMessageSenderType.customer,
+        isRead: false,
+        isDelivered: false,
+        isFailed: false,
+        createdAt: DateTime.now(),
+        isOptimistic: true,
+        metadata: {
+          'uploading': true,
+          'progress': 0.0,
+          'localPath': localFilePath,
+          'fileName': fileName,
+        },
+      );
+
+      // Add optimistic message to UI immediately
+      final messagesWithOptimistic = List<SessionMessage>.from(state.sessionMessages);
+      messagesWithOptimistic.add(optimisticMessage);
+      messagesWithOptimistic.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+
+      emit(state.copyWith(
+        uploadFileStatus: BaseStatus.loading,
+        uploadProgress: 0.0,
+        sessionMessages: messagesWithOptimistic,
+      ));
 
       //* Upload file to storage provider using new API
       // All files now use SESSION_MEDIA category
       final String? fileUrl = await MediaUpload.uploadFile(file: result.file, sessionId: state.sessionId);
 
       if (fileUrl != null) {
-        emit(state.copyWith(uploadFileStatus: BaseStatus.success));
+        emit(state.copyWith(uploadFileStatus: BaseStatus.success, uploadProgress: 1.0));
+
+        // Remove optimistic message (will be replaced by actual message from sendMessage)
+        final messagesWithoutOptimistic = state.sessionMessages.where((msg) => msg.id != tempMessageId).toList();
+        emit(state.copyWith(sessionMessages: messagesWithoutOptimistic));
 
         // Automatically send the media message
         await _sendMediaMessage(fileUrl);
 
         return fileUrl;
       } else {
-        emit(state.copyWith(uploadFileStatus: BaseStatus.failure));
+        // Mark optimistic message as failed
+        final failedMessages = state.sessionMessages.map((msg) {
+          if (msg.id == tempMessageId) {
+            return msg.copyWith(isFailed: true, isOptimistic: false);
+          }
+          return msg;
+        }).toList();
+
+        emit(state.copyWith(
+          uploadFileStatus: BaseStatus.failure,
+          uploadProgress: 0.0,
+          sessionMessages: failedMessages,
+        ));
+
         primarySnackBar(context, message: 'Failed to upload image. Please try again.');
         return null;
       }
     } catch (e) {
-      emit(state.copyWith(uploadFileStatus: BaseStatus.failure));
+      emit(state.copyWith(uploadFileStatus: BaseStatus.failure, uploadProgress: 0.0));
       primarySnackBar(context, message: 'Error uploading image: ${e.toString()}');
       return null;
     }
@@ -680,12 +1068,11 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     } else if (Utils.isFileUrl(fileUrl)) {
       contentType = 'FILE';
     }
-    // extract file name
-    final fileName = ImageUrlResolver.extractFileName(fileUrl);
 
-    // Send the media message
+    // Send the media message with the full URL (not just filename)
+    // The full URL allows the image widget to display it directly without API resolution
     // TODO: Add fileSize metadata support when sendMessage accepts it
-    await sendMessage(message: fileName, contentType: contentType);
+    await sendMessage(message: fileUrl, contentType: contentType);
   }
 
   /// Check if currently uploading a file
