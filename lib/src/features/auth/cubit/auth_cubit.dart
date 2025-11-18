@@ -118,6 +118,66 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  //! Auto-login Methods -----------------------------------
+
+  /// Auto-login with customer data
+  /// Automatically authenticates the user without OTP flow
+  /// [customer] - Customer data containing phone and name
+  ///
+  /// On success:
+  /// - Saves authentication data to persistent storage
+  /// - Assigns any anonymous sessions to the authenticated user
+  /// - Updates state with auth token and customer data
+  /// On error: Shows error message and updates status to failure
+  Future<void> autoLogin({required CustomerData customer}) async {
+    smPrint('Auto-login for: ${customer.name} - ${customer.fullPhoneNumber}');
+    emit(state.copyWith(verifyOtpStatus: BaseStatus.loading));
+
+    try {
+      final result = await sl<AuthRepo>().autoLogin(customer: customer);
+
+      result.when(
+        success: (data) async {
+          smPrint('Auto Login Success - User authenticated: ${data.result.customer.id}');
+
+          // Save authentication data to persistent storage
+          await AuthManager.saveAuthData(token: data.result.token, customer: data.result.customer);
+
+          // Check if there are anonymous session IDs to assign
+          final List<String> anonymousSessionIds = SharedPrefHelper.getAnonymousSessionIds();
+          if (anonymousSessionIds.isNotEmpty) {
+            smPrint('Found ${anonymousSessionIds.length} anonymous sessions to assign');
+
+            // Assign anonymous sessions to the authenticated user
+            await _assignAnonymousSessionsToUser(anonymousSessionIds);
+
+            // Clear the stored anonymous session IDs after assignment
+            await SharedPrefHelper.clearAnonymousSessionIds();
+            smPrint('Cleared anonymous session IDs from storage');
+          }
+
+          emit(
+            state.copyWith(
+              verifyOtpStatus: BaseStatus.success,
+              currentCustomer: data.result.customer,
+              tempToken: null,
+              isResetTempToken: true,
+            ),
+          );
+        },
+        error: (error) {
+          smPrint('Auto Login Error: ${error.failure.error}');
+          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
+          emit(state.copyWith(verifyOtpStatus: BaseStatus.failure, errorMessage: error.failure.error));
+        },
+      );
+    } catch (e) {
+      smPrint('Auto Login Exception: $e');
+      primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
+      emit(state.copyWith(verifyOtpStatus: BaseStatus.failure, errorMessage: e.toString()));
+    }
+  }
+
   //! Authentication API Methods -----------------------------------
 
   /// Send OTP to phone number

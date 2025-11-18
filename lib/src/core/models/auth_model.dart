@@ -177,3 +177,29 @@ class VerifyOtpResponse extends Equatable {
   List<Object?> get props => [result, statusCode];
 }
 
+/// Auto-login customer data model
+class CustomerData extends Equatable {
+  final String countryCode;
+  final String phone;
+  final String name;
+
+  const CustomerData({
+    required this.countryCode,
+    required this.phone,
+    required this.name,
+  });
+
+  /// Get full phone number (country code + phone)
+  String get fullPhoneNumber => '$countryCode$phone';
+
+  Map<String, dynamic> toJson() {
+    return {
+      'phone': fullPhoneNumber,
+      'name': name,
+    };
+  }
+
+  @override
+  List<Object?> get props => [countryCode, phone, name];
+}
+

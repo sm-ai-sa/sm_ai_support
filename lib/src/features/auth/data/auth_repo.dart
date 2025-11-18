@@ -67,4 +67,29 @@ class AuthRepo {
     }
   }
 
+  /// Auto-login with customer data
+  /// Automatically authenticates the user without OTP flow
+  /// [customer] - Customer data containing phone and name
+  ///
+  /// Returns [NetworkResult<VerifyOtpResponse>] containing:
+  /// - Success: VerifyOtpResponse with authentication token and customer data
+  /// - Error: ErrorModel with failure details
+  Future<NetworkResult<VerifyOtpResponse>> autoLogin({required CustomerData customer}) async {
+    try {
+      final response = await networkServices.autoLogin(customer: customer);
+
+      if (response.statusCode?.isSuccess ?? false) {
+        final loginResponse = VerifyOtpResponse.fromJson(response.data);
+        smPrint('Auto Login Response: Success - User ${loginResponse.result.customer.id} authenticated');
+        return Success(loginResponse);
+      } else {
+        smPrint('Auto Login Error: ${response.statusCode}');
+        return Error(ErrorHandler.handle(response));
+      }
+    } catch (e) {
+      smPrint('Auto Login Error: $e');
+      return Error(ErrorHandler.handle(e));
+    }
+  }
+
 }
