@@ -25,21 +25,19 @@ class OtpScreen extends StatefulWidget {
   String? sessionId;
   final AuthCubit authCubit; // Receive AuthCubit from parent
 
-  OtpScreen({
-    super.key,
-    required this.isCreateAccount,
-    required this.authCubit, // Required parameter
-    this.phoneNumber,
-    this.countryCode,
-    this.sessionId
-  });
+  OtpScreen(
+      {super.key,
+      required this.isCreateAccount,
+      required this.authCubit, // Required parameter
+      this.phoneNumber,
+      this.countryCode,
+      this.sessionId});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-
   Timer? _timer;
   final ValueNotifier<int> seconds = ValueNotifier<int>(60);
   final ValueNotifier<String> otp = ValueNotifier<String>("");
@@ -108,8 +106,7 @@ class _OtpScreenState extends State<OtpScreen> {
     return BlocConsumer<AuthCubit, AuthState>(
       bloc: _authCubit, // Use the cubit passed from parent
       listenWhen: (prevState, state) =>
-          state.verifyOtpStatus != prevState.verifyOtpStatus ||
-          state.sendOtpStatus != prevState.sendOtpStatus,
+          state.verifyOtpStatus != prevState.verifyOtpStatus || state.sendOtpStatus != prevState.sendOtpStatus,
       listener: (context, state) async {
         if (state.verifyOtpStatus.isSuccess) {
           if (widget.isCreateAccount) {
@@ -118,14 +115,14 @@ class _OtpScreenState extends State<OtpScreen> {
 
             // Pop OTP bottom sheet with success result (true)
             // This signals Register screen to close itself and show Congratulations
-            Navigator.of(context).pop(true);
-
+            // Navigator.of(SMConfig.parentContext).pop(true);
+            context.smPopSheet(isSuccess: true);
             // Trigger refresh of support state to update authentication status
             _refreshSupportState();
           } else {
             // For login flow: Close the OTP screen and trigger auth refresh
             if (!mounted) return;
-            Navigator.of(context).pop();
+            context.smPopSheet();
 
             // Trigger refresh of support state to update authentication status
             _refreshSupportState();
@@ -139,8 +136,7 @@ class _OtpScreenState extends State<OtpScreen> {
         }
       },
       buildWhen: (prevState, state) =>
-          prevState.verifyOtpStatus != state.verifyOtpStatus || 
-          prevState.sendOtpStatus != state.sendOtpStatus,
+          prevState.verifyOtpStatus != state.verifyOtpStatus || prevState.sendOtpStatus != state.sendOtpStatus,
       builder: (context, state) {
         return Column(
           children: [

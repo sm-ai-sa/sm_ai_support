@@ -6,7 +6,7 @@ import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/core/network/dio_factory.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
 
 SMSupportCubit get smCubit => sl<SMSupportCubit>();
 
@@ -87,8 +87,6 @@ class SMSupportCubit extends Cubit<SMSupportState> {
       final result = await sl<SupportRepo>().startAnonymousSession(categoryId: categoryId);
       result.when(
         success: (data) async {
-          smPrint('Start Anonymous Session Success: ${data.result.viewId}');
-
           // Save anonymous session ID to SharedPreferences
           await SharedPrefHelper.addAnonymousSessionId(data.result.id);
           smPrint('Saved anonymous session ID: ${data.result.id}');
@@ -119,7 +117,6 @@ class SMSupportCubit extends Cubit<SMSupportState> {
       );
       result.when(
         success: (data) {
-          smPrint('Start Session Success: ${data.result.viewId}');
           emit(state.copyWith(startSessionStatus: BaseStatus.success, currentSession: data.result));
         },
         error: (error) {
@@ -534,9 +531,8 @@ class SMSupportCubit extends Cubit<SMSupportState> {
           // Create updated metadata
           final newMetadata = session.metadata.copyWith(
             unreadCount: metadata['customerUnreadCount'] as int?,
-            lastMessageAt: metadata['lastMessageAt'] != null
-                ? DateTime.parse(metadata['lastMessageAt'] as String)
-                : null,
+            lastMessageAt:
+                metadata['lastMessageAt'] != null ? DateTime.parse(metadata['lastMessageAt'] as String) : null,
             lastMessageContent: metadata['lastMessageContent'] as String?,
           );
 

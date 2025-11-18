@@ -101,9 +101,8 @@ class _CountrySelectionBottomSheetState extends State<CountrySelectionBottomShee
       }
 
       groupedCountries.forEach((key, countries) {
-        var filteredList = countries
-            .where((country) => country.name.contains(query) || country.nameEn.contains(query))
-            .toList();
+        var filteredList =
+            countries.where((country) => country.name.contains(query) || country.nameEn.contains(query)).toList();
         if (filteredList.isNotEmpty) {
           tempFilteredCountries[key] = filteredList;
         }
@@ -175,8 +174,10 @@ class _CountrySelectionBottomSheetState extends State<CountrySelectionBottomShee
               children: [
                 DesignSystem.closeButton(
                   onTap: () {
-                    widget.seletedCountry!(null);
-                    Navigator.pop(context);
+                    widget.seletedCountry!(
+                      countriesList.firstWhereOrNull((country) => country.isoCode == selectedCountryIsoCode),
+                    );
+                    context.smPopSheet();
                   },
                 ),
                 Text(SMText.chooseTheCountry, style: TextStyles.s_16_400.copyWith(color: ColorsPallets.loud900)),
@@ -185,7 +186,7 @@ class _CountrySelectionBottomSheetState extends State<CountrySelectionBottomShee
                     widget.seletedCountry!(
                       countriesList.firstWhereOrNull((country) => country.isoCode == selectedCountryIsoCode),
                     );
-                    smNavigatorKey.currentContext!.smParentPop();
+                    context.smPopSheet();
                   },
                   child: Text(SMText.apply, style: TextStyles.s_15_400.copyWith(color: ColorsPallets.primaryColor)),
                 ),

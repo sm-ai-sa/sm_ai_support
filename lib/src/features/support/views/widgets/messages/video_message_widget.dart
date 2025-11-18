@@ -12,7 +12,7 @@ import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:sm_ai_support/src/support/views/video_player_page.dart';
+import 'package:sm_ai_support/src/features/support/views/video_player_page.dart';
 import 'package:video_player/video_player.dart';
 
 /// Video message widget with actual video thumbnail and play button

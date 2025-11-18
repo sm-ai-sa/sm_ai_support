@@ -131,11 +131,13 @@ Column columnOfLeadingNotchAndChild(bool showLeadingContainer, Widget child, {bo
 
 Future primaryCupertinoBottomSheet({
   required Widget child,
+  BuildContext? context,
   bool isShowCloseIcon = false,
   bool haveBarrierColor = false,
   bool enableDragDismiss = true,
   bool showSwipeCloseIndicator = false,
   double? height,
+  bool useDynamicHeight = false,
   EdgeInsets? padding,
   Widget? bottomBarWidget,
   Color? backgroundColor,
@@ -145,56 +147,85 @@ Future primaryCupertinoBottomSheet({
   bool? isDismissible,
 }) async {
   return await showCupertinoModalBottomSheet(
-    barrierColor: haveBarrierColor ? Colors.black.withOpacity(0.8) : null,
-    context: smNavigatorKey.currentContext!,
+    barrierColor: haveBarrierColor ? Colors.black.withValues(alpha: 0.8) : null,
+    context: context ?? smNavigatorKey.currentContext!,
     backgroundColor: backgroundColor ?? ColorsPallets.white,
     topRadius: 14.rSp.rBr,
     isDismissible: isDismissible ?? true,
     duration: const Duration(milliseconds: 300),
     enableDrag: enableDragDismiss,
-    builder: (_) {
-      return Scaffold(
-        backgroundColor: backgroundColor ?? ColorsPallets.white,
-        body: Container(
-          width: double.infinity,
-          height: height ?? 92.h,
-          padding: padding ?? EdgeInsets.zero,
-          decoration: BoxDecoration(color: backgroundColor ?? ColorsPallets.white),
-          child: Stack(
-            // mainAxisSize: MainAxisSize.min,
-            // mainAxisAlignment: MainAxisAlignment.start,
-            // crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Column(
-                children: [
-                  Visibility(
-                    visible: showSwipeCloseIndicator,
-                    child: Container(
-                      width: 24.rw,
-                      height: 4.rh,
-                      margin: EdgeInsets.only(bottom: 24.rh),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: 100.br,
-                        // color: ColorsPallets.gray30,
-                      ),
-                    ),
-                  ),
-                  Expanded(child: child),
-                ],
+    expand: !useDynamicHeight,
+    builder: (context) {
+      final Widget content = Column(
+        mainAxisSize: useDynamicHeight ? MainAxisSize.min : MainAxisSize.max,
+        children: [
+          Visibility(
+            visible: showSwipeCloseIndicator,
+            child: Container(
+              width: 24.rw,
+              height: 4.rh,
+              margin: EdgeInsets.only(bottom: 0.rh),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: 100.br,
+                // color: ColorsPallets.gray30,
               ),
-              if (isShowCloseIcon)
-                Align(
-                  alignment: AlignmentDirectional.topStart,
-                  child: Padding(
-                    padding: EdgeInsetsDirectional.only(start: 20.rw, top: 31.rh),
-                    child: DesignSystem.closeButton(onTap: onClosePressed),
+            ),
+          ),
+          if (useDynamicHeight) child else Expanded(child: child),
+        ],
+      );
+
+      return useDynamicHeight
+          ? MediaQuery.removePadding(
+              context: context,
+              removeBottom: true,
+              child: Container(
+                width: double.infinity,
+                constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.9),
+                padding: padding ?? EdgeInsets.zero,
+                decoration: BoxDecoration(color: backgroundColor ?? ColorsPallets.white),
+                child: Stack(
+                  children: [
+                    content,
+                    if (isShowCloseIcon)
+                      Align(
+                        alignment: AlignmentDirectional.topStart,
+                        child: Padding(
+                          padding: EdgeInsetsDirectional.only(start: 20.rw, top: 31.rh),
+                          child: DesignSystem.closeButton(onTap: onClosePressed),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            )
+          : SizedBox(
+              height: height ?? MediaQuery.of(context).size.height,
+              child: Scaffold(
+                backgroundColor: backgroundColor ?? ColorsPallets.white,
+                body: Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  padding: padding ?? EdgeInsets.zero,
+                  margin: EdgeInsets.zero,
+                  decoration: BoxDecoration(color: backgroundColor ?? ColorsPallets.white),
+                  child: Stack(
+                    children: [
+                      content,
+                      if (isShowCloseIcon)
+                        Align(
+                          alignment: AlignmentDirectional.topStart,
+                          child: Padding(
+                            padding: EdgeInsetsDirectional.only(start: 20.rw, top: 31.rh),
+                            child: DesignSystem.closeButton(onTap: onClosePressed),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-            ],
-          ),
-        ),
-      );
+              ),
+            );
     },
   );
 }

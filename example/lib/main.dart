@@ -1,5 +1,6 @@
 import 'package:example/sm_support_page.dart';
 import 'package:flutter/material.dart';
+import 'package:sm_ai_support/sm_ai_support.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,6 +25,22 @@ class MyApp extends StatelessWidget {
 
 class SupportDemoScreen extends StatelessWidget {
   const SupportDemoScreen({super.key});
+
+  /// Opens SM Support as a bottom sheet within the current app context
+  void _openBottomSheet(BuildContext context, {required bool isEnglish}) {
+    SMSupport.show(
+      context: context,
+      smSupportData: SMSupportData(
+        appName: 'UNI-SUPPORT',
+        locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
+        tenantId: '1',
+        apiKey: '17841476553120002', // Test API key for sandbox
+        secretKey: 'in-app-default', // Test secret key for HMAC signing
+        baseUrl: 'http://sandbox.unicode.team/api/core', // REST API base URL
+        socketBaseUrl: 'wss://sandbox.unicode.team/ws', // WebSocket base URL
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,11 +95,11 @@ class SupportDemoScreen extends StatelessWidget {
 
             const SizedBox(height: 40),
 
-            // Demo Buttons
+            // Demo Buttons - Bottom Sheet Mode
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Try Demo',
+                'Bottom Sheet Mode (Recommended)',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
               ),
             ),
@@ -92,9 +109,9 @@ class SupportDemoScreen extends StatelessWidget {
             _buildDemoButton(
               context,
               icon: Icons.chat_bubble_outline_rounded,
-              title: 'Open Support',
-              subtitle: 'Arabic interface',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage())),
+              title: 'Open as Bottom Sheet',
+              subtitle: 'Arabic - Opens within current app',
+              onTap: () => _openBottomSheet(context, isEnglish: false),
             ),
 
             const SizedBox(height: 12),
@@ -102,8 +119,39 @@ class SupportDemoScreen extends StatelessWidget {
             _buildDemoButton(
               context,
               icon: Icons.language_rounded,
-              title: 'Open Support EN',
-              subtitle: 'English interface',
+              title: 'Open as Bottom Sheet EN',
+              subtitle: 'English - Opens within current app',
+              onTap: () => _openBottomSheet(context, isEnglish: true),
+            ),
+
+            const SizedBox(height: 32),
+
+            // Demo Buttons - Full Screen Mode
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Full Screen Mode (Legacy)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            _buildDemoButton(
+              context,
+              icon: Icons.fullscreen_rounded,
+              title: 'Open Full Screen',
+              subtitle: 'Arabic - Opens as new screen',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage())),
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildDemoButton(
+              context,
+              icon: Icons.fullscreen_rounded,
+              title: 'Open Full Screen EN',
+              subtitle: 'English - Opens as new screen',
               onTap: () =>
                   Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage(isEnglish: true))),
             ),

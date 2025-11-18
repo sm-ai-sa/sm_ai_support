@@ -1,7 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
-import 'package:sm_ai_support/src/support/cubit/single_session_cubit.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_cubit.dart';
+import 'package:sm_ai_support/src/features/support/cubit/single_session_cubit.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_cubit.dart';
 
 Future<void> init(GetIt instance) async {
   // Register AuthCubit as a lazy singleton

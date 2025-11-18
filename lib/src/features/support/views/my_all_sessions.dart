@@ -6,8 +6,9 @@ import 'package:sm_ai_support/src/core/global/shimmer_items.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
-import 'package:sm_ai_support/src/support/views/widgets/session_item.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/session_item.dart';
 
 class MySessions extends StatefulWidget {
   const MySessions({super.key});
@@ -28,7 +29,13 @@ class _MySessionsState extends State<MySessions> {
   @override
   void dispose() {
     // Stop the session stats stream when leaving the page
-    smCubit.stopSessionStatsStream();
+    // Add safety check to prevent errors during rapid dismissal
+    try {
+      smCubit.stopSessionStatsStream();
+    } catch (e) {
+      // Silently handle disposal errors
+      smPrint('Error during MySessions disposal: $e');
+    }
     super.dispose();
   }
 

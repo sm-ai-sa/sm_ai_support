@@ -85,4 +85,53 @@ class ShimmerItems {
       ],
     );
   }
+
+  /// Shimmer for category items - matches actual category structure
+  static Widget categoryShimmer({bool showDivider = true}) {
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.rh),
+          child: Row(
+            children: [
+              // Icon shimmer
+              shimmerContainer(
+                width: 24.rw,
+                height: 24.rh,
+                radius: 8,
+              ),
+              SizedBox(width: 14.rw),
+              // Text shimmer
+              Expanded(
+                child: shimmerContainer(
+                  width: double.infinity,
+                  height: 14.rh,
+                  radius: 4,
+                ),
+              ),
+              SizedBox(width: 14.rw),
+              // Arrow shimmer
+              shimmerContainer(
+                width: 16.rw,
+                height: 16.rh,
+                radius: 4,
+              ),
+            ],
+          ),
+        ),
+        // Divider (same as actual category)
+        if (showDivider)
+          Divider(color: ColorsPallets.disabled25, thickness: 1),
+      ],
+    );
+  }
+
+  /// Shimmer for logo
+  static Widget logoShimmer() {
+    return shimmerContainer(
+      width: 48.rw,
+      height: 48.rh,
+      isCircle: true,
+    );
+  }
 }

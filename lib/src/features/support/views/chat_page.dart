@@ -8,32 +8,32 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
-import 'package:sm_ai_support/src/support/views/widgets/chat_app_bar.dart';
-import 'package:sm_ai_support/src/support/views/widgets/chat_empty_state.dart';
-import 'package:sm_ai_support/src/support/views/widgets/chat_message_item.dart';
-import 'package:sm_ai_support/src/support/views/widgets/message_input.dart';
-import 'package:sm_ai_support/src/support/views/widgets/rate_bs.dart';
+import 'package:sm_ai_support/src/features/support/cubit/single_session_state.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/chat_app_bar.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/chat_empty_state.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/chat_message_item.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/message_input.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/rate_bs.dart';
 
 /// Main chat page for displaying and managing chat conversations
 /// Refactored for better code organization and maintainability
 class ChatPage extends StatefulWidget {
   final bool initTicket;
-  final SessionModel? session;
+
   final MySessionModel? mySession;
   final CategoryModel? category;
 
-  const ChatPage({super.key, this.session, this.mySession, this.category, this.initTicket = false})
-    : assert(
-        session != null || mySession != null || (category != null && initTicket),
-        'Either session or mySession must be provided, or category with initTicket for new sessions',
-      );
+  const ChatPage({super.key, this.mySession, this.category, this.initTicket = false})
+      : assert(
+          mySession != null || (category != null && initTicket),
+          'Either mySession must be provided, or category with initTicket for new sessions',
+        );
 
   // Convenience getters
-  String get sessionId => session?.id ?? mySession?.id ?? '';
-  SessionModel? get currentSession => session ?? mySession?.toSessionModel();
-  CategoryModel? get sessionCategory => session?.category ?? mySession?.category ?? category;
+  String get sessionId => mySession?.id ?? '';
+  // SessionModel? get currentSession => mySession?.toSessionModel();
+  CategoryModel? get sessionCategory => mySession?.category ?? category;
 
   // Check if this is a new session without existing session data
   bool get isNewSession => initTicket && sessionId.isEmpty && category != null;
@@ -131,10 +131,22 @@ class _ChatPageState extends State<ChatPage> {
 
   /// Cleanup session on dispose
   void _cleanupSession() {
-    if (!widget.initTicket && widget.sessionId.isNotEmpty) {
-      _sessionCubit.stopMessageStream();
+    try {
+      // Dispose scroll controller first to prevent errors
+      if (_scrollController.hasClients) {
+        _scrollController.removeListener(_onScroll);
+      }
+      _scrollController.dispose();
+
+      // Then cleanup session streams
+      if (!widget.initTicket && widget.sessionId.isNotEmpty) {
+        _sessionCubit.stopMessageStream();
+      }
+      _sessionCubit.close();
+    } catch (e) {
+      // Silently handle disposal errors
+      smPrint('Error during ChatPage disposal: $e');
     }
-    _sessionCubit.close();
   }
 
   /// Show rating bottom sheet if required
@@ -291,8 +303,7 @@ class _ChatPageState extends State<ChatPage> {
             previous.loadMoreMessagesStatus.isLoading && current.loadMoreMessagesStatus.isSuccess;
 
         // New message added: last message changed (but not during pagination)
-        final newMessageAdded =
-            !paginationJustCompleted &&
+        final newMessageAdded = !paginationJustCompleted &&
             previous.sessionMessages.isNotEmpty &&
             current.sessionMessages.isNotEmpty &&
             previous.sessionMessages.last.id != current.sessionMessages.last.id;
@@ -344,8 +355,7 @@ class _ChatPageState extends State<ChatPage> {
             reverse: messagesList.isNotEmpty, // This makes newest messages at bottom and preserves scroll on pagination
             addAutomaticKeepAlives: false,
             padding: EdgeInsets.symmetric(horizontal: 22.rw).copyWith(top: 20.rh),
-            itemCount:
-                messagesList.length +
+            itemCount: messagesList.length +
                 (sessionState.loadMoreMessagesStatus.isLoading ? 1 : 0) +
                 (!sessionState.hasMoreMessages && messagesList.isNotEmpty ? 1 : 0) +
                 (messagesList.isEmpty ? 1 : 0) +
@@ -411,7 +421,7 @@ class _ChatPageState extends State<ChatPage> {
         return BlocBuilder<SingleSessionCubit, SingleSessionState>(
           builder: (context, sessionState) {
             final currentSession = _getCurrentSession(state);
-            final sessionStatus = currentSession?.toSessionModel().status ?? widget.currentSession?.status;
+            final sessionStatus = currentSession?.status ?? widget.mySession?.status;
 
             final lastMessage = sessionState.sessionMessages.isNotEmpty ? sessionState.sessionMessages.last : null;
 
@@ -421,8 +431,7 @@ class _ChatPageState extends State<ChatPage> {
               children: [
                 // Message input
                 Visibility(
-                  visible:
-                      (widget.initTicket || sessionStatus?.isActive == true) &&
+                  visible: (widget.initTicket || sessionStatus?.isActive == true) &&
                       !shouldShowRating &&
                       !(lastMessage?.contentType.isCloseSession ?? false),
                   child: MessageInput(

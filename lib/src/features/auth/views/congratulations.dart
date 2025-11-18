@@ -24,7 +24,7 @@ class _CongratulationsState extends State<Congratulations> {
     // Auto close after 2 seconds
     _timer = Timer(2.seconds, () {
       if (mounted) {
-        Navigator.of(context).pop();
+        context.smPop();
       }
     });
   }

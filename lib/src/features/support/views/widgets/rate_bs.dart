@@ -7,7 +7,7 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
-import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
+import 'package:sm_ai_support/src/features/support/cubit/single_session_state.dart';
 
 class RateBS extends StatefulWidget {
   final String sessionId;

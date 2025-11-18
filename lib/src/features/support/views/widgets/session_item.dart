@@ -9,8 +9,8 @@ import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/days_extensions.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:sm_ai_support/src/support/cubit/sm_support_state.dart';
-import 'package:sm_ai_support/src/support/views/chat_page.dart';
+import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
+import 'package:sm_ai_support/src/features/support/views/chat_page.dart';
 
 class SessionItem extends StatelessWidget {
   const SessionItem({super.key, required this.session, this.isLast = false});
@@ -23,10 +23,11 @@ class SessionItem extends StatelessWidget {
     return InkWell(
       onTap: () {
         // Get the current session from SMSupportCubit state to ensure we have the latest data
-      
+
         final currentSession = smCubit.state.mySessions.firstWhereOrNull((s) => s.id == session.id) ?? session;
 
-        context.smPush(ChatPage(mySession: currentSession, category: currentSession.category));
+        // Open chat in full screen
+        context.smPushFullScreen(ChatPage(mySession: currentSession, category: currentSession.category));
       },
       child: BlocBuilder<SMSupportCubit, SMSupportState>(
         builder: (context, state) {

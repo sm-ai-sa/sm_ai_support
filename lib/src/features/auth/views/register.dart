@@ -60,7 +60,7 @@ class _RegisterState extends State<Register> with SingleTickerProviderStateMixin
             // If OTP verification was successful (result == true), show Congratulations and close Register
             if (result == true && mounted) {
               // Close the Register bottom sheet first
-              Navigator.of(context).pop();
+              context.smPopSheet();
 
               // Small delay for animation
               await Future.delayed(const Duration(milliseconds: 150));
@@ -88,7 +88,7 @@ class _RegisterState extends State<Register> with SingleTickerProviderStateMixin
                     "close",
                     color: ColorsPallets.normal500,
                     size: 26.rSp,
-                    onTap: () => context.smPop(),
+                    onTap: () => context.smPopSheet(),
                   ),
                 ),
               ),
@@ -109,7 +109,7 @@ class _RegisterState extends State<Register> with SingleTickerProviderStateMixin
                         SizedBox(height: 24.rh),
                         DesignSystem.thereIsAnAccount(
                           onPressed: () {
-                            context.smPop();
+                            context.smPopSheet();
                             primaryCupertinoBottomSheet(child: LoginByPhone());
                           },
                         ),

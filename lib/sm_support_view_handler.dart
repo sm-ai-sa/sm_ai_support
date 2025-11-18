@@ -3,7 +3,7 @@ import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.dart';
 import 'package:sm_ai_support/src/core/global/components/simple_loading_animation.dart';
-import 'package:sm_ai_support/src/support/views/widgets/sm_support_categories_bs.dart';
+import 'package:sm_ai_support/src/features/support/views/widgets/sm_support_categories_bs.dart';
 
 import 'src/core/utils/extension/size_extension.dart';
 

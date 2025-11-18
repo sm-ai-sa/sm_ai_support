@@ -6,7 +6,7 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
-import 'package:sm_ai_support/src/support/views/image_preview.dart';
+import 'package:sm_ai_support/src/features/support/views/image_preview.dart';
 
 /// Image message widget with preview functionality
 class ImageMessageWidget extends StatelessWidget {

@@ -12,7 +12,7 @@ import 'package:sm_ai_support/src/core/services/media_upload.dart';
 import 'package:sm_ai_support/src/core/services/picker_helper.dart';
 import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:sm_ai_support/src/support/cubit/single_session_state.dart';
+import 'package:sm_ai_support/src/features/support/cubit/single_session_state.dart';
 
 /// Media type enum for file picker dialog
 enum MediaFileType { video, audio, document }
