@@ -21,6 +21,9 @@ class SingleSessionState extends Equatable {
   /// Status for uploading files
   final BaseStatus uploadFileStatus;
 
+  /// Upload progress percentage (0.0 to 1.0)
+  final double uploadProgress;
+
   /// Status for creating a new session
   final BaseStatus createSessionStatus;
 
@@ -49,6 +52,7 @@ class SingleSessionState extends Equatable {
     this.sendMessageStatus = BaseStatus.initial,
     this.rateSessionStatus = BaseStatus.initial,
     this.uploadFileStatus = BaseStatus.initial,
+    this.uploadProgress = 0.0,
     this.createSessionStatus = BaseStatus.initial,
     this.hasMoreMessages = true,
     this.repliedOn,
@@ -65,6 +69,7 @@ class SingleSessionState extends Equatable {
     BaseStatus? sendMessageStatus,
     BaseStatus? rateSessionStatus,
     BaseStatus? uploadFileStatus,
+    double? uploadProgress,
     BaseStatus? createSessionStatus,
     bool? hasMoreMessages,
     String? repliedOn,
@@ -82,6 +87,7 @@ class SingleSessionState extends Equatable {
       sendMessageStatus: sendMessageStatus ?? this.sendMessageStatus,
       rateSessionStatus: rateSessionStatus ?? this.rateSessionStatus,
       uploadFileStatus: uploadFileStatus ?? this.uploadFileStatus,
+      uploadProgress: uploadProgress ?? this.uploadProgress,
       createSessionStatus: createSessionStatus ?? this.createSessionStatus,
       hasMoreMessages: hasMoreMessages ?? this.hasMoreMessages,
       repliedOn: repliedOn ?? (isResetRepliedOn == true ? null : this.repliedOn),
@@ -100,6 +106,7 @@ class SingleSessionState extends Equatable {
         sendMessageStatus,
         rateSessionStatus,
         uploadFileStatus,
+        uploadProgress,
         createSessionStatus,
         hasMoreMessages,
         repliedOn,

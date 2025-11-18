@@ -36,7 +36,7 @@ class SupportDemoScreen extends StatelessWidget {
         tenantId: '1',
         apiKey: '17841476553120002', // Test API key for sandbox
         secretKey: 'in-app-default', // Test secret key for HMAC signing
-        baseUrl: 'http://sandbox.unicode.team/api/core', // REST API base URL
+        baseUrl: 'https://sandbox.unicode.team/api/core', // REST API base URL (HTTPS)
         socketBaseUrl: 'wss://sandbox.unicode.team/ws', // WebSocket base URL
       ),
     );

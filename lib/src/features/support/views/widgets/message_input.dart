@@ -2,11 +2,11 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
+import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
-import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/features/support/cubit/single_session_state.dart';
 
@@ -77,9 +77,11 @@ class _MessageInputState extends State<MessageInput> {
                           : () {
                               __pickerBottomSheet(context);
                             },
-                      child: state.uploadFileStatus.isLoading
-                          ? DesignSystem.loadingIndicator()
-                          : DesignSystem.svgIcon('attach', size: 22.rSp),
+                      child:
+                          // state.uploadFileStatus.isLoading
+                          //     ? DesignSystem.loadingIndicator()
+                          //     :
+                          DesignSystem.svgIcon('attach', size: 22.rSp),
                     ),
                   // TODO: Implement file picker functionality
                   // if (state.pickedFile != null) ...[
@@ -111,10 +113,15 @@ class _MessageInputState extends State<MessageInput> {
                           !state.sendMessageStatus.isLoading &&
                           !state.uploadFileStatus.isLoading &&
                           !state.createSessionStatus.isLoading) {
+                        // Send message
                         context.read<SingleSessionCubit>().sendMessage(
-                          message: _messageController.text,
-                          contentType: 'TEXT',
-                        );
+                              message: _messageController.text,
+                              contentType: 'TEXT',
+                            );
+
+                        // Clear input immediately for smooth UX (optimistic UI)
+                        _messageController.clear();
+                        setState(() {});
                       }
                     },
                     child: CircleAvatar(
@@ -137,52 +144,90 @@ class _MessageInputState extends State<MessageInput> {
   }
 
   Future<dynamic> __pickerBottomSheet(BuildContext context) {
-    return primaryBottomSheet(
-      showLeadingContainer: true,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(height: 20.rh),
+    final textDirection = SMConfig.smData.locale.isEnglish ? TextDirection.ltr : TextDirection.rtl;
 
-            // Gallery Option - Pick photos/videos
-            _buildAttachmentOption(
-              context: context,
-              icon: 'gallery',
-              label: SMText.attachFromLibrary,
-              onTap: () async {
-                context.smPop();
-                await context.read<SingleSessionCubit>().pickAndUploadMedia(context, isFile: true);
-              },
+    return primaryCupertinoBottomSheet(
+      context: context,
+      showSwipeCloseIndicator: true,
+      enableDragDismiss: true,
+      useDynamicHeight: true,
+      child: Directionality(
+        textDirection: textDirection,
+        child: Material(
+          color: ColorsPallets.white,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22.rw, vertical: 12.rh),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(height: 10.rh),
+
+                // Gallery Option - Pick photos/videos
+                _buildAttachmentOption(
+                  context: context,
+                  icon: 'gallery',
+                  label: SMText.attachFromLibrary,
+                  onTap: () async {
+                    // Store navigator before async operation
+                    final navigator = Navigator.of(context);
+
+                    // Start file picking (this will open file picker which pauses execution)
+                    final cubit = context.read<SingleSessionCubit>();
+
+                    // Close bottom sheet before picker opens
+                    navigator.pop();
+
+                    // Now open picker and upload
+                    await cubit.pickAndUploadMedia(context, isFile: true);
+                  },
+                ),
+                SizedBox(height: 16.rh),
+                // Gallery Option - Pick photos/videos
+                _buildAttachmentOption(
+                  context: context,
+                  icon: 'gallery',
+                  label: SMText.attachFromGallery,
+                  onTap: () async {
+                    // Store navigator before async operation
+                    final navigator = Navigator.of(context);
+
+                    // Start file picking
+                    final cubit = context.read<SingleSessionCubit>();
+
+                    // Close bottom sheet before picker opens
+                    navigator.pop();
+
+                    // Now open picker and upload
+                    await cubit.pickAndUploadMedia(context, isFile: false);
+                  },
+                ),
+
+                SizedBox(height: 16.rh),
+
+                // Camera Option - Take photo
+                _buildAttachmentOption(
+                  context: context,
+                  icon: 'camera',
+                  label: SMText.attachFromCamera,
+                  onTap: () async {
+                    // Store navigator before async operation
+                    final navigator = Navigator.of(context);
+
+                    // Start camera
+                    final cubit = context.read<SingleSessionCubit>();
+
+                    // Close bottom sheet before camera opens
+                    navigator.pop();
+
+                    // Now open camera and upload
+                    await cubit.pickAndUploadCameraImage(context);
+                  },
+                ),
+
+                SizedBox(height: 20.rh),
+              ],
             ),
-            SizedBox(height: 16.rh),
-            // Gallery Option - Pick photos/videos
-            _buildAttachmentOption(
-              context: context,
-              icon: 'gallery',
-              label: SMText.attachFromGallery,
-              onTap: () async {
-                context.smPop();
-                await context.read<SingleSessionCubit>().pickAndUploadMedia(context, isFile: false);
-              },
-            ),
-
-            SizedBox(height: 16.rh),
-
-            // Camera Option - Take photo
-            _buildAttachmentOption(
-              context: context,
-              icon: 'camera',
-              label: SMText.attachFromCamera,
-              onTap: () async {
-                context.smPop();
-                await context.read<SingleSessionCubit>().pickAndUploadCameraImage(context);
-              },
-            ),
-
-            SizedBox(height: 32.rh),
-          ],
+          ),
         ),
       ),
     );

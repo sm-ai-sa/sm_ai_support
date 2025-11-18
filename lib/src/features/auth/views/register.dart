@@ -67,11 +67,9 @@ class _RegisterState extends State<Register> with SingleTickerProviderStateMixin
 
               if (!mounted) return;
 
-              // Show Congratulations page
-              await Navigator.of(
-                context,
-                rootNavigator: true,
-              ).push(MaterialPageRoute(builder: (_) => const Congratulations()));
+              // Show Congratulations page using the bottom sheet navigator
+              // This ensures when it pops, it returns to the categories bottom sheet
+              context.smPushFullScreen(const Congratulations());
             }
           }
         },

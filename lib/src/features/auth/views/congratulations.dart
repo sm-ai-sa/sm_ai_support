@@ -21,10 +21,10 @@ class _CongratulationsState extends State<Congratulations> {
   @override
   void initState() {
     super.initState();
-    // Auto close after 2 seconds
+    // Auto close after 2 seconds and return to categories bottom sheet
     _timer = Timer(2.seconds, () {
       if (mounted) {
-        context.smPop();
+        context.smPopSheet();
       }
     });
   }

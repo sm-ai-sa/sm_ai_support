@@ -92,21 +92,55 @@ class SessionMessage extends Equatable {
   /// Get file size from metadata (in bytes)
   int? get fileSize => metadata?['fileSize'] as int?;
 
+  /// Check if this is a temporary optimistic message (ID starts with 'temp_')
+  bool get isTemporary => id.startsWith('temp_');
+
+  /// Copy with method for updating message properties
+  SessionMessage copyWith({
+    String? id,
+    String? content,
+    SessionMessageContentType? contentType,
+    SessionMessageSenderType? senderType,
+    bool? isRead,
+    bool? isDelivered,
+    bool? isFailed,
+    SessionMessageReply? reply,
+    DateTime? createdAt,
+    dynamic admin,
+    Map<String, dynamic>? metadata,
+    bool? isOptimistic,
+  }) {
+    return SessionMessage(
+      id: id ?? this.id,
+      content: content ?? this.content,
+      contentType: contentType ?? this.contentType,
+      senderType: senderType ?? this.senderType,
+      isRead: isRead ?? this.isRead,
+      isDelivered: isDelivered ?? this.isDelivered,
+      isFailed: isFailed ?? this.isFailed,
+      reply: reply ?? this.reply,
+      createdAt: createdAt ?? this.createdAt,
+      admin: admin ?? this.admin,
+      metadata: metadata ?? this.metadata,
+      isOptimistic: isOptimistic ?? this.isOptimistic,
+    );
+  }
+
   @override
   List<Object?> get props => [
-    id,
-    content,
-    contentType,
-    senderType,
-    isRead,
-    isDelivered,
-    isFailed,
-    reply,
-    createdAt,
-    admin,
-    metadata,
-    isOptimistic,
-  ];
+        id,
+        content,
+        contentType,
+        senderType,
+        isRead,
+        isDelivered,
+        isFailed,
+        reply,
+        createdAt,
+        admin,
+        metadata,
+        isOptimistic,
+      ];
 }
 
 /// Model for a session messages document containing all messages for a session
@@ -144,11 +178,9 @@ class SessionMessagesResponse extends Equatable {
 
   const SessionMessagesResponse({required this.result, required this.statusCode});
 
-
   factory SessionMessagesResponse.fromJson(Map<String, dynamic> json) {
     return SessionMessagesResponse(
       result: SessionMessagesDoc.fromJson(json['result'] as Map<String, dynamic>),
-
       statusCode: json['statusCode'] as int,
     );
   }
@@ -176,7 +208,11 @@ class CustomerSendMessageRequest extends Equatable {
   });
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> json = {'sessionId': sessionId, 'message': message, 'contentType': contentType};
+    final Map<String, dynamic> json = {
+      'sessionId': sessionId,
+      'message': message,
+      'contentType': contentType,
+    };
 
     if (reply != null) {
       json['reply'] = reply!.toJson();

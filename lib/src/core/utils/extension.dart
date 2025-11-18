@@ -5,7 +5,6 @@ import 'package:sm_ai_support/src/constant/locale.dart';
 import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
-import 'package:sm_ai_support/src/features/support/cubit/sm_support_cubit.dart';
 import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
 
 extension NumExt on num {
@@ -83,7 +82,9 @@ extension BuildContextExt on BuildContext {
   }
 
   ///* Go to next view (within bottom sheet navigator)
-  void smPush(Widget widget) => Navigator.of(SMConfig.parentContext).push(MaterialPageRoute(builder: (_) => widget));
+  void smPush(Widget widget) => Navigator.of(SMConfig.parentContext).push(
+        MaterialPageRoute(builder: (_) => _FullScreenWrapper(child: widget)),
+      );
 
   ///* Push a full-screen page using the parent app's context
   /// This is useful for chat pages and other screens that need full screen

@@ -107,8 +107,8 @@ class _LoginByPhoneState extends State<LoginByPhone> {
                       });
                     }
                     if (state.verifyOtpStatus.isSuccess) {
-                      // Close the login by phone bottom sheet after successful verification
-                      context.smPop();
+                      // Close the login by phone bottom sheet and return to categories
+                      context.smPopSheet();
                     }
                   },
                   buildWhen: (prevState, state) => state.sendOtpStatus != prevState.sendOtpStatus,

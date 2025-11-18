@@ -87,14 +87,11 @@ class _FileMessageWidgetState extends State<FileMessageWidget> {
                 //     : ColorsPallets.primary25,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: (widget.message.isOptimistic || _isDownloading)
+              child: ( _isDownloading)
                   ? SizedBox(
                       width: 16.rSp,
                       height: 16.rSp,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(ColorsPallets.subdued400),
-                      ),
+                      child: DesignSystem.loadingIndicator(),
                     )
                   : Icon(Icons.download, color: ColorsPallets.muted600, size: 16.rSp),
             ),

@@ -21,9 +21,13 @@ class WebSocketService {
   String? _currentChannelName;
   Timer? _pingTimer;
   Timer? _pollingTimer;
+  Timer? _reconnectTimer;
   int _reconnectAttempts = 0;
-  static const int _maxReconnectAttempts = 3;
+  static const int _maxReconnectAttempts = 5;
+  static const int _initialReconnectDelay = 1000; // 1 second
+  static const int _maxReconnectDelay = 30000; // 30 seconds
   bool _usePollingFallback = false;
+  bool _isManualDisconnect = false;
   String? _tenantId;
   String? _sessionId;
   String? _customerId;
@@ -81,6 +85,9 @@ class WebSocketService {
     _tenantId = tenantId;
     _sessionId = sessionId;
     _customerId = customerId;
+
+    // Reset manual disconnect flag since this is a new connection attempt
+    _isManualDisconnect = false;
 
     try {
       // Build channel name first
@@ -369,7 +376,7 @@ class WebSocketService {
     _messageController?.addError(error);
   }
 
-  /// Handle connection closed
+  /// Handle connection closed with exponential backoff
   void _onConnectionClosed() {
     smLog('WebSocketService: Connection closed for channel: $_currentChannelName');
     smLog('WebSocketService: Reconnect attempts so far: $_reconnectAttempts/$_maxReconnectAttempts');
@@ -377,10 +384,29 @@ class WebSocketService {
 
     _isConnected = false;
 
-    // Socket.IO has built-in reconnection, but we can add our own logic here if needed
+    // Don't reconnect if this was a manual disconnect
+    if (_isManualDisconnect) {
+      smLog('WebSocketService: Manual disconnect, not reconnecting');
+      return;
+    }
+
+    // Implement exponential backoff for reconnection
     if (_currentChannelName != null && _reconnectAttempts < _maxReconnectAttempts && !_usePollingFallback) {
-      smLog('WebSocketService: Socket.IO will handle reconnection...');
       _reconnectAttempts++;
+
+      // Calculate exponential backoff delay: min(_initialReconnectDelay * 2^attempt, _maxReconnectDelay)
+      final delay = (_initialReconnectDelay * (1 << (_reconnectAttempts - 1))).clamp(0, _maxReconnectDelay);
+
+      smLog('WebSocketService: Scheduling reconnection attempt $_reconnectAttempts in ${delay}ms');
+
+      // Cancel any existing reconnect timer
+      _reconnectTimer?.cancel();
+
+      // Schedule reconnection with exponential backoff
+      _reconnectTimer = Timer(Duration(milliseconds: delay), () {
+        smLog('WebSocketService: Attempting reconnection...');
+        _attemptReconnection();
+      });
     } else if (!_usePollingFallback) {
       // Switch to polling fallback
       smLog('WebSocketService: Max reconnection attempts reached, switching to polling fallback...');
@@ -391,6 +417,26 @@ class WebSocketService {
     } else {
       smLog('WebSocketService: Already using polling fallback, cleaning up...');
       _cleanup();
+    }
+  }
+
+  /// Attempt to reconnect to the Socket.IO server
+  Future<void> _attemptReconnection() async {
+    if (_tenantId == null || _sessionId == null) {
+      smLog('WebSocketService: Cannot reconnect - missing connection parameters');
+      return;
+    }
+
+    try {
+      smLog('WebSocketService: Reconnecting to session...');
+      await connectToSession(
+        tenantId: _tenantId!,
+        sessionId: _sessionId!,
+        customerId: _customerId,
+      );
+    } catch (e) {
+      smLog('WebSocketService: Reconnection failed: $e');
+      // _onConnectionClosed will be called again, triggering another retry if attempts remain
     }
   }
 
@@ -715,6 +761,9 @@ class WebSocketService {
   Future<void> disconnect() async {
     smLog('WebSocketService: Disconnecting from channel: $_currentChannelName');
 
+    // Set manual disconnect flag to prevent auto-reconnection
+    _isManualDisconnect = true;
+
     // Disconnect from additional streams
     disconnectFromUnreadSessionsCountStream();
     disconnectFromSessionStatsStream();
@@ -786,6 +835,10 @@ class WebSocketService {
       // Stop heartbeat and polling
       _stopHeartbeat();
       _stopPollingTimer();
+
+      // Cancel reconnection timer
+      _reconnectTimer?.cancel();
+      _reconnectTimer = null;
 
       // Disconnect Socket.IO
       if (_socket != null) {

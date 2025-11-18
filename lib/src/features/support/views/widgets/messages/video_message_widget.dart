@@ -1,13 +1,13 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:sm_ai_support/src/constant/texts.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
 import 'package:sm_ai_support/src/core/models/session_messages_model.dart';
 import 'package:sm_ai_support/src/core/models/upload_model.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
-import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/image_url_resolver.dart';
@@ -45,63 +45,85 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
     _initializeVideoThumbnail();
   }
 
+  @override
+  void didUpdateWidget(VideoMessageWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reinitialize if the message content changed
+    if (oldWidget.message.content != widget.message.content) {
+      _disposeController();
+      _initializeVideoThumbnail();
+    }
+  }
+
+  void _disposeController() {
+    _videoController?.dispose();
+    _videoController = null;
+    _isInitialized = false;
+    _hasError = false;
+  }
+
   Future<void> _initializeVideoThumbnail() async {
-    if (widget.message.isOptimistic) return;
-
     try {
-      String? videoUrl = widget.message.content;
+      String? videoSource = widget.message.content;
 
-      // Resolve URL if needed
-      if (!ImageUrlResolver.isDirectDownloadUrl(widget.message.content)) {
-        final fileName = ImageUrlResolver.extractFileName(widget.message.content);
-        videoUrl = await ImageUrlResolver.resolveMediaUrl(
-          fileName: fileName,
-          sessionId: widget.sessionId,
-          category: FileUploadCategory.sessionMedia,
-        );
-      }
-
-      if (videoUrl == null || !mounted) return;
-
-      smPrint('🎬 Loading video thumbnail for: $videoUrl');
-
-      // For thumbnail, check cache first, otherwise download in background
-      final fileInfo = await DefaultCacheManager().getFileFromCache(videoUrl);
-
-      if (fileInfo != null && fileInfo.file.existsSync()) {
-        smPrint('✅ Using cached video for thumbnail');
-        _videoController = VideoPlayerController.file(fileInfo.file);
+      // For optimistic messages with local file path
+      if (widget.message.isOptimistic && videoSource.startsWith('/')) {
+        smPrint('🎬 Initializing local video thumbnail for optimistic message: $videoSource');
+        _videoController = VideoPlayerController.file(File(videoSource));
 
         await _videoController!.initialize();
-        await _videoController!.seekTo(Duration.zero);
+        await _videoController!.seekTo(const Duration(seconds: 1)); // Seek to 1 second for better thumbnail
         await _videoController!.pause();
 
         if (mounted) {
           setState(() {
             _isInitialized = true;
           });
+          smPrint('✅ Local video thumbnail initialized');
         }
-        smPrint('✅ Video thumbnail loaded from cache');
-      } else {
-        // Video not cached - start background download but don't wait
-        smPrint('📥 Video not cached, downloading in background...');
-        DefaultCacheManager().getSingleFile(videoUrl).then((file) {
-          smPrint('✅ Video downloaded to cache');
-        }).catchError((e) {
-          smPrint('⚠️ Failed to cache video: $e');
-        });
+        return;
+      }
 
-        // Show placeholder instead of trying to load thumbnail from network
-        if (mounted) {
-          setState(() {
-            _hasError = false;
-            _isInitialized = false; // Keep showing loading state
-          });
-        }
-        smPrint('ℹ️ Thumbnail will be available after video is cached');
+      // For non-optimistic messages
+      if (widget.message.isOptimistic) return;
+
+      // Resolve URL if needed
+      if (!ImageUrlResolver.isDirectDownloadUrl(widget.message.content)) {
+        final fileName = ImageUrlResolver.extractFileName(widget.message.content);
+        videoSource = await ImageUrlResolver.resolveMediaUrl(
+          fileName: fileName,
+          sessionId: widget.sessionId,
+          category: FileUploadCategory.sessionMedia,
+        );
+      }
+
+      if (videoSource == null || !mounted) return;
+
+      smPrint('🎬 Initializing video thumbnail for: $videoSource');
+
+      // Download and cache the video first (same as VideoPlayerPage)
+      smPrint('📥 Downloading video to cache...');
+      final file = await DefaultCacheManager().getSingleFile(videoSource);
+
+      if (!file.existsSync()) {
+        throw Exception('Failed to download video file');
+      }
+
+      smPrint('✅ Video downloaded - initializing player');
+      _videoController = VideoPlayerController.file(file);
+
+      await _videoController!.initialize();
+      await _videoController!.seekTo(const Duration(seconds: 1)); // Seek to 1 second for better thumbnail
+      await _videoController!.pause();
+
+      if (mounted) {
+        setState(() {
+          _isInitialized = true;
+        });
+        smPrint('✅ Video thumbnail initialized');
       }
     } catch (e) {
-      smPrint('❌ Error loading video thumbnail: $e');
+      smPrint('❌ Error initializing video thumbnail: $e');
       if (mounted) {
         setState(() {
           _hasError = true;
@@ -112,7 +134,7 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
 
   @override
   void dispose() {
-    _videoController?.dispose();
+    _disposeController();
     super.dispose();
   }
 
@@ -164,13 +186,13 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
               ),
             ),
             // Optimistic loading indicator
-            if (widget.message.isOptimistic)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
-                  child: Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
-                ),
-              ),
+            // if (widget.message.isOptimistic)
+            //   Positioned.fill(
+            //     child: Container(
+            //       decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
+            //       child: Center(child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)),
+            //     ),
+            //   ),
           ],
         ),
       ),
@@ -178,44 +200,56 @@ class _VideoMessageWidgetState extends State<VideoMessageWidget> {
   }
 
   Widget _buildThumbnail() {
-    if (widget.message.isOptimistic) {
-      return Container(
-        color: Colors.black12,
-        child: Icon(Icons.videocam, size: 48.rSp, color: ColorsPallets.subdued400),
-      );
-    }
-
+    // Show error state
     if (_hasError) {
       return Container(
-        color: Colors.black12,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 32.rSp, color: ColorsPallets.subdued400),
-            SizedBox(height: 4.rh),
-            Text(SMText.video, style: TextStyles.s_12_400.copyWith(color: ColorsPallets.subdued400)),
-          ],
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
         ),
-      );
-    }
-
-    if (!_isInitialized) {
-      return Container(
-        color: Colors.black12,
         child: Center(
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            valueColor: AlwaysStoppedAnimation<Color>(widget.tenantColor ?? ColorsPallets.primary300),
+          child: Icon(
+            Icons.error_outline,
+            size: 32.rSp,
+            color: ColorsPallets.subdued400,
           ),
         ),
       );
     }
 
-    // Show video first frame as thumbnail
+    // Show loading state while initializing (for both optimistic and regular videos)
+    if (!_isInitialized || _videoController == null) {
+      return Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.video_library,
+              size: 32.rSp,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show actual video thumbnail (first frame) - works for both optimistic and regular videos
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Colors.black,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: FittedBox(
         fit: BoxFit.cover,
         child: SizedBox(
