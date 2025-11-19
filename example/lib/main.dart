@@ -1,4 +1,3 @@
-import 'package:example/sm_support_page.dart';
 import 'package:flutter/material.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 
@@ -23,8 +22,25 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SupportDemoScreen extends StatelessWidget {
+class SupportDemoScreen extends StatefulWidget {
   const SupportDemoScreen({super.key});
+
+  @override
+  State<SupportDemoScreen> createState() => _SupportDemoScreenState();
+}
+
+class _SupportDemoScreenState extends State<SupportDemoScreen> {
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _countryCodeController = TextEditingController(text: '+20');
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _nameController.dispose();
+    _countryCodeController.dispose();
+    super.dispose();
+  }
 
   /// Opens SM Support as a bottom sheet within the current app context
   void _openBottomSheet(BuildContext context, {required bool isEnglish}) {
@@ -32,6 +48,13 @@ class SupportDemoScreen extends StatelessWidget {
       context: context,
       smSupportData: SMSupportData(
         appName: 'UNI-SUPPORT',
+        customer: _phoneController.text.isNotEmpty && _nameController.text.isNotEmpty && _countryCodeController.text.isNotEmpty
+            ? CustomerData(
+                countryCode: _countryCodeController.text,
+                phone: _phoneController.text,
+                name: _nameController.text,
+              )
+            : null,
         locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
         tenantId: '1',
         apiKey: '17841476553120002', // Test API key for sandbox
@@ -95,6 +118,103 @@ class SupportDemoScreen extends StatelessWidget {
 
             const SizedBox(height: 40),
 
+            // Auto-Login Test Fields
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Auto-Login Test (Optional)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Name',
+                hintText: 'Enter customer name',
+                prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF2563EB)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: TextField(
+                    controller: _countryCodeController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'Code',
+                      hintText: '+20',
+                      prefixIcon: const Icon(Icons.flag_outlined, color: Color(0xFF2563EB)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _phoneController,
+                    keyboardType: TextInputType.phone,
+                    decoration: InputDecoration(
+                      labelText: 'Phone',
+                      hintText: 'Enter phone number',
+                      prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF2563EB)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Leave empty for anonymous mode',
+              style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontStyle: FontStyle.italic),
+              textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 32),
+
             // Demo Buttons - Bottom Sheet Mode
             const Align(
               alignment: Alignment.centerLeft,
@@ -127,36 +247,36 @@ class SupportDemoScreen extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Demo Buttons - Full Screen Mode
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Full Screen Mode (Legacy)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
-              ),
-            ),
+            // const Align(
+            //   alignment: Alignment.centerLeft,
+            //   child: Text(
+            //     'Full Screen Mode (Legacy)',
+            //     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+            //   ),
+            // ),
 
-            const SizedBox(height: 16),
+            // const SizedBox(height: 16),
 
-            _buildDemoButton(
-              context,
-              icon: Icons.fullscreen_rounded,
-              title: 'Open Full Screen',
-              subtitle: 'Arabic - Opens as new screen',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage())),
-            ),
+            // _buildDemoButton(
+            //   context,
+            //   icon: Icons.fullscreen_rounded,
+            //   title: 'Open Full Screen',
+            //   subtitle: 'Arabic - Opens as new screen',
+            //   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage())),
+            // ),
 
-            const SizedBox(height: 12),
+            // const SizedBox(height: 12),
 
-            _buildDemoButton(
-              context,
-              icon: Icons.fullscreen_rounded,
-              title: 'Open Full Screen EN',
-              subtitle: 'English - Opens as new screen',
-              onTap: () =>
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage(isEnglish: true))),
-            ),
+            // _buildDemoButton(
+            //   context,
+            //   icon: Icons.fullscreen_rounded,
+            //   title: 'Open Full Screen EN',
+            //   subtitle: 'English - Opens as new screen',
+            //   onTap: () =>
+            //       Navigator.push(context, MaterialPageRoute(builder: (context) => SMSupportPage(isEnglish: true))),
+            // ),
 
-            const SizedBox(height: 40),
+            // const SizedBox(height: 40),
 
             // Features
             const Align(

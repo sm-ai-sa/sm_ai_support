@@ -1,4 +1,5 @@
 import 'package:sm_ai_support/sm_ai_support.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 /// Global authentication manager for the SM AI Support package
 class AuthManager {
@@ -31,8 +32,14 @@ class AuthManager {
   /// Save authentication data after successful login
   static Future<void> saveAuthData({
     required String token,
-    required CustomerModel customer,
+    required CustomerModel? customer,
   }) async {
+    // Customer data is required for authentication
+    if (customer == null) {
+      smPrint('⚠️ Cannot save auth data: customer is null');
+      return;
+    }
+
     await SharedPrefHelper.setAuthToken(token);
     await SharedPrefHelper.setCustomerData(
       id: customer.id,

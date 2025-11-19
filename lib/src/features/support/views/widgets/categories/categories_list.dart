@@ -116,22 +116,28 @@ Future<void> _loadAndResumeSession(
 
         // Check if session is closed
         if (SessionHelpers.isSessionClosed(messages)) {
-          smPrint('Session ${sessionData.sessionId} is closed, attempting to reopen');
+          smPrint('Session ${sessionData.sessionId} is closed, marking as closed in storage');
+
+          // Mark as closed IMMEDIATELY before attempting reopen
+          // This prevents the same closed session from being loaded on next category click
+          await SharedPrefHelper.updateSessionStatus(category.id, sessionData.sessionId, 'closed');
 
           // Try to reopen session silently
+          smPrint('Attempting to reopen closed session ${sessionData.sessionId}');
           final cubit = SingleSessionCubit(sessionId: sessionData.sessionId);
           final reopened = await cubit.attemptReopenSession(sessionData.sessionId, category.id);
           cubit.close(); // Clean up cubit
 
           if (reopened) {
-            // Reopen successful - continue with this session
-            smPrint('Session reopened successfully');
+            // Reopen successful - update status back to active and continue with this session
+            smPrint('Session reopened successfully, updating status to active');
+            await SharedPrefHelper.updateSessionStatus(category.id, sessionData.sessionId, 'active');
             if (context.mounted) {
               _openChatWithSession(context, category, sessionData.sessionId);
             }
           } else {
-            // Reopen failed - open in "create new on send" mode
-            smPrint('Session reopen failed, will create new on send');
+            // Reopen failed - keep session as 'closed', open empty page
+            smPrint('Session reopen failed, keeping status as closed. Next click will create new session.');
             if (context.mounted) {
               context.smPushFullScreen(ChatPage(category: category, initTicket: true));
             }

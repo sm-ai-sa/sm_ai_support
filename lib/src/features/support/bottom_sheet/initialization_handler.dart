@@ -34,9 +34,33 @@ class InitializationHandler {
     initializeDefaultCountry();
     getCountries();
 
-    // Perform auto-login if customer data is provided
-    if (smSupportData.customer != null && !AuthManager.isAuthenticated) {
-      await _performAutoLogin(smSupportData.customer!);
+    // Debug logging
+    smPrint('=== Authentication State ===');
+    smPrint('Customer data provided: ${smSupportData.customer != null}');
+    smPrint('Current auth status: ${AuthManager.isAuthenticated}');
+    smPrint('Has valid auth data: ${AuthManager.hasValidAuthData}');
+    smPrint('Auth token: ${AuthManager.authToken != null ? "Present" : "Null"}');
+    smPrint('Customer ID: ${AuthManager.currentCustomer?.id ?? "Null"}');
+    smPrint('==========================');
+
+    // Handle authentication based on customer data
+    if (smSupportData.customer != null) {
+      // Customer data provided - perform auto-login if not already authenticated
+      if (!AuthManager.isAuthenticated) {
+        smPrint('🔐 Customer data provided, user not authenticated → Performing auto-login');
+        await _performAutoLogin(smSupportData.customer!);
+      } else {
+        smPrint('✅ Customer data provided, user already authenticated → Skipping auto-login');
+      }
+    } else {
+      // No customer data provided - maintain current authentication state
+      // If already logged in, keep them logged in
+      // If anonymous, keep them anonymous
+      if (AuthManager.isAuthenticated) {
+        smPrint('✅ No customer data provided, user is authenticated → Maintaining logged-in state');
+      } else {
+        smPrint('👤 No customer data provided, user not authenticated → Maintaining anonymous state');
+      }
     }
   }
 
