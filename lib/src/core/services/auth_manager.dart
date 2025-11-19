@@ -31,14 +31,14 @@ class AuthManager {
   /// Save authentication data after successful login
   static Future<void> saveAuthData({
     required String token,
-    required CustomerModel customer,
+    required CustomerModel? customer,
   }) async {
     await SharedPrefHelper.setAuthToken(token);
     await SharedPrefHelper.setCustomerData(
-      id: customer.id,
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone,
+      id: customer?.id ?? "",
+      name: customer?.name ?? "",
+      email: customer?.email ?? "",
+      phone: customer?.phone ?? "",
     );
     await SharedPrefHelper.setAuthenticated(true);
   }

@@ -51,11 +51,12 @@ class AuthRepo {
     String? sessionId,
   }) async {
     try {
-      final response = await networkServices.verifyOtp(phone: phone, otp: otp, sessionId: sessionId, tempToken: tempToken);
+      final response =
+          await networkServices.verifyOtp(phone: phone, otp: otp, sessionId: sessionId, tempToken: tempToken);
 
       if (response.statusCode?.isSuccess ?? false) {
         final verifyResponse = VerifyOtpResponse.fromJson(response.data);
-        smPrint('Verify OTP Response: Success - User ${verifyResponse.result.customer.id} authenticated');
+
         return Success(verifyResponse);
       } else {
         smPrint('Verify OTP Error: ${response.statusCode}');
@@ -80,7 +81,7 @@ class AuthRepo {
 
       if (response.statusCode?.isSuccess ?? false) {
         final loginResponse = VerifyOtpResponse.fromJson(response.data);
-        smPrint('Auto Login Response: Success - User ${loginResponse.result.customer.id} authenticated');
+
         return Success(loginResponse);
       } else {
         smPrint('Auto Login Error: ${response.statusCode}');
@@ -91,5 +92,4 @@ class AuthRepo {
       return Error(ErrorHandler.handle(e));
     }
   }
-
 }

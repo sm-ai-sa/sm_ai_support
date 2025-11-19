@@ -240,6 +240,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
   /// Attempt to reopen a closed anonymous session (silent, no user feedback)
   /// Returns true if reopen was successful, false otherwise
   /// This method is used for background session restoration
+  /// Note: Status updates are handled by the caller (categories_list.dart)
   Future<bool> attemptReopenSession(String sessionId, int categoryId) async {
     smPrint('Attempting to reopen session: $sessionId for category: $categoryId');
     try {
@@ -248,21 +249,15 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       return result.when(
         success: (_) {
           smPrint('Session reopened successfully: $sessionId');
-          // Update local storage status to active
-          SharedPrefHelper.updateSessionStatus(categoryId, sessionId, 'active');
           return true;
         },
         error: (error) {
           smPrint('Failed to reopen session: ${error.failure.error}');
-          // Update local storage status to failed
-          SharedPrefHelper.updateSessionStatus(categoryId, sessionId, 'failed');
           return false;
         },
       );
     } catch (e) {
       smPrint('Exception reopening session: $e');
-      // Update local storage status to failed
-      SharedPrefHelper.updateSessionStatus(categoryId, sessionId, 'failed');
       return false;
     }
   }

@@ -109,11 +109,11 @@ class VerifyOtpRequest extends Equatable {
       'phone': phone,
       'otp': otp,
     };
-    
+
     if (sessionId != null) {
       data['sessionId'] = sessionId!;
     }
-    
+
     return data;
   }
 
@@ -124,24 +124,24 @@ class VerifyOtpRequest extends Equatable {
 /// Verify OTP response result model
 class VerifyOtpResult extends Equatable {
   final String token; // Final authentication token
-  final CustomerModel customer;
+  final CustomerModel? customer;
 
   const VerifyOtpResult({
     required this.token,
-    required this.customer,
+    this.customer,
   });
 
   factory VerifyOtpResult.fromJson(Map<String, dynamic> json) {
     return VerifyOtpResult(
       token: json['token'] as String,
-      customer: CustomerModel.fromJson(json['customer'] as Map<String, dynamic>),
+      customer: json['customer'] != null ? CustomerModel.fromJson(json['customer'] as Map<String, dynamic>) : null,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'token': token,
-      'customer': customer.toJson(),
+      'customer': customer?.toJson(),
     };
   }
 
@@ -202,4 +202,3 @@ class CustomerData extends Equatable {
   @override
   List<Object?> get props => [countryCode, phone, name];
 }
-

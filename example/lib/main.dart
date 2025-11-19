@@ -32,6 +32,11 @@ class SupportDemoScreen extends StatelessWidget {
       context: context,
       smSupportData: SMSupportData(
         appName: 'UNI-SUPPORT',
+        // customer: CustomerData(
+        //   countryCode: "+20",
+        //   phone: "1013010592",
+        //   name: "Abdullah Ahmed In-app",
+        // ),
         locale: isEnglish ? SMSupportLocale.en : SMSupportLocale.ar,
         tenantId: '1',
         apiKey: '17841476553120002', // Test API key for sandbox
