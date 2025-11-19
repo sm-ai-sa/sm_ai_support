@@ -106,14 +106,12 @@ class SharedPrefHelper {
   // Check if we have complete auth data
   static bool get hasValidAuthData {
     final token = getAuthToken();
-    final customerId = getCustomerId();
     final phone = getCustomerPhone();
-    
-    return token != null && 
-           token.isNotEmpty && 
-           customerId != null && 
-           customerId.isNotEmpty &&
-           phone != null && 
+
+    // Valid auth requires: token and phone (customer ID can be empty initially)
+    return token != null &&
+           token.isNotEmpty &&
+           phone != null &&
            phone.isNotEmpty;
   }
 

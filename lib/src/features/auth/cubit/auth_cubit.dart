@@ -132,6 +132,7 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> autoLogin({required CustomerData customer}) async {
     // Check if user is already authenticated
     if (AuthManager.isAuthenticated) {
+      smPrint('User already authenticated, skipping auto-login');
       return;
     }
 
@@ -143,11 +144,25 @@ class AuthCubit extends Cubit<AuthState> {
 
       result.when(
         success: (data) async {
+          smPrint('Auto Login Success - Token received, customer from API: ${data.result.customer != null}');
+
+          // Use customer from API response if available, otherwise create from input customer data
+          final customerToSave = data.result.customer ?? CustomerModel(
+            id: '', // ID will be populated from token/API later
+            name: customer.name,
+            email: null, // CustomerData doesn't have email
+            phone: customer.fullPhoneNumber,
+          );
+
+          smPrint('Saving auth data - Customer name: ${customerToSave.name}, Phone: ${customerToSave.phone}');
+
           // Save authentication data to persistent storage
           await AuthManager.saveAuthData(
             token: data.result.token,
-            customer: data.result.customer,
+            customer: customerToSave,
           );
+
+          smPrint('✅ Auth data saved successfully - isAuthenticated: ${AuthManager.isAuthenticated}');
 
           // Check if there are anonymous session IDs to assign
           final List<String> anonymousSessionIds = SharedPrefHelper.getAnonymousSessionIds();
