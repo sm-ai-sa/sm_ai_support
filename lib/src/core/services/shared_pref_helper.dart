@@ -50,17 +50,21 @@ class SharedPrefHelper {
     required String id,
     String? name,
     String? email,
-    required String phone,
+    String? phone,
   }) async {
     await prefs.setString(_customerIdKey, id);
-    await prefs.setString(_customerPhoneKey, phone);
-    
+    if (phone != null) {
+      await prefs.setString(_customerPhoneKey, phone);
+    } else {
+      await prefs.remove(_customerPhoneKey);
+    }
+
     if (name != null) {
       await prefs.setString(_customerNameKey, name);
     } else {
       await prefs.remove(_customerNameKey);
     }
-    
+
     if (email != null) {
       await prefs.setString(_customerEmailKey, email);
     } else {
@@ -106,13 +110,10 @@ class SharedPrefHelper {
   // Check if we have complete auth data
   static bool get hasValidAuthData {
     final token = getAuthToken();
-    final phone = getCustomerPhone();
+    final customerId = getCustomerId();
 
-    // Valid auth requires: token and phone (customer ID can be empty initially)
-    return token != null &&
-           token.isNotEmpty &&
-           phone != null &&
-           phone.isNotEmpty;
+    // Valid auth requires: token and customer ID (phone/email are optional)
+    return token != null && token.isNotEmpty && customerId != null && customerId.isNotEmpty;
   }
 
   // Anonymous Session IDs Management (Legacy - for backward compatibility)

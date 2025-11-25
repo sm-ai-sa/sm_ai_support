@@ -115,9 +115,11 @@ class _ChatPageState extends State<ChatPage> {
 
       if (!widget.initTicket && widget.sessionId.isNotEmpty) {
         await _loadExistingSession();
+        // Check rating after messages are loaded
+        if (mounted && context.mounted) {
+          _showRatingIfRequired(context);
+        }
       }
-
-      _showRatingIfRequired();
     });
   }
 
@@ -150,12 +152,26 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   /// Show rating bottom sheet if required
-  void _showRatingIfRequired() {
-    if (_shouldShowRating()) {
-      primaryBottomSheet(
-        showLeadingContainer: true,
-        child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
-      );
+  void _showRatingIfRequired(BuildContext context) {
+    final shouldShow = _shouldShowRating();
+    smPrint('🌟 _showRatingIfRequired called - shouldShow: $shouldShow');
+    smPrint('🌟 sessionMessageDoc.isRatingRequired: ${_sessionCubit.state.sessionMessageDoc.isRatingRequired}');
+    smPrint('🌟 isRatingRequiredFromSocket: ${_sessionCubit.state.isRatingRequiredFromSocket}');
+
+    if (shouldShow) {
+      smPrint('🌟 Opening rating bottom sheet...');
+      // Use a slight delay to ensure the UI is fully built
+      Future.delayed(Duration(milliseconds: 300), () {
+        if (mounted && context.mounted) {
+          smPrint('🌟 Attempting to show rating bottom sheet from API...');
+          primaryCupertinoBottomSheet(
+            context: context,
+            useDynamicHeight: true,
+            isDismissible: false,
+            child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+          );
+        }
+      });
     }
   }
 
@@ -196,7 +212,20 @@ class _ChatPageState extends State<ChatPage> {
         return;
       }
 
-      final customerId = AuthManager.isAuthenticated ? AuthManager.currentCustomer?.id : null;
+      // Get customer ID if authenticated - make sure it's not empty
+      String? customerId;
+      if (AuthManager.isAuthenticated) {
+        final id = AuthManager.currentCustomer?.id;
+        // Only use customer ID if it's not null and not empty
+        customerId = (id != null && id.isNotEmpty) ? id : null;
+
+        smPrint('🔍 Auth Check for WebSocket:');
+        smPrint('  - isAuthenticated: ${AuthManager.isAuthenticated}');
+        smPrint('  - Customer ID from AuthManager: $id');
+        smPrint('  - Customer ID to use: $customerId');
+        smPrint('  - Customer phone: ${AuthManager.currentCustomer?.phone}');
+      }
+
       smPrint('Starting message stream - TenantId: $tenantId, SessionId: $currentSessionId, CustomerId: $customerId');
 
       _sessionCubit.startMessageStream(tenantId: tenantId, customerId: customerId);
@@ -254,11 +283,17 @@ class _ChatPageState extends State<ChatPage> {
   void _handleRatingRequest(BuildContext context, SingleSessionState state) {
     if (state.isRatingRequiredFromSocket) {
       smPrint('🌟 Rating request received via WebSocket - showing rating bottom sheet');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        primaryBottomSheet(
-          showLeadingContainer: true,
-          child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
-        );
+      // Use the context from the listener directly
+      Future.delayed(Duration(milliseconds: 300), () {
+        if (mounted && context.mounted) {
+          smPrint('🌟 Attempting to show rating bottom sheet via WebSocket...');
+          primaryCupertinoBottomSheet(
+            context: context,
+            useDynamicHeight: true,
+            isDismissible: false,
+            child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+          );
+        }
       });
     }
   }
@@ -441,23 +476,6 @@ class _ChatPageState extends State<ChatPage> {
                     category: widget.category,
                     onSend: _onMessageSent,
                     onSessionCreated: _onSessionCreated,
-                  ),
-                ),
-
-                // Rating button
-                Visibility(
-                  visible: shouldShowRating,
-                  child: InkWell(
-                    onTap: () {
-                      primaryBottomSheet(
-                        showLeadingContainer: true,
-                        child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
-                      );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 30, top: 20),
-                      child: Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
-                    ),
                   ),
                 ),
               ],

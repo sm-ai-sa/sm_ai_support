@@ -26,6 +26,7 @@ class CategoriesAppBar extends StatelessWidget {
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          textDirection: TextDirection.rtl,
           children: [
             DesignSystem.closeButton(
               onTap: () {

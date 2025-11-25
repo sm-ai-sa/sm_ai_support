@@ -136,7 +136,38 @@ class WebSocketService {
     // smLog('WebSocketService: Connecting to Socket.IO server: $_baseUrl/customer/room');
 
     // Get device ID for anonymous user tracking
-    final deviceId = DeviceIdManager.instance.getDeviceIdSync();
+    // IMPORTANT: Ensure device ID is always available - generate if needed
+    String deviceId = DeviceIdManager.instance.getDeviceIdSync() ?? '';
+
+    // If device ID is null or empty, initialize/generate it now
+    if (deviceId.isEmpty) {
+      smLog('WebSocketService: Device ID not initialized, initializing now...');
+      deviceId = await DeviceIdManager.instance.getDeviceId();
+      smLog('WebSocketService: Device ID initialized: ${deviceId.substring(0, 8)}...');
+    }
+
+    // Build headers based on authentication status
+    final headers = <String, String>{};
+
+    // Add tenant ID header
+    final tenantId = SMConfig.smData.tenantId;
+    headers['x-tenant'] = tenantId;
+    smLog('WebSocketService: Adding x-tenant header: $tenantId');
+
+    // Add device-id header (always required)
+    headers['device-id'] = deviceId;
+    smLog('WebSocketService: Adding device-id header: ${deviceId.substring(0, 8)}...');
+
+    // Add authorization header for authenticated users
+    if (AuthManager.isAuthenticated) {
+      final token = AuthManager.authToken;
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+        smLog('WebSocketService: Adding authorization header for authenticated user');
+      }
+    } else {
+      smLog('WebSocketService: Connecting as anonymous user (no authorization header)');
+    }
 
     // Create Socket.IO client with proper configuration
     _socket = IO.io(
@@ -149,7 +180,7 @@ class WebSocketService {
           .setReconnectionDelay(1000)
           .setTimeout(20000)
           .setPath('/socket.io/')
-          .setExtraHeaders(deviceId != null ? {'device-id': deviceId} : {})
+          .setExtraHeaders(headers)
           .build(),
     );
 
@@ -650,7 +681,37 @@ class WebSocketService {
       smLog('WebSocketService: Connecting to Socket.IO server for additional streams');
 
       // Get device ID for anonymous user tracking
-      final deviceId = DeviceIdManager.instance.getDeviceIdSync();
+      // IMPORTANT: Ensure device ID is always available - generate if needed
+      String deviceId = DeviceIdManager.instance.getDeviceIdSync() ?? '';
+
+      // If device ID is null or empty, initialize/generate it now
+      if (deviceId.isEmpty) {
+        smLog('WebSocketService: Device ID not initialized (additional streams), initializing now...');
+        deviceId = await DeviceIdManager.instance.getDeviceId();
+      }
+
+      // Build headers based on authentication status
+      final headers = <String, String>{};
+
+      // Add tenant ID header
+      final tenantId = SMConfig.smData.tenantId;
+      headers['x-tenant'] = tenantId;
+      smLog('WebSocketService: Adding x-tenant header for additional streams: $tenantId');
+
+      // Add device-id header (always required)
+      headers['device-id'] = deviceId;
+      smLog('WebSocketService: Adding device-id header for additional streams: ${deviceId.substring(0, 8)}...');
+
+      // Add authorization header for authenticated users
+      if (AuthManager.isAuthenticated) {
+        final token = AuthManager.authToken;
+        if (token != null) {
+          headers['Authorization'] = 'Bearer $token';
+          smLog('WebSocketService: Adding authorization header for authenticated user (additional streams)');
+        }
+      } else {
+        smLog('WebSocketService: Connecting as anonymous user for additional streams (no authorization header)');
+      }
 
       // Create Socket.IO client with proper configuration
       _socket = IO.io(
@@ -663,7 +724,7 @@ class WebSocketService {
             .setReconnectionDelay(1000)
             .setTimeout(20000)
             .setPath('/socket.io/')
-            .setExtraHeaders(deviceId != null ? {'device-id': deviceId} : {})
+            .setExtraHeaders(headers)
             .build(),
       );
 

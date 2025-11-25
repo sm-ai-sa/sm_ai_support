@@ -37,6 +37,7 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       result.when(
         success: (data) {
           smPrint('Get Session Messages Success: ${data.result.messages.length} messages');
+          smPrint('🌟 API Response - isRatingRequired: ${data.result.isRatingRequired}');
 
           // Get all messages
           final List<SessionMessage> allMessages = [];
@@ -56,6 +57,8 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
               hasMoreMessages: hasMore,
             ),
           );
+
+          smPrint('🌟 State updated - isRatingRequired: ${state.isRatingRequired}');
         },
         error: (error) {
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);

@@ -44,6 +44,7 @@ class _MySessionsState extends State<MySessions> {
     return BlocBuilder<SMSupportCubit, SMSupportState>(
       builder: (context, state) {
         return Scaffold(
+          backgroundColor: ColorsPallets.white,
           body: Padding(
             padding: EdgeInsets.symmetric(horizontal: 22.rw),
             child: SingleChildScrollView(

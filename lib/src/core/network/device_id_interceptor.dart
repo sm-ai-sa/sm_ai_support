@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../services/device_id_manager.dart';
+import '../utils/utils.dart';
 
 /// Dio interceptor that adds device ID to all HTTP requests.
 ///
@@ -19,18 +20,23 @@ class DeviceIdInterceptor extends Interceptor {
       : _deviceIdManager = deviceIdManager ?? DeviceIdManager.instance;
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Get device ID synchronously to avoid blocking the request
-    final deviceId = _deviceIdManager.getDeviceIdSync();
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    // Get device ID synchronously first to avoid blocking if already available
+    String? deviceId = _deviceIdManager.getDeviceIdSync();
 
-    if (deviceId != null && deviceId.isNotEmpty) {
-      // Add device-id header to the request
-      options.headers['device-id'] = deviceId;
-    } else {
-      // Device ID not initialized - this shouldn't happen in normal operation
-      // Log warning but don't block the request
-      // In production, you might want to initialize synchronously here as fallback
+    // CRITICAL: If device ID is null or empty, initialize it now
+    // This ensures device-id header is ALWAYS sent with every API request
+    if (deviceId == null || deviceId.isEmpty) {
+      smPrint('⚠️ DeviceIdInterceptor: Device ID not initialized, initializing now...');
+
+      // Initialize device ID asynchronously - this will generate and save it
+      deviceId = await _deviceIdManager.getDeviceId();
+
+      smPrint('✅ DeviceIdInterceptor: Device ID initialized: ${deviceId.substring(0, 8)}...');
     }
+
+    // Add device-id header to the request (always required)
+    options.headers['device-id'] = deviceId;
 
     // Continue with the request
     handler.next(options);

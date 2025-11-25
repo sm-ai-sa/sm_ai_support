@@ -146,6 +146,17 @@ class AuthCubit extends Cubit<AuthState> {
         success: (data) async {
           smPrint('Auto Login Success - Token received, customer from API: ${data.result.customer != null}');
 
+          // Debug: Log customer data from API
+          if (data.result.customer != null) {
+            smPrint('📋 Customer from API:');
+            smPrint('  - ID: ${data.result.customer!.id}');
+            smPrint('  - Name: ${data.result.customer!.name}');
+            smPrint('  - Email: ${data.result.customer!.email}');
+            smPrint('  - Phone: ${data.result.customer!.phone}');
+          } else {
+            smPrint('⚠️ No customer data in API response - will create placeholder');
+          }
+
           // Use customer from API response if available, otherwise create from input customer data
           final customerToSave = data.result.customer ?? CustomerModel(
             id: '', // ID will be populated from token/API later
@@ -154,7 +165,10 @@ class AuthCubit extends Cubit<AuthState> {
             phone: customer.fullPhoneNumber,
           );
 
-          smPrint('Saving auth data - Customer name: ${customerToSave.name}, Phone: ${customerToSave.phone}');
+          smPrint('💾 Saving auth data:');
+          smPrint('  - Customer ID: ${customerToSave.id}');
+          smPrint('  - Customer name: ${customerToSave.name}');
+          smPrint('  - Phone: ${customerToSave.phone}');
 
           // Save authentication data to persistent storage
           await AuthManager.saveAuthData(
@@ -359,7 +373,6 @@ class AuthCubit extends Cubit<AuthState> {
           isResetSessionId: true,
         ),
       );
-
       smPrint('User logged out successfully');
     } catch (e) {
       smPrint('Logout Exception: $e');
