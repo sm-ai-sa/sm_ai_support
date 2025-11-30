@@ -37,6 +37,8 @@ class SMText {
 
   static String get supportAndHelp => isEnglish ? "how can we help you" : "سّم امرنا كيف نقدر نخدمك";
 
+   static String get supportAndHelpTitle => isEnglish ? "Support and help" : "الدعم والمساعدة";
+
   static String get supportAndHelpDescription => isEnglish
       ? "We are at your service 24/7"
       : "موجودين لخدمتك على مدار الساعة 24/7";

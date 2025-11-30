@@ -44,9 +44,15 @@ class _RateBSState extends State<RateBS> {
           },
           builder: (context, state) {
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: Column(
-                children: [
+              padding: EdgeInsets.only(
+                left: 22,
+                right: 22,
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   SizedBox(height: 34.rh),
                   Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
                   SizedBox(height: 5.rh),
@@ -160,7 +166,8 @@ class _RateBSState extends State<RateBS> {
                   //   ),
                   // ],
                   SizedBox(height: 52.rh),
-                ],
+                  ],
+                ),
               ),
             );
           },

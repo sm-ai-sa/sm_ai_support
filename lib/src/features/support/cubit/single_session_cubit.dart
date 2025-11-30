@@ -869,7 +869,8 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
     // The app will continue to work with polling-based message updates
   }
 
-  /// Stop WebSocket connection
+  /// Stop WebSocket connection for message channel only
+  /// This preserves other streams like session stats
   Future<void> stopMessageStream() async {
     try {
       smPrint('Stopping message stream for session: ${state.sessionId}');
@@ -881,9 +882,9 @@ class SingleSessionCubit extends Cubit<SingleSessionState> {
       await _ratingRequestSubscription?.cancel();
       _ratingRequestSubscription = null;
 
-      // Disconnect WebSocket
+      // Disconnect from message channel only (preserve session stats stream)
       final webSocketService = sl<WebSocketService>();
-      await webSocketService.disconnect();
+      await webSocketService.disconnectFromMessageChannel();
 
       smPrint('Message stream stopped for session: ${state.sessionId}');
     } catch (e) {
