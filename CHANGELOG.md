@@ -1,3 +1,9 @@
+## 1.0.6
+
+* Fix sockets issues
+* Update the UI to be more smooth 
+
+
 ## 1.0.5
 
 * Updated SDK constraints to support Flutter 3.27.0 and Dart 3.6.0+
