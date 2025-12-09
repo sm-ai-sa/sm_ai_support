@@ -17,15 +17,15 @@ class AuthManager {
   /// Get current customer data
   static CustomerModel? get currentCustomer {
     final id = SharedPrefHelper.getCustomerId();
-    final phone = SharedPrefHelper.getCustomerPhone();
-    
-    if (id == null || phone == null) return null;
-    
+
+    // Only require customer ID - phone and email are optional
+    if (id == null || id.isEmpty) return null;
+
     return CustomerModel(
       id: id,
       name: SharedPrefHelper.getCustomerName(),
       email: SharedPrefHelper.getCustomerEmail(),
-      phone: phone,
+      phone: SharedPrefHelper.getCustomerPhone() ?? '', // Phone is optional, default to empty string
     );
   }
 

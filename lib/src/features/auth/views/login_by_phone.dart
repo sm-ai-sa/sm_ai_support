@@ -11,6 +11,7 @@ import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
+import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_state.dart';
 import 'package:sm_ai_support/src/features/auth/views/otp_screen.dart';
@@ -123,6 +124,13 @@ class _LoginByPhoneState extends State<LoginByPhone> {
                         String phoneNumber = phone.value.replaceAll(" ", "");
                         if (phoneNumber.startsWith("0")) {
                           phoneNumber = phoneNumber.substring(1);
+                        }
+
+                        // Validate phone number before sending OTP
+                        final validationError = Utils.phoneValidator(phoneNumber, country.dialCode);
+                        if (validationError != null) {
+                          primarySnackBar(context, message: validationError);
+                          return;
                         }
 
                         sl<AuthCubit>().sendOtp(

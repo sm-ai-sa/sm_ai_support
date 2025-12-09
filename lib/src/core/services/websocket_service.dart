@@ -100,8 +100,8 @@ class WebSocketService {
         return;
       }
 
-      // Close existing connection if any
-      await disconnect();
+      // Close existing message channel only (preserve additional streams like session stats)
+      await disconnectFromMessageChannel();
 
       // smLog('WebSocketService: Connecting to channel: $channelName');
 
@@ -135,8 +135,47 @@ class WebSocketService {
   Future<void> _attemptSocketIOConnection(String channelName) async {
     // smLog('WebSocketService: Connecting to Socket.IO server: $_baseUrl/customer/room');
 
+    // If socket is already connected, just subscribe to the new channel
+    if (_isConnected && _socket != null) {
+      smLog('WebSocketService: Socket already connected, subscribing to new channel: $channelName');
+      _setupMessageChannelListeners(channelName);
+      _joinChannel(channelName);
+      return;
+    }
+
     // Get device ID for anonymous user tracking
-    final deviceId = DeviceIdManager.instance.getDeviceIdSync();
+    // IMPORTANT: Ensure device ID is always available - generate if needed
+    String deviceId = DeviceIdManager.instance.getDeviceIdSync() ?? '';
+
+    // If device ID is null or empty, initialize/generate it now
+    if (deviceId.isEmpty) {
+      smLog('WebSocketService: Device ID not initialized, initializing now...');
+      deviceId = await DeviceIdManager.instance.getDeviceId();
+      smLog('WebSocketService: Device ID initialized: ${deviceId.substring(0, 8)}...');
+    }
+
+    // Build headers based on authentication status
+    final headers = <String, String>{};
+
+    // Add tenant ID header
+    final tenantId = SMConfig.smData.tenantId;
+    headers['x-tenant'] = tenantId;
+    smLog('WebSocketService: Adding x-tenant header: $tenantId');
+
+    // Add device-id header (always required)
+    headers['x-device-id'] = deviceId;
+    smLog('WebSocketService: Adding device-id header: ${deviceId.substring(0, 8)}...');
+
+    // Add authorization header for authenticated users
+    if (AuthManager.isAuthenticated) {
+      final token = AuthManager.authToken;
+      if (token != null) {
+        headers['Authorization'] = 'Bearer $token';
+        smLog('WebSocketService: Adding authorization header for authenticated user');
+      }
+    } else {
+      smLog('WebSocketService: Connecting as anonymous user (no authorization header)');
+    }
 
     // Create Socket.IO client with proper configuration
     _socket = IO.io(
@@ -149,7 +188,7 @@ class WebSocketService {
           .setReconnectionDelay(1000)
           .setTimeout(20000)
           .setPath('/socket.io/')
-          .setExtraHeaders(deviceId != null ? {'device-id': deviceId} : {})
+          .setExtraHeaders(headers)
           .build(),
     );
 
@@ -196,14 +235,8 @@ class WebSocketService {
       _onConnectionClosed();
     });
 
-    // Listen for new messages on the subscribed channel
-    _socket!.on('new_message', _onNewMessageReceived);
-
-    // Listen for messages on the specific channel name
-    _socket!.on(channelName, _onMessageReceived);
-
-    // Listen for general message events
-    _socket!.on('message', _onMessageReceived);
+    // Setup message channel specific listeners
+    _setupMessageChannelListeners(channelName);
 
     // Listen for subscription confirmation
     _socket!.on('subscribed', (data) {
@@ -230,6 +263,20 @@ class WebSocketService {
       smLog('WebSocketService: Socket.IO error: $error');
       _messageController?.addError(error);
     });
+  }
+
+  /// Setup message channel specific listeners (can be called when switching channels)
+  void _setupMessageChannelListeners(String channelName) {
+    if (_socket == null) return;
+
+    // Listen for new messages on the subscribed channel
+    _socket!.on('new_message', _onNewMessageReceived);
+
+    // Listen for messages on the specific channel name
+    _socket!.on(channelName, _onMessageReceived);
+
+    // Listen for general message events
+    _socket!.on('message', _onMessageReceived);
   }
 
   /// Wait for Socket.IO connection to establish
@@ -540,21 +587,33 @@ class WebSocketService {
   /// This stream provides real-time updates for the number of unread sessions
   Future<void> connectToUnreadSessionsCountStream({required String tenantId, required String customerId}) async {
     try {
+      smLog('WebSocketService: connectToUnreadSessionsCountStream called');
+      smLog('WebSocketService: _isConnected: $_isConnected, _socket: ${_socket != null}');
+
       // Connect to WebSocket if not already connected
       if (!_isConnected) {
+        smLog('WebSocketService: Not connected, calling _connectToWebSocketServer');
         await _connectToWebSocketServer();
       }
 
       final channelName = 'unread_sessions_count_$tenantId$customerId';
 
-      // Check if already connected to this channel
-      if (_unreadSessionsCountChannel == channelName) {
+      smLog('WebSocketService: Channel: $channelName');
+      smLog('WebSocketService: Current channel: $_unreadSessionsCountChannel');
+      smLog('WebSocketService: Controller exists: ${_unreadSessionsCountController != null}');
+      smLog('WebSocketService: Controller closed: ${_unreadSessionsCountController?.isClosed}');
+
+      // Check if already connected to this channel AND controller is active
+      if (_unreadSessionsCountChannel == channelName &&
+          _unreadSessionsCountController != null &&
+          !_unreadSessionsCountController!.isClosed) {
         smLog('WebSocketService: Already connected to unread sessions count stream: $channelName');
         return;
       }
 
       // Disconnect from previous channel if any
       if (_unreadSessionsCountChannel != null) {
+        smLog('WebSocketService: Removing listener from old channel: $_unreadSessionsCountChannel');
         _socket?.off(_unreadSessionsCountChannel!);
       }
 
@@ -562,13 +621,18 @@ class WebSocketService {
 
       smLog('WebSocketService: Connecting to unread sessions count stream: $channelName');
 
-      // Initialize the stream controller if not already done
-      _unreadSessionsCountController ??= StreamController<int>.broadcast();
+      // Initialize or reinitialize the stream controller if closed or null
+      if (_unreadSessionsCountController == null || _unreadSessionsCountController!.isClosed) {
+        smLog('WebSocketService: Creating new unread sessions count controller');
+        _unreadSessionsCountController = StreamController<int>.broadcast();
+      }
 
       // Subscribe to the channel
+      smLog('WebSocketService: Calling subscribeToChannel for: $channelName');
       subscribeToChannel(channelName);
 
       // Listen for unread count updates
+      smLog('WebSocketService: Adding socket listener for: $channelName');
       _socket?.on(channelName, _onUnreadSessionsCountReceived);
 
       smLog('WebSocketService: Successfully connected to unread sessions count stream');
@@ -589,8 +653,8 @@ class WebSocketService {
 
       final channelName = 'session_stats_$tenantId$customerId';
 
-      // Check if already connected to this channel
-      if (_sessionStatsChannel == channelName) {
+      // Check if already connected to this channel AND controller is active
+      if (_sessionStatsChannel == channelName && _sessionStatsController != null && !_sessionStatsController!.isClosed) {
         smLog('WebSocketService: Already connected to session stats stream: $channelName');
         return;
       }
@@ -604,8 +668,10 @@ class WebSocketService {
 
       smLog('WebSocketService: Connecting to session stats stream: $channelName');
 
-      // Initialize the stream controller if not already done
-      _sessionStatsController ??= StreamController<Map<String, dynamic>>.broadcast();
+      // Initialize or reinitialize the stream controller if closed or null
+      if (_sessionStatsController == null || _sessionStatsController!.isClosed) {
+        _sessionStatsController = StreamController<Map<String, dynamic>>.broadcast();
+      }
 
       // Subscribe to the channel
       subscribeToChannel(channelName);
@@ -650,7 +716,38 @@ class WebSocketService {
       smLog('WebSocketService: Connecting to Socket.IO server for additional streams');
 
       // Get device ID for anonymous user tracking
-      final deviceId = DeviceIdManager.instance.getDeviceIdSync();
+      // IMPORTANT: Ensure device ID is always available - generate if needed
+      String deviceId = DeviceIdManager.instance.getDeviceIdSync() ?? '';
+
+      // If device ID is null or empty, initialize/generate it now
+      if (deviceId.isEmpty) {
+        smLog('WebSocketService: Device ID not initialized (additional streams), initializing now...');
+        deviceId = await DeviceIdManager.instance.getDeviceId();
+      }
+
+      // Build headers based on authentication status
+      final headers = <String, String>{};
+
+      // Add tenant ID header
+      final tenantId = SMConfig.smData.tenantId;
+      headers['x-tenant'] = tenantId;
+      smLog('WebSocketService: Adding x-tenant header for additional streams: $tenantId');
+
+      // Add device-id header (always required)
+      headers['x-device-id'] = deviceId;
+      
+      smLog('WebSocketService: Adding device-id header for additional streams: ${deviceId.substring(0, 8)}...');
+
+      // Add authorization header for authenticated users
+      if (AuthManager.isAuthenticated) {
+        final token = AuthManager.authToken;
+        if (token != null) {
+          headers['Authorization'] = 'Bearer $token';
+          smLog('WebSocketService: Adding authorization header for authenticated user (additional streams)');
+        }
+      } else {
+        smLog('WebSocketService: Connecting as anonymous user for additional streams (no authorization header)');
+      }
 
       // Create Socket.IO client with proper configuration
       _socket = IO.io(
@@ -663,7 +760,7 @@ class WebSocketService {
             .setReconnectionDelay(1000)
             .setTimeout(20000)
             .setPath('/socket.io/')
-            .setExtraHeaders(deviceId != null ? {'device-id': deviceId} : {})
+            .setExtraHeaders(headers)
             .build(),
       );
 
@@ -757,7 +854,39 @@ class WebSocketService {
     }
   }
 
-  /// Disconnect from Socket.IO
+  /// Disconnect from Socket.IO message channel only (preserves additional streams)
+  /// Use this when switching between chat sessions
+  Future<void> disconnectFromMessageChannel() async {
+    smLog('WebSocketService: Disconnecting from message channel only: $_currentChannelName');
+
+    // Stop heartbeat
+    _stopHeartbeat();
+    _stopPollingTimer();
+
+    // Cancel reconnection timer
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    // Clear message-related state only
+    if (_currentChannelName != null) {
+      _socket?.off(_currentChannelName!);
+    }
+
+    // Close message controller only
+    await _messageController?.close();
+    _messageController = null;
+
+    await _ratingRequestController?.close();
+    _ratingRequestController = null;
+
+    _currentChannelName = null;
+    _usePollingFallback = false;
+    _reconnectAttempts = 0;
+
+    smLog('WebSocketService: Message channel disconnected, additional streams preserved');
+  }
+
+  /// Disconnect from Socket.IO completely (closes all streams)
   Future<void> disconnect() async {
     smLog('WebSocketService: Disconnecting from channel: $_currentChannelName');
 

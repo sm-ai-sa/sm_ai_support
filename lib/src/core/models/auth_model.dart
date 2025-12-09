@@ -5,7 +5,7 @@ class CustomerModel extends Equatable {
   final String id;
   final String? name;
   final String? email;
-  final String phone;
+  final String? phone;
 
   const CustomerModel({
     required this.id,
@@ -19,7 +19,7 @@ class CustomerModel extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String?,
       email: json['email'] as String?,
-      phone: json['phone'] as String,
+      phone: json['phone'] as String?,
     );
   }
 

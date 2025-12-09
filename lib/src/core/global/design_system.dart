@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 // import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:gif/gif.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/constant/path.dart';
@@ -22,8 +21,7 @@ import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 class DesignSystem {
   static Widget closeButton({Function()? onTap, bool isWithCircle = false, Color? iconColor, double? size}) {
     return InkWell(
-      onTap:
-          onTap ??
+      onTap: onTap ??
           () {
             smNavigatorKey.currentContext!.smParentPop();
           },
@@ -51,8 +49,7 @@ class DesignSystem {
 
   static Widget backButton({Function()? onBackPressed, Color? color, double? size}) {
     return InkWell(
-      onTap:
-          onBackPressed ??
+      onTap: onBackPressed ??
           () {
             smNavigatorKey.currentContext!.smParentPop();
           },
@@ -201,23 +198,23 @@ class DesignSystem {
 
   ///* Error View
   static Widget errorView({String? title, dynamic subTitle}) => Container(
-    padding: const EdgeInsets.all(30),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Text(title ?? SMText.somethingWentWrong, style: TextStyles.s_14_500, textAlign: TextAlign.center),
-        if (subTitle != null) ...[
-          10.vs,
-          Text(
-            subTitle.toString(),
-            textAlign: TextAlign.center,
-            style: TextStyles.s_14_500.copyWith(color: ColorsPallets.greyTextColor),
-          ),
-        ],
-      ],
-    ),
-  );
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(title ?? SMText.somethingWentWrong, style: TextStyles.s_14_500, textAlign: TextAlign.center),
+            if (subTitle != null) ...[
+              10.vs,
+              Text(
+                subTitle.toString(),
+                textAlign: TextAlign.center,
+                style: TextStyles.s_14_500.copyWith(color: ColorsPallets.greyTextColor),
+              ),
+            ],
+          ],
+        ),
+      );
 
   ///* Radio button checkbox
   static Widget checkBox({required bool status, ValueChanged<bool>? onChange, required Color activeColor}) =>
@@ -294,25 +291,26 @@ class DesignSystem {
     bool isRotated = false,
     double borderRadius = 0,
     bool isExternalSvg = false,
-  }) => InkWell(
-    onTap: onTap,
-    child: Transform.rotate(
-      angle: isRotated ? pi : 0,
-      child: Container(
-        height: height ?? size ?? 24.rSp,
-        width: width ?? size ?? 24.rSp,
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(borderRadius: borderRadius.br),
-        child: Image.asset(
-          '${SMAssetsPath.icons}/$iconName.png',
-          matchTextDirection: isDirectional,
-          package: isExternalSvg ? null : SMAssetsPath.packageName,
-          color: color,
-          fit: fit ?? BoxFit.cover,
+  }) =>
+      InkWell(
+        onTap: onTap,
+        child: Transform.rotate(
+          angle: isRotated ? pi : 0,
+          child: Container(
+            height: height ?? size ?? 24.rSp,
+            width: width ?? size ?? 24.rSp,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(borderRadius: borderRadius.br),
+            child: Image.asset(
+              '${SMAssetsPath.icons}/$iconName.png',
+              matchTextDirection: isDirectional,
+              package: isExternalSvg ? null : SMAssetsPath.packageName,
+              color: color,
+              fit: fit ?? BoxFit.cover,
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   static Widget internetImage({
     Widget? child,
@@ -553,12 +551,17 @@ class DesignSystem {
   }
 
   static chatGif() {
-    return Gif(
-      height: 50.rh,
-      width: 48.rw,
-      image: AssetImage("${SMAssetsPath.gif}/chat.gif", package: SMAssetsPath.packageName),
-      autostart: Autostart.loop,
-      placeholder: (context) => const SizedBox(),
+    // return Gif(
+    //   height: 50.rh,
+    //   width: 48.rw,
+    //   image: AssetImage("${SMAssetsPath.gif}/chat.gif", package: SMAssetsPath.packageName),
+    //   autostart: Autostart.loop,
+    //   placeholder: (context) => const SizedBox(),
+    // );
+
+    return DesignSystem.pngIcon(
+      'support_3d',
+      size: 60.rh,
     );
   }
 

@@ -75,14 +75,34 @@ class Utils {
   }
 
 
-  /// Phone number validator
-  static String? phoneValidator(String? value, String? country) {
-    smLog('phoneValidator: country: $country  value: $value');
+  /// Phone number validator with country-specific regex patterns
+  static String? phoneValidator(String? value, String? countryCode) {
+    smLog('phoneValidator: countryCode: $countryCode  value: $value');
     if (value == null || value.isEmpty) {
       return SMText.pleaseCheckTheEnteredNumber;
-    } else if (value.length < 9) {
-      return SMText.pleaseCheckTheEnteredNumber;
     }
+
+    // Country-specific validation patterns
+    switch (countryCode) {
+      case '+966': // Saudi Arabia
+        final saRegex = RegExp(r'^0?5\d{8}$');
+        if (!saRegex.hasMatch(value)) {
+          return SMText.pleaseCheckTheEnteredNumber;
+        }
+        break;
+      case '+20': // Egypt
+        final egRegex = RegExp(r'^0?1[0125]\d{8}$');
+        if (!egRegex.hasMatch(value)) {
+          return SMText.pleaseCheckTheEnteredNumber;
+        }
+        break;
+      default:
+        // Fallback: generic validation for other countries
+        if (value.length < 9) {
+          return SMText.pleaseCheckTheEnteredNumber;
+        }
+    }
+
     return null;
   }
 

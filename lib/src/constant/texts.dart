@@ -35,11 +35,13 @@ class SMText {
 
   static String get reopen => isEnglish ? "Reopen" : "اعادة فتح";
 
-  static String get supportAndHelp => isEnglish ? "Support & Help" : "الدعم والمساعدة";
+  static String get supportAndHelp => isEnglish ? "how can we help you" : "سّم امرنا كيف نقدر نخدمك";
+
+   static String get supportAndHelpTitle => isEnglish ? "Support and help" : "الدعم والمساعدة";
 
   static String get supportAndHelpDescription => isEnglish
-      ? "Your satisfaction is our priority. Contact us and you will receive a response as quickly as possible."
-      : "خدمتك أولويتنا ، تواصل معنا وسيصلك الرد في أسرع وقت";
+      ? "We are at your service 24/7"
+      : "موجودين لخدمتك على مدار الساعة 24/7";
 
   static String get howCanWeHelpYou => isEnglish ? "How can we help you?" : "كيف يمكننا مساعدتك؟";
 

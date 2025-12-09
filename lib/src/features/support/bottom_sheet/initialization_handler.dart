@@ -49,6 +49,17 @@ class InitializationHandler {
       if (!AuthManager.isAuthenticated) {
         smPrint('🔐 Customer data provided, user not authenticated → Performing auto-login');
         await _performAutoLogin(smSupportData.customer!);
+
+        // Debug: Check authentication state after auto-login
+        smPrint('=== Post Auto-Login State ===');
+        smPrint('Is Authenticated: ${AuthManager.isAuthenticated}');
+        smPrint('Has Token: ${AuthManager.authToken != null}');
+        smPrint('Customer ID: ${AuthManager.currentCustomer?.id ?? "Null"}');
+        smPrint('============================');
+
+        // Trigger UI update after auto-login by emitting a state change in SMSupportCubit
+        // This ensures that widgets listening to authentication state will rebuild
+        _refreshAuthenticationState();
       } else {
         smPrint('✅ Customer data provided, user already authenticated → Skipping auto-login');
       }
@@ -61,6 +72,19 @@ class InitializationHandler {
       } else {
         smPrint('👤 No customer data provided, user not authenticated → Maintaining anonymous state');
       }
+    }
+  }
+
+  /// Refresh authentication state in SMSupportCubit
+  /// This triggers a UI rebuild for widgets listening to authentication state
+  static void _refreshAuthenticationState() {
+    try {
+      final smSupportCubit = sl<SMSupportCubit>();
+      // Trigger state update to notify listeners about authentication changes
+      smSupportCubit.refreshAuthState();
+      smPrint('✅ SMSupportCubit state refreshed after auto-login');
+    } catch (e) {
+      smPrint('⚠️ Error refreshing SMSupportCubit state: $e');
     }
   }
 

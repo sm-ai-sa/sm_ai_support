@@ -8,6 +8,7 @@ import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
+import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
 import 'package:sm_ai_support/src/features/support/views/my_all_sessions.dart';
 
@@ -20,13 +21,26 @@ class MyChatsButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SMSupportCubit, SMSupportState>(
-      buildWhen: (previous, current) => !isDisposed,
+      buildWhen: (previous, current) {
+        if (isDisposed) return false;
+        // Rebuild if unread count changes or if authentication state might have changed
+        return previous.myUnreadSessionsCount != current.myUnreadSessionsCount ||
+            previous.getMyUnreadSessionsStatus != current.getMyUnreadSessionsStatus ||
+            previous != current; // Rebuild on any state change to catch auth updates
+      },
       builder: (context, state) {
         return InkWell(
           onTap: () {
+            smPrint('🔍 MyChatsButton tapped - Checking auth state:');
+            smPrint('  state.isAuthenticated: ${state.isAuthenticated}');
+            smPrint('  AuthManager.isAuthenticated: ${AuthManager.isAuthenticated}');
+            smPrint('  AuthManager.authToken: ${AuthManager.authToken != null ? "Present" : "Null"}');
+
             if (state.isAuthenticated) {
+              smPrint('✅ User is authenticated - Navigating to MySessions');
               context.smPush(MySessions());
             } else {
+              smPrint('❌ User is NOT authenticated - Showing auth bottom sheet');
               primaryCupertinoBottomSheet(
                 showSwipeCloseIndicator: true,
                 child: NeedAuthBS(),

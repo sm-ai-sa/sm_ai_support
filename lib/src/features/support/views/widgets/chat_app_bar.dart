@@ -35,7 +35,7 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(SMText.supportAndHelp, style: TextStyles.s_16_400),
+          Text(SMText.supportAndHelpTitle, style: TextStyles.s_16_400),
           Text(SMText.online, style: TextStyles.s_12_400.copyWith(color: ColorsPallets.secondaryGreen100)),
         ],
       ),

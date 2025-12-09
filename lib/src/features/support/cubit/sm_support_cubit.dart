@@ -28,6 +28,14 @@ class SMSupportCubit extends Cubit<SMSupportState> {
     }
   }
 
+  /// Refresh authentication state
+  /// Triggers a state update to notify listeners about authentication changes
+  /// This is useful after auto-login or logout to update the UI
+  void refreshAuthState() {
+    emit(state.copyWith());
+    smPrint('🔄 Authentication state refreshed');
+  }
+
   // Stream subscriptions for WebSocket streams
   StreamSubscription<int>? _unreadSessionsCountSubscription;
   StreamSubscription<Map<String, dynamic>>? _sessionStatsSubscription;
