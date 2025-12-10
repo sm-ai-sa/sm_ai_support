@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:sm_ai_support/src/constant/texts.dart';
 import 'package:sm_ai_support/src/core/global/components/countries_bs/countries_bottom_sheet.dart';
@@ -9,7 +11,6 @@ import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:uni_country_city_picker/uni_country_city_picker.dart';
-import 'dart:ui' as ui;
 
 class PhoneTextField extends StatefulWidget {
   final TextEditingController? controller;
@@ -59,7 +60,9 @@ class _PhoneTextFieldState extends State<PhoneTextField> {
       height: null,
       isOneSideBorder: true,
       topTitleText: widget.topTitleText ?? SMText.phoneNumber,
-      hintText: widget.hintText ?? '${SMText.example}: "050 658 6162"',
+      hintText: widget.hintText ?? ' "050 658 6162"',
+      hintTextDirection: ui.TextDirection.ltr,
+      textAlign: TextAlign.right,
       // hintText: widget.hintText ?? '${LocaleKeys.example.tr()} : "6162 658 05"',
       validator: (value) => Utils.phoneValidator(value, selectedCountry.isoCode),
       keyboardType: TextInputType.phone,

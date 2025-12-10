@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sm_ai_support/src/constant/texts.dart';
+import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
@@ -82,11 +83,14 @@ class _RegisterState extends State<Register> with SingleTickerProviderStateMixin
                 padding: EdgeInsets.symmetric(horizontal: 12.rw, vertical: 6.rh),
                 child: Align(
                   alignment: AlignmentDirectional.bottomStart,
-                  child: DesignSystem.svgIcon(
-                    "close",
-                    color: ColorsPallets.normal500,
-                    size: 26.rSp,
-                    onTap: () => context.smPopSheet(),
+                  child: Transform.rotate(
+                    angle: SMConfig.smData.locale.isArabic ? 3.14 : 0,
+                    child: DesignSystem.svgIcon(
+                      "arrow-left",
+                      color: ColorsPallets.normal500,
+                      size: 28.rSp,
+                      onTap: () => context.smPopSheet(),
+                    ),
                   ),
                 ),
               ),

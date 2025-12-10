@@ -27,6 +27,7 @@ class PrimaryTextFormField extends StatefulWidget {
   final TextStyle? labelStyle;
   final String? hintText;
   final TextStyle? hintStyle;
+  final TextDirection? hintTextDirection;
   final TextStyle? inputStyle;
   final TextAlign? textAlign;
   final bool isDense;
@@ -67,6 +68,7 @@ class PrimaryTextFormField extends StatefulWidget {
     this.labelStyle,
     this.hintText,
     this.hintStyle,
+    this.hintTextDirection,
     this.inputStyle,
     this.textAlign,
     this.isDense = true,
@@ -193,6 +195,7 @@ class _PrimaryTextFormFieldState extends State<PrimaryTextFormField> {
                   //*  Hint & Lable
                   hintText: widget.hintText,
                   hintStyle: widget.hintStyle ?? TextStyles.s_13_400.copyWith(color: ColorsPallets.disabled300),
+                  hintTextDirection: widget.hintTextDirection,
                   labelText: widget.labelText,
                   labelStyle: widget.labelStyle ?? TextStyles.s_16_400.copyWith(color: ColorsPallets.normal25),
 

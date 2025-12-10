@@ -275,10 +275,16 @@ class _CountrySelectionBottomSheetState extends State<CountrySelectionBottomShee
                 Text(country.flag, style: const TextStyle(fontSize: 26)),
                 SizedBox(width: 14.rw),
                 Text(country.name, style: TextStyles.s_14_400.copyWith(color: ColorsPallets.muted600)),
-                const Spacer(),
+                SizedBox(width: 8.rw),
                 Text(
                   country.dialCode,
                   style: TextStyles.s_14_500.copyWith(color: ColorsPallets.subdued400, fontFamily: 'DMSans'),
+                ),
+                const Spacer(),
+                DesignSystem.animatedCrossFadeWidget(
+                  animationStatus: selectedCountryIsoCode == country.isoCode,
+                  shownIfFalse: DesignSystem.svgIcon('check', color: ColorsPallets.transparent),
+                  shownIfTrue: DesignSystem.svgIcon('check', color: ColorsPallets.primaryColor),
                 ),
               ],
             ),
@@ -310,6 +316,11 @@ class _CountrySelectionBottomSheetState extends State<CountrySelectionBottomShee
                 Text(country.flag, style: const TextStyle(fontSize: 26)),
                 SizedBox(width: 14.rw),
                 Text(country.name, style: TextStyles.s_14_400.copyWith(color: ColorsPallets.muted600)),
+                SizedBox(width: 8.rw),
+                Text(
+                  country.dialCode,
+                  style: TextStyles.s_14_500.copyWith(color: ColorsPallets.subdued400, fontFamily: 'DMSans'),
+                ),
                 const Spacer(),
                 DesignSystem.animatedCrossFadeWidget(
                   animationStatus: selectedCountryIsoCode == country.isoCode,

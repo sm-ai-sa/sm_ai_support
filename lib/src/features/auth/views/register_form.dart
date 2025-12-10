@@ -70,8 +70,7 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
     smPrint('  countryCode: "${registrationBody.countryCode}" (isEmpty: ${registrationBody.countryCode.isEmpty})');
     smPrint('  phoneNumber: "${registrationBody.phoneNumber}" (isEmpty: ${registrationBody.phoneNumber.isEmpty})');
 
-    final bool allFieldsFilled =
-        registrationBody.fullName.isNotEmpty &&
+    final bool allFieldsFilled = registrationBody.fullName.isNotEmpty &&
         registrationBody.countryCode.isNotEmpty &&
         registrationBody.phoneNumber.isNotEmpty;
 
@@ -90,9 +89,7 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
             controller: nameController,
             topTitleText: SMText.fullName,
             keyboardType: TextInputType.name,
-            hintText:
-                '${SMText.example} : '
-                '"عبدالله"',
+            hintText: '“نواف المحسن”',
             validator: (value) => Utils.nameValidator(value),
             onChanged: (value) {
               registrationBody = registrationBody.copyWith(fullName: value);
@@ -124,12 +121,12 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
                   showLoading: state.registerStatus.isLoading,
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
-    
+
                     final authCubit = context.read<AuthCubit>();
-    
+
                     // Update authCubit with registration body
                     authCubit.updateRegistrationBody(registrationBody);
-    
+
                     // Call register method
                     await authCubit.register();
                   },

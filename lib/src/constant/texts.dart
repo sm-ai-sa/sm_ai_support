@@ -37,13 +37,14 @@ class SMText {
 
   static String get supportAndHelp => isEnglish ? "how can we help you" : "سّم امرنا كيف نقدر نخدمك";
 
-   static String get supportAndHelpTitle => isEnglish ? "Support and help" : "الدعم والمساعدة";
+  static String get supportAndHelpTitle => isEnglish ? "Support and help" : "الدعم والمساعدة";
 
-  static String get supportAndHelpDescription => isEnglish
-      ? "We are at your service 24/7"
-      : "موجودين لخدمتك على مدار الساعة 24/7";
+  static String get supportAndHelpDescription =>
+      isEnglish ? "We are at your service 24/7" : "موجودين لخدمتك على مدار الساعة 24/7";
 
-  static String get howCanWeHelpYou => isEnglish ? "How can we help you?" : "كيف يمكننا مساعدتك؟";
+  static String get howCanWeHelpYou => isEnglish
+      ? "Choose the appropriate category or start a conversation immediately!"
+      : "اختر التصنيف المناسب او ابدأ محادثة فورياً ! ";
 
   static String get myMessages => isEnglish ? "My Messages" : "رسائلي";
 
@@ -112,7 +113,7 @@ class SMText {
       : "للاستمرار في عرض الرسائل  والاستفادة من جميع خدماتنا، يرجى تسجيل الدخول إلى حسابك.";
   static String get login => isEnglish ? "Login" : "تسجيل الدخول";
   static String get loginNow => isEnglish ? "Login Now" : "تسجيل الدخول الآن";
-  static String get loginNow2 => isEnglish ? "Login Now" : "سجل الدخول الآن";
+  static String get loginNow2 => isEnglish ? "Login Now" : "سجّل الدخول الآن";
 
   static String get thisNumberDoesNotExistPleaseRegisterFirst =>
       isEnglish ? "This number doesn't exist, please register first" : "هذا الرقم غير موجود، يرجى التسجيل أولاً";
@@ -150,9 +151,9 @@ class SMText {
   static String get wrongVerificationCode =>
       isEnglish ? "Wrong verification code, try again." : "رمز التحقق المدخل خاطئ, حاول مجدداً.";
 
-  static String get thereIsAnAccount => isEnglish ? "There is an account?" : "يوجد لديك حساب؟";
+  static String get thereIsAnAccount => isEnglish ? "There is an account?" : "امتلك حساب بالفعل!";
 
-  static String get loginToYourAccount => isEnglish ? "Login to your account" : "سجل دخول";
+  static String get loginToYourAccount => isEnglish ? "Login to your account" : "تسجيل الدخول";
 
   static String get registerNow => isEnglish ? "Register Now" : "سجّل الآن!";
 
@@ -202,7 +203,7 @@ class SMText {
 
   static String get requiredField => isEnglish ? "This field is required" : "هذا الحقل مطلوب";
 
-  static String get phoneNumber => isEnglish ? "Phone Number" : "رقم الهاتف";
+  static String get phoneNumber => isEnglish ? "Phone Number" : "رقم الجوال";
 
   static String get example => isEnglish ? "Example" : "مثال";
 
@@ -214,7 +215,7 @@ class SMText {
   static String get specialCharactersAreNotAllowed =>
       isEnglish ? "Special characters are not allowed in the name." : "الأحرف الخاصة غير مسموح بها في الاسم.";
 
-  static String get fullName => isEnglish ? "Full Name" : "الاسم الكامل";
+  static String get fullName => isEnglish ? "Full Name" : "الاسم كاملاً";
 
   static String get followUp => isEnglish ? "Follow Up" : "المتابعة";
 
@@ -228,7 +229,6 @@ class SMText {
 
   static String get yourAccountHasBeenCreatedOnSmPlatform =>
       isEnglish ? "Your account has been created on the Sm platform." : "تم إنشاء حساب خاص بك في منصة سّم.";
-
 
   static String get welcomeOnSm =>
       isEnglish ? "Welcome to SM AI! \n Happy to see you again!" : "مرحبًا بك في سم\n نسعد برؤيتك مجدداً!";

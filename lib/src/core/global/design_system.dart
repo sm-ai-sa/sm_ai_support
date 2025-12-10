@@ -474,7 +474,7 @@ class DesignSystem {
           const TextSpan(text: ' '),
           TextSpan(
             text: richText ?? SMText.createNewAccount,
-            style: TextStyles.s_13_500.copyWith(color: ColorsPallets.primaryColor),
+            style: TextStyles.s_13_500,
             recognizer: TapGestureRecognizer()
               ..onTap = () {
                 onPressed?.call();
@@ -496,7 +496,7 @@ class DesignSystem {
           const TextSpan(text: ' '),
           TextSpan(
             text: richText ?? SMText.loginToYourAccount,
-            style: TextStyles.s_13_500.copyWith(color: ColorsPallets.primaryColor),
+            style: TextStyles.s_13_500,
             recognizer: TapGestureRecognizer()
               ..onTap = () {
                 onPressed?.call();
