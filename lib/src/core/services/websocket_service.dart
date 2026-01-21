@@ -900,6 +900,91 @@ class WebSocketService {
     await _cleanup();
   }
 
+  /// Reconnect WebSocket with updated authentication headers
+  /// Call this after login/logout to refresh the socket connection with new auth state
+  Future<void> reconnectWithNewAuth() async {
+    smLog('WebSocketService: Reconnecting with updated authentication headers');
+
+    // Save current connection parameters
+    final savedTenantId = _tenantId;
+    final savedSessionId = _sessionId;
+    final savedCustomerId = _customerId;
+    final savedUnreadChannel = _unreadSessionsCountChannel;
+    final savedStatsChannel = _sessionStatsChannel;
+
+    // Fully disconnect and dispose socket (but don't set manual disconnect flag)
+    _isManualDisconnect = false;
+
+    // Stop timers
+    _stopHeartbeat();
+    _stopPollingTimer();
+    _reconnectTimer?.cancel();
+    _reconnectTimer = null;
+
+    // Disconnect Socket.IO completely
+    if (_socket != null) {
+      _socket!.disconnect();
+      _socket!.dispose();
+      _socket = null;
+    }
+
+    // Close all stream controllers
+    await _messageController?.close();
+    _messageController = null;
+
+    await _unreadSessionsCountController?.close();
+    _unreadSessionsCountController = null;
+
+    await _sessionStatsController?.close();
+    _sessionStatsController = null;
+
+    await _ratingRequestController?.close();
+    _ratingRequestController = null;
+
+    // Clear state
+    _currentChannelName = null;
+    _unreadSessionsCountChannel = null;
+    _sessionStatsChannel = null;
+    _usePollingFallback = false;
+    _reconnectAttempts = 0;
+    _isConnected = false;
+
+    smLog('WebSocketService: Old socket disposed, reconnecting with fresh headers...');
+
+    // Reconnect to message channel if we had one
+    if (savedTenantId != null && savedSessionId != null) {
+      await connectToSession(
+        tenantId: savedTenantId,
+        sessionId: savedSessionId,
+        customerId: savedCustomerId,
+      );
+    }
+
+    // Reconnect to unread sessions count stream if we had one
+    if (savedUnreadChannel != null && AuthManager.isAuthenticated) {
+      final customerId = AuthManager.currentCustomer?.id;
+      if (customerId != null && customerId.isNotEmpty) {
+        await connectToUnreadSessionsCountStream(
+          tenantId: SMConfig.smData.tenantId,
+          customerId: customerId,
+        );
+      }
+    }
+
+    // Reconnect to session stats stream if we had one
+    if (savedStatsChannel != null && AuthManager.isAuthenticated) {
+      final customerId = AuthManager.currentCustomer?.id;
+      if (customerId != null && customerId.isNotEmpty) {
+        await connectToSessionStatsStream(
+          tenantId: SMConfig.smData.tenantId,
+          customerId: customerId,
+        );
+      }
+    }
+
+    smLog('WebSocketService: Reconnection with new auth headers completed');
+  }
+
   /// Start polling fallback mechanism
   Future<void> _startPollingFallback(String? channelName) async {
     try {

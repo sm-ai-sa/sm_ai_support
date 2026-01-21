@@ -10,7 +10,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/constant/path.dart';
-import 'package:sm_ai_support/src/core/config/sm_support_config.dart';
 import 'package:sm_ai_support/src/core/global/cached_image.dart';
 import 'package:sm_ai_support/src/core/global/shimmer_items.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
@@ -252,7 +251,7 @@ class DesignSystem {
         margin: EdgeInsets.only(bottom: isBottomBarButton ? 25.rh : marginBottom),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isButtonDisabled ? ColorsPallets.fillColor : (backgroundColor ?? ColorsPallets.primaryColor),
+          color: isButtonDisabled ? ColorsPallets.primaryColor.withValues(alpha: 0.2) : (backgroundColor ?? ColorsPallets.primaryColor),
           borderRadius: (borderRadius ?? 14).br,
         ),
         child: Visibility(
@@ -260,7 +259,7 @@ class DesignSystem {
           replacement: Text(
             title,
             style: TextStyles.s_14_500.copyWith(
-              color: isButtonDisabled ? ColorsPallets.greyTextColor : ColorsPallets.white,
+              color: isButtonDisabled ? ColorsPallets.primaryColor.withValues(alpha: 0.7) : ColorsPallets.white,
             ),
           ),
           child: DesignSystem.loadingIndicator(),

@@ -6,12 +6,12 @@ import 'package:sm_ai_support/src/core/global/components/country_codes.dart';
 import 'package:sm_ai_support/src/core/global/components/key_board/hard_coded_keyboard.dart';
 import 'package:sm_ai_support/src/core/global/components/primary_bottom_sheet.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
+import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
-import 'package:sm_ai_support/src/core/global/primary_snack_bar.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_state.dart';
 import 'package:sm_ai_support/src/features/auth/views/otp_screen.dart';
@@ -118,6 +118,7 @@ class _LoginByPhoneState extends State<LoginByPhone> {
                     builder: (context, value, child) => DesignSystem.primaryButton(
                       borderRadius: 14,
                       title: SMText.login,
+                      backgroundColor: ColorsPallets.primaryColor,
                       isDisabled: textLengthWithoutSpaces < 9,
                       showLoading: state.sendOtpStatus.isLoading,
                       onPressed: () async {
@@ -143,7 +144,6 @@ class _LoginByPhoneState extends State<LoginByPhone> {
                   ),
                 ),
                 SizedBox(height: 20.rh),
-
                 DesignSystem.noAccCreateOne(
                   onPressed: () {
                     context.smPopSheet();

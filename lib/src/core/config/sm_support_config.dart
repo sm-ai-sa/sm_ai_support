@@ -96,4 +96,40 @@ class SMConfig {
     await clearSecretKey();
     smPrint('🔐 All secure data cleared');
   }
+
+  /// Logout from the package and return to anonymous mode
+  ///
+  /// This method:
+  /// 1. Clears authentication data (token, customer info) but preserves device_id
+  /// 2. Clears anonymous session mappings (user will start fresh sessions)
+  /// 3. Reconnects WebSocket with anonymous headers
+  ///
+  /// Call this from the parent app when the user logs out to ensure
+  /// the support package returns to anonymous mode properly.
+  ///
+  /// Example:
+  /// ```dart
+  /// // In your app's logout flow:
+  /// await SMConfig.logout();
+  /// ```
+  static Future<void> logout() async {
+    smPrint('🚪 SMConfig.logout() - Starting logout process...');
+
+    // Ensure SharedPreferences is initialized
+    await SharedPrefHelper.init();
+
+    // 1. Clear authentication data (preserves device_id)
+    await AuthManager.logout();
+    smPrint('🚪 Auth data cleared');
+
+    // 2. Clear anonymous session mappings (fresh start for anonymous mode)
+    await SharedPrefHelper.clearAnonymousSessionCategoryMap();
+    smPrint('🚪 Anonymous session mappings cleared');
+
+    // 3. Reconnect WebSocket with anonymous headers
+    await WebSocketService.instance.reconnectWithNewAuth();
+    smPrint('🚪 WebSocket reconnected as anonymous');
+
+    smPrint('🚪 SMConfig.logout() - Logout completed successfully');
+  }
 }

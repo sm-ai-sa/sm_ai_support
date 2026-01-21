@@ -357,10 +357,12 @@ class AuthCubit extends Cubit<AuthState> {
       // Clear persistent storage
       await AuthManager.logout();
 
-      // Clear state
+      // Clear state - reset all statuses to initial to allow fresh login flow
       emit(
         state.copyWith(
           logoutStatus: BaseStatus.success,
+          sendOtpStatus: BaseStatus.initial,
+          verifyOtpStatus: BaseStatus.initial,
           // authToken: null,
           isResetAuthToken: true,
           currentCustomer: null,

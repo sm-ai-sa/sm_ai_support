@@ -28,6 +28,8 @@ export 'src/core/services/device_id_manager.dart';
 export 'src/core/services/secure_storage_helper.dart';
 export 'src/core/services/shared_pref_helper.dart';
 export 'src/core/services/websocket_service.dart';
+/// Config
+export 'src/core/config/sm_support_config.dart';
 export 'src/core/utils/enums.dart';
 /// Cubit
 export 'src/features/support/cubit/single_session_cubit.dart';

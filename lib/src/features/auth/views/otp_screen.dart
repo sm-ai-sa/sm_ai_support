@@ -95,6 +95,11 @@ class _OtpScreenState extends State<OtpScreen> {
     // Trigger a refresh by calling getMySessions if authenticated
     // This will cause the support cubit to emit a new state and refresh the UI
     if (AuthManager.isAuthenticated) {
+      // Reconnect WebSocket with new auth headers
+      // This is critical because the socket was created before login
+      // and doesn't have the Authorization header
+      WebSocketService.instance.reconnectWithNewAuth();
+
       smCubit.getMySessions();
       smCubit.getMyUnreadSessions();
       smCubit.startUnreadSessionsCountStream();

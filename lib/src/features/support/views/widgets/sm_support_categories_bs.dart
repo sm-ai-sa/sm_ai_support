@@ -68,6 +68,7 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 22.rw),
           child: SingleChildScrollView(
+            // physics: ClampingScrollPhysics(),
             controller: _scrollController,
             child: Column(
               children: [

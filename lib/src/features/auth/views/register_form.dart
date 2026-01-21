@@ -4,6 +4,7 @@ import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/core/global/components/custom_text_field/custom_text_field.dart';
 import 'package:sm_ai_support/src/core/global/components/custom_text_field/phone/phone_text_field.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
+import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/features/auth/cubit/auth_cubit.dart';
@@ -115,6 +116,7 @@ class _RegisterFormState extends State<RegisterForm> with SingleTickerProviderSt
             builder: (context, value, child) => BlocBuilder<AuthCubit, AuthState>(
               builder: (context, state) {
                 return DesignSystem.primaryButton(
+                  backgroundColor: ColorsPallets.primaryColor,
                   title: SMText.followUp,
                   height: 52.rh,
                   isDisabled: !value || state.registerStatus.isLoading,
