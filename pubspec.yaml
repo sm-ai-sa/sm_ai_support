@@ -21,7 +21,7 @@ dependencies:
   intl: ^0.20.2
 
   equatable: ^2.0.7
-  get_it: ^8.0.3
+  get_it: ^9.2.0
   cached_network_image: ^3.3.1
   uuid: ^4.3.3
   collection: ^1.18.0
