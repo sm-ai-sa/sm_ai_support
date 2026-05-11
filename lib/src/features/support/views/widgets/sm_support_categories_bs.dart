@@ -78,7 +78,7 @@ class _SMSupportCategoriesBsState extends State<SMSupportCategoriesBs> {
                 MyChatsButton(isDisposed: _isDisposed),
                 SizedBox(height: 20.rh),
                 CategoriesList(state: state),
-                SizedBox(height: 30.rh),
+                SizedBox(height: SMConfig.smData.isVoiceEnabled ? 160.rh : 30.rh),
               ],
             ),
           ),

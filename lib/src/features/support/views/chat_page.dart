@@ -23,15 +23,28 @@ class ChatPage extends StatefulWidget {
 
   final MySessionModel? mySession;
   final CategoryModel? category;
+  final String? providedSessionId;
 
-  const ChatPage({super.key, this.mySession, this.category, this.initTicket = false})
-      : assert(
-          mySession != null || (category != null && initTicket),
-          'Either mySession must be provided, or category with initTicket for new sessions',
+  /// Force-open the rating bottom sheet once messages finish loading,
+  /// regardless of the `isRatingRequired` flag from the API or WebSocket.
+  /// Used when navigating here right after a voice call ends, where the
+  /// backend's `rating_request` socket event can race our subscription.
+  final bool autoShowRating;
+
+  const ChatPage({
+    super.key,
+    this.mySession,
+    this.category,
+    this.initTicket = false,
+    this.providedSessionId,
+    this.autoShowRating = false,
+  }) : assert(
+          mySession != null || (category != null && initTicket) || providedSessionId != null,
+          'Either mySession must be provided, or category with initTicket for new sessions, or providedSessionId to resume an existing session',
         );
 
   // Convenience getters
-  String get sessionId => mySession?.id ?? '';
+  String get sessionId => providedSessionId ?? mySession?.id ?? '';
   // SessionModel? get currentSession => mySession?.toSessionModel();
   CategoryModel? get sessionCategory => mySession?.category ?? category;
 
@@ -48,6 +61,7 @@ class _ChatPageState extends State<ChatPage> {
   late SingleSessionCubit _sessionCubit;
   bool _streamStarted = false;
   bool _isFirstLoad = true;
+  bool _ratingSheetShown = false;
   DateTime? _lastPaginationTrigger;
 
   @override
@@ -117,7 +131,7 @@ class _ChatPageState extends State<ChatPage> {
         await _loadExistingSession();
         // Check rating after messages are loaded
         if (mounted && context.mounted) {
-          _showRatingIfRequired(context);
+          _showRatingIfRequired(context, force: widget.autoShowRating);
         }
       }
     });
@@ -152,13 +166,14 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   /// Show rating bottom sheet if required
-  void _showRatingIfRequired(BuildContext context) {
-    final shouldShow = _shouldShowRating();
-    smPrint('🌟 _showRatingIfRequired called - shouldShow: $shouldShow');
+  void _showRatingIfRequired(BuildContext context, {bool force = false}) {
+    final shouldShow = force || _shouldShowRating();
+    smPrint('🌟 _showRatingIfRequired called - shouldShow: $shouldShow (force: $force)');
     smPrint('🌟 sessionMessageDoc.isRatingRequired: ${_sessionCubit.state.sessionMessageDoc.isRatingRequired}');
     smPrint('🌟 isRatingRequiredFromSocket: ${_sessionCubit.state.isRatingRequiredFromSocket}');
 
-    if (shouldShow) {
+    if (shouldShow && !_ratingSheetShown) {
+      _ratingSheetShown = true;
       smPrint('🌟 Opening rating bottom sheet...');
       // Use a slight delay to ensure the UI is fully built
       Future.delayed(Duration(milliseconds: 300), () {
@@ -265,14 +280,16 @@ class _ChatPageState extends State<ChatPage> {
           backgroundColor: ColorsPallets.white,
           extendBody: true,
           appBar: ChatAppBar(),
-          body: Column(
-            children: [
-              _buildCategoryHeader(),
-              DesignSystem.primaryDivider(),
-              _buildMessagesList(),
-              DesignSystem.primaryDivider(),
-              _buildMessageInput(),
-            ],
+          body: SafeArea(
+            child: Column(
+              children: [
+                _buildCategoryHeader(),
+                DesignSystem.primaryDivider(),
+                _buildMessagesList(),
+                DesignSystem.primaryDivider(),
+                _buildMessageInput(),
+              ],
+            ),
           ),
         ),
       ),
@@ -281,7 +298,8 @@ class _ChatPageState extends State<ChatPage> {
 
   /// Handle rating request from WebSocket
   void _handleRatingRequest(BuildContext context, SingleSessionState state) {
-    if (state.isRatingRequiredFromSocket) {
+    if (state.isRatingRequiredFromSocket && !_ratingSheetShown) {
+      _ratingSheetShown = true;
       smPrint('🌟 Rating request received via WebSocket - showing rating bottom sheet');
       // Use the context from the listener directly
       Future.delayed(Duration(milliseconds: 300), () {

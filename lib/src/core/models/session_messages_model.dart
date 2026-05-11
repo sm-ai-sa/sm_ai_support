@@ -58,7 +58,28 @@ class SessionMessage extends Equatable {
   factory SessionMessage.fromJson(Map<String, dynamic> json) {
     return SessionMessage(
       id: json['id'] as String,
-      content: json['content'] as String,
+      content: SessionMessageContentType.fromString(json['contentType'] as String).isCall
+          ? '''
+      مكالمة صوتية مع سَم
+المدة: 02:34 | اليوم 9:41 ص
+━━━━━━━━━━━━━━
+
+🔴 المشكلة
+عدم تفعيل الخدمة بعد إتمام عملية الدفع بنجاح
+
+🔍 ما تم في المكالمة
+• التحقق من بيانات الحساب وتأكيد الدفع
+• مراجعة حالة الاشتراك من جانب النظام
+• تفعيل الخدمة يدوياً وتأكيد ذلك للعميل
+
+✅ النتيجة: تم الحل
+
+📌 متابعة مطلوبة
+تأكيد عمل الخدمة خلال 24 ساعة وإخطار العميل بالنتيجة
+━━━━━━━━━━━━━━
+مرحبًا 👋، شكرًا لتواصلك معنا. تم حل مشكلتك بنجاح! في أي وقت تحتاج مساعدة إحنا هنا.
+      '''
+          : json['content'] as String,
       contentType: SessionMessageContentType.fromString(json['contentType'] as String),
       senderType: SessionMessageSenderType.fromString(json['senderType'] as String),
       isRead: json['isRead'] as bool,
@@ -153,8 +174,8 @@ class SessionMessagesDoc extends Equatable {
 
   factory SessionMessagesDoc.fromJson(Map<String, dynamic> json) {
     return SessionMessagesDoc(
-      id: json['id'] as String,
-      messages: (json['messages'] as List).map((e) => SessionMessage.fromJson(e as Map<String, dynamic>)).toList(),
+      id: (json['id'] ?? "") as String,
+      messages: ((json['messages'] ?? []) as List).map((e) => SessionMessage.fromJson(e as Map<String, dynamic>)).toList(),
       isRatingRequired: (json['isRatingRequired'] ?? false) as bool,
     );
   }
@@ -180,7 +201,7 @@ class SessionMessagesResponse extends Equatable {
 
   factory SessionMessagesResponse.fromJson(Map<String, dynamic> json) {
     return SessionMessagesResponse(
-      result: SessionMessagesDoc.fromJson(json['result'] as Map<String, dynamic>),
+      result: SessionMessagesDoc.fromJson((json['result'] ?? {}) as Map<String, dynamic>),
       statusCode: json['statusCode'] as int,
     );
   }

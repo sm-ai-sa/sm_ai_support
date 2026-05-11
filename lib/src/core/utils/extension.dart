@@ -102,6 +102,17 @@ extension BuildContextExt on BuildContext {
   ///* Go to next view and remove current view from tree
   void smPushReplacement(Widget widget) =>
       Navigator.pushReplacement(SMConfig.parentContext, MaterialPageRoute(builder: (_) => widget));
+
+  ///* Replace current full-screen route with a new full-screen route
+  /// Wraps the widget in the standard full-screen wrapper (locale, bloc providers).
+  void smPushReplacementFullScreen(Widget widget) {
+    if (!mounted) return;
+    Navigator.of(SMConfig.parentContext).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => _FullScreenWrapper(child: widget),
+      ),
+    );
+  }
 }
 
 /// Wrapper widget for full-screen routes that provides necessary context

@@ -28,6 +28,9 @@ class SMSupportData extends Equatable {
   ///* Optional customer data for auto-login functionality
   final CustomerData? customer;
 
+  ///* Whether voice calling is enabled for this tenant
+  final bool isVoiceEnabled;
+
   ///* Data constructor for `SMSupportData` with required parameters only
   const SMSupportData({
     required this.appName,
@@ -38,8 +41,9 @@ class SMSupportData extends Equatable {
     required this.baseUrl,
     required this.socketBaseUrl,
     this.customer,
+    this.isVoiceEnabled = false,
   });
 
   @override
-  List<Object?> get props => [appName, locale, tenantId, apiKey, secretKey, baseUrl, socketBaseUrl, customer];
+  List<Object?> get props => [appName, locale, tenantId, apiKey, secretKey, baseUrl, socketBaseUrl, customer, isVoiceEnabled];
 }

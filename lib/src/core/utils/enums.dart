@@ -191,6 +191,7 @@ enum SessionMessageSenderType {
 
 enum SessionMessageContentType {
   text,
+  call,
   audio,
   image,
   video,
@@ -205,6 +206,7 @@ enum SessionMessageContentType {
   unsupportedMedia;
 
   bool get isText => this == SessionMessageContentType.text;
+  bool get isCall => this == SessionMessageContentType.call;
   bool get isAudio => this == SessionMessageContentType.audio;
   bool get isImage => this == SessionMessageContentType.image;
   bool get isVideo => this == SessionMessageContentType.video;
@@ -221,6 +223,7 @@ enum SessionMessageContentType {
   static SessionMessageContentType fromString(String contentType) {
     return switch (contentType.toUpperCase()) {
       'TEXT' => SessionMessageContentType.text,
+      'CALL' => SessionMessageContentType.call,
       'AUDIO' => SessionMessageContentType.audio,
       'IMAGE' => SessionMessageContentType.image,
       'VIDEO' => SessionMessageContentType.video,

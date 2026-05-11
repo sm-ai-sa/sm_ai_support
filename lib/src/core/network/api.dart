@@ -42,4 +42,7 @@ class Apis {
   // Storage/Upload
   static String get storageUpload => '$baseUrl/in-app/storage/upload';
   static String get storageDownload => '$baseUrl/storage/download';
+
+  // Voice / WebRTC
+  static String get startCallSession => '$baseUrl/in-app/start-call-session';
 }

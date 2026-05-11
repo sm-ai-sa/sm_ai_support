@@ -19,6 +19,7 @@ class ColorsPallets {
 
   static const Color red0 = Color(0xFFFEF1F1);
   static const Color red25 = Color(0xFFFDD8D8);
+  static const Color red200 = Color(0xFFDF1C41);
   static const Color red300 = Color(0xFF780707);
 
   static WidgetStatePropertyAll<Color> transparentMaterialColor = WidgetStatePropertyAll<Color>(
@@ -49,6 +50,8 @@ class ColorsPallets {
   static const Color hover50 = Color(0xFFEFEFF0);
   static const Color neutralSolid100 = Color(0xFFE1E1E5);
   static const Color darkGreen = Color(0xFF484D46);
+  static const Color violetPrimary = Color(0xFF7B61FF);
+  static const Color mutedBlack = Color(0xFF141415);
 }
 
 class SMSupportTheme {

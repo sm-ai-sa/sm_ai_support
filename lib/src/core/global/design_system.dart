@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+
 // import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lottie/lottie.dart';
@@ -241,6 +242,7 @@ class DesignSystem {
     bool isBottomBarButton = false,
     Color? backgroundColor,
     double? borderRadius,
+    String? icon,
   }) {
     bool isButtonDisabled = (isDisabled || showLoading);
     return InkWell(
@@ -251,16 +253,29 @@ class DesignSystem {
         margin: EdgeInsets.only(bottom: isBottomBarButton ? 25.rh : marginBottom),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: isButtonDisabled ? ColorsPallets.primaryColor.withValues(alpha: 0.2) : (backgroundColor ?? ColorsPallets.primaryColor),
+          color: isButtonDisabled
+              ? ColorsPallets.primaryColor.withValues(alpha: 0.2)
+              : (backgroundColor ?? ColorsPallets.primaryColor),
           borderRadius: (borderRadius ?? 14).br,
         ),
         child: Visibility(
           visible: showLoading,
-          replacement: Text(
-            title,
-            style: TextStyles.s_14_500.copyWith(
-              color: isButtonDisabled ? ColorsPallets.primaryColor.withValues(alpha: 0.7) : ColorsPallets.white,
-            ),
+          replacement: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (icon != null)
+                Padding(
+                  padding: EdgeInsetsDirectional.only(end: 5.rw),
+                  child: svgIcon(icon, size: 16.rSp),
+                ),
+              Text(
+                title,
+                style: TextStyles.s_14_500.copyWith(
+                  color: isButtonDisabled ? ColorsPallets.primaryColor.withValues(alpha: 0.7) : ColorsPallets.white,
+                ),
+              ),
+            ],
           ),
           child: DesignSystem.loadingIndicator(),
         ),
@@ -577,6 +592,7 @@ class DesignSystem {
 class GlassMorphism extends StatelessWidget {
   final Widget child;
   final double sigmaVal;
+
   const GlassMorphism({super.key, required this.child, this.sigmaVal = 10});
 
   @override

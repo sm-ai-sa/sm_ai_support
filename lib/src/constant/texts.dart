@@ -232,4 +232,16 @@ class SMText {
 
   static String get welcomeOnSm =>
       isEnglish ? "Welcome to SM AI! \n Happy to see you again!" : "مرحبًا بك في سم\n نسعد برؤيتك مجدداً!";
+
+  // Voice call strings
+  static String get contactUsNow => isEnglish ? "Contact us now!" : "تواصل معنا فورياً !";
+  static String get welcomeHowCanWeHelpToday =>
+      isEnglish ? "Welcome! 👋 How can we help you today?" : "أهلاً بك! 👋 كيف نقدر نساعدك اليوم؟";
+  static String get callNow => isEnglish ? "Call Now" : "اتصل الأن";
+  static String get listening => isEnglish ? "Listening..." : "جارٍ الاستماع...";
+  static String get calling => isEnglish ? "Calling..." : "جارٍ الاتصال...";
+  static String get speaker => isEnglish ? "Speaker" : "مكبر الصوت";
+  static String get mute => isEnglish ? "Mute" : "كتم";
+  static String get close => isEnglish ? "Close" : "إغلاق";
+  static String get unmute => isEnglish ? "Unmute" : "إلغاء الكتم";
 }

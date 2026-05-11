@@ -164,6 +164,13 @@ class NetworkServices {
     return await dio.post(Apis.reopenSession, data: request.toJson());
   }
 
+  //! Voice / WebRTC API Methods -----------------------------------
+
+  /// Start a call session — returns JWT, vertoPassword, vertoUrl, iceServers
+  Future<Response> startCallSession() async {
+    return await dio.post(Apis.startCallSession, data: {"categoryId": "1"});
+  }
+
   //! Authentication API Methods -----------------------------------
 
   /// Send OTP to phone number

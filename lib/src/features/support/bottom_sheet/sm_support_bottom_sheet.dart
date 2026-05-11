@@ -7,6 +7,7 @@ import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:sm_ai_support/src/features/support/cubit/sm_support_state.dart';
 import 'package:sm_ai_support/src/features/support/views/widgets/sm_support_categories_bs.dart';
+import 'package:sm_ai_support/src/features/webrtc_calls/views/widgets/start_call_widget.dart';
 
 /// Internal bottom sheet widget that displays support interface within parent app context
 class SMSupportBottomSheet extends StatefulWidget {
@@ -80,10 +81,18 @@ class _SMSupportBottomSheetState extends State<SMSupportBottomSheet> {
                     builder: (context) => MediaQuery.removePadding(
                       context: context,
                       removeTop: true,
-                      removeBottom: true,
-                      child: Scaffold(
-                        backgroundColor: ColorsPallets.white,
-                        body: const SMSupportCategoriesBs(),
+                      child: SafeArea(
+                        top: false,
+                        child: Scaffold(
+                          backgroundColor: ColorsPallets.white,
+                          body: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              const SMSupportCategoriesBs(),
+                              StartCallWidget(destination: "human"),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   );
