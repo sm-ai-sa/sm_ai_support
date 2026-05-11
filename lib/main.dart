@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
 import 'package:sm_ai_support/src/features/support/bottom_sheet/bottom_sheet_wrapper.dart';
 import 'package:sm_ai_support/src/features/support/bottom_sheet/initialization_handler.dart';
@@ -49,19 +50,21 @@ class SMSupport extends StatefulWidget {
   static Future<void> show({
     required BuildContext context,
     required SMSupportData smSupportData,
+    List<DeviceOrientation>? restoreOrientations,
   }) async {
-    // Initialize all services before showing UI
-    await InitializationHandler.initialize(
-      context: context,
-      smSupportData: smSupportData,
-    );
+    // Lock to portrait for the SDK's UI lifecycle. Restored on dismissal to
+    // [restoreOrientations] if provided, otherwise to all orientations so the
+    // host app is not left portrait-locked.
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
-    // Show the bottom sheet - remaining initialization happens inside
-    if (context.mounted) {
-      await BottomSheetWrapper.show(
-        context: context,
-        smSupportData: smSupportData,
-      );
+    try {
+      // Initialize all services before showing UI
+      await InitializationHandler.initialize(context: context, smSupportData: smSupportData);
+
+      // Show the bottom sheet - remaining initialization happens inside
+      if (context.mounted) await BottomSheetWrapper.show(context: context, smSupportData: smSupportData);
+    } finally {
+      SystemChrome.setPreferredOrientations(restoreOrientations ?? DeviceOrientation.values);
     }
   }
 
