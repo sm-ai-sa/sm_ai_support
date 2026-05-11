@@ -21,7 +21,7 @@ class StartCallWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: ColorsPallets.white,
-      padding: EdgeInsets.all(22.rw),
+      padding: EdgeInsets.all(22.rw).copyWith(top: 8.rh),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -102,7 +102,6 @@ class StartCallWidget extends StatelessWidget {
                 showLoading: state.authStatus.isLoading || state.connectStatus.isLoading,
                 title: SMText.callNow,
                 icon: "call",
-                backgroundColor: ColorsPallets.violetPrimary,
                 onPressed: () {
                   if (!SMConfig.smData.isVoiceEnabled) return;
                   if (!AuthManager.isAuthenticated) {

@@ -89,7 +89,14 @@ class _SMSupportBottomSheetState extends State<SMSupportBottomSheet> {
                             alignment: Alignment.bottomCenter,
                             children: [
                               const SMSupportCategoriesBs(),
-                              StartCallWidget(destination: "human"),
+                              BlocBuilder<SMSupportCubit, SMSupportState>(
+                                buildWhen: (prevState, state) => state.getTenantStatus != prevState.getTenantStatus,
+                                builder: (context, state) => state.currentTenant == null ||
+                                        state.getTenantStatus.isLoading ||
+                                        state.getTenantStatus.isFailure
+                                    ? SizedBox.shrink()
+                                    : StartCallWidget(destination: "human"),
+                              ),
                             ],
                           ),
                         ),
