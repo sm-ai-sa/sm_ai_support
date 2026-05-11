@@ -49,6 +49,7 @@ class ColorsPallets {
   static const Color solid600 = Color(0xFF3C3C44);
   static const Color hover50 = Color(0xFFEFEFF0);
   static const Color neutralSolid100 = Color(0xFFE1E1E5);
+  static const Color neutralAlpha400 = Color(0xFF18181B);
   static const Color darkGreen = Color(0xFF484D46);
   static const Color violetPrimary = Color(0xFF7B61FF);
   static const Color mutedBlack = Color(0xFF141415);

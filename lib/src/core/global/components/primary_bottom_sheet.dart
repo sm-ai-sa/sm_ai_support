@@ -141,13 +141,14 @@ Future primaryCupertinoBottomSheet({
   EdgeInsets? padding,
   Widget? bottomBarWidget,
   Color? backgroundColor,
+  Color? barrierColor,
   Widget? backButtonWidget,
   Function()? onClosePressed,
   Function()? onBackPressed,
   bool? isDismissible,
 }) async {
   return await showCupertinoModalBottomSheet(
-    barrierColor: haveBarrierColor ? Colors.black.withValues(alpha: 0.8) : null,
+    barrierColor: haveBarrierColor ? barrierColor ?? Colors.black.withValues(alpha: 0.8) : null,
     context: context ?? smNavigatorKey.currentContext!,
     backgroundColor: backgroundColor ?? ColorsPallets.white,
     topRadius: 14.rSp.rBr,

@@ -32,6 +32,7 @@ class _RateBSState extends State<RateBS> {
   @override
   Widget build(BuildContext context) {
     return Material(
+      color: ColorsPallets.white,
       child: BlocProvider.value(
         value: widget.sessionCubit,
         child: BlocConsumer<SingleSessionCubit, SingleSessionState>(
@@ -54,16 +55,18 @@ class _RateBSState extends State<RateBS> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                   SizedBox(height: 34.rh),
-                  Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
-                  SizedBox(height: 5.rh),
-                  Text(
-                    SMText.rateTheConversationDescription,
-                    textAlign: TextAlign.center,
-                    style: TextStyles.s_13_400.copyWith(color: ColorsPallets.subdued400),
-                  ),
+                  if(rate == 0) ...[
+                    Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
+                    SizedBox(height: 5.rh),
+                    Text(
+                      SMText.rateTheConversationDescription,
+                      textAlign: TextAlign.center,
+                      style: TextStyles.s_13_400.copyWith(color: ColorsPallets.subdued400),
+                    ),
+                  ],
                   SizedBox(height: 20.rh),
                   DesignSystem.starsRating(
-                    starSize: 32.rSp,
+                    starSize: 35.rSp,
                     value: rate,
                     starOffColor: ColorsPallets.solid200,
                     isOnlyShow: state.rateSessionStatus.isLoading,
@@ -99,7 +102,7 @@ class _RateBSState extends State<RateBS> {
                               ),
                               style: TextStyles.s_14_400,
                               maxLines: 4,
-                              minLines: 1,
+                              minLines: 3,
                               maxLength: null, // We'll handle the limit manually
                               onChanged: (value) {
                                 setState(() {});

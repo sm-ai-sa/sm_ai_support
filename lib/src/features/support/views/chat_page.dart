@@ -184,6 +184,9 @@ class _ChatPageState extends State<ChatPage> {
             context: context,
             useDynamicHeight: true,
             isDismissible: false,
+            haveBarrierColor: true,
+            backgroundColor: ColorsPallets.white,
+            barrierColor: ColorsPallets.neutralAlpha400.withValues(alpha: 0.6),
             child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
           );
         }

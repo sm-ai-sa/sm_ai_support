@@ -420,10 +420,16 @@ class DesignSystem {
           onRateChanged(v);
         }
       },
-      itemBuilder: (c, index) => DesignSystem.svgIcon(
-        'star',
-        size: 12.rSp,
-        color: index < (value ?? 5) ? ColorsPallets.warning500 : ColorsPallets.warning500.withValues(alpha: .4),
+      itemBuilder: (c, index) => Stack(
+        alignment: Alignment.center,
+        children: [
+          DesignSystem.svgIcon(
+            'star',
+            size: 12.rSp,
+            color: index < (value ?? 5) ? ColorsPallets.warning500 : ColorsPallets.warning500.withValues(alpha: .4),
+          ),
+          Center(child: Text((index + 1).toString(), style: TextStyle(color: ColorsPallets.white, fontFamily: SMSupportTheme.sansFamily, fontSize: 5.rSp)))
+        ],
       ),
       itemCount: 5,
       itemPadding: EdgeInsets.symmetric(horizontal: 2.rw),
