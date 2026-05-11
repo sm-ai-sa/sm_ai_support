@@ -13,6 +13,7 @@ class WebRTCState extends Equatable {
   final bool isMuted;
   final bool isSpeakerOn;
   final String? smSessionId;
+  final bool fromActiveSession;
 
   const WebRTCState({
     this.authStatus = BaseStatus.initial,
@@ -25,6 +26,7 @@ class WebRTCState extends Equatable {
     this.isMuted = false,
     this.isSpeakerOn = false,
     this.smSessionId,
+    this.fromActiveSession = false,
   });
 
   WebRTCState copyWith({
@@ -39,6 +41,7 @@ class WebRTCState extends Equatable {
     bool? isMuted,
     bool? isSpeakerOn,
     String? smSessionId,
+    bool? fromActiveSession,
   }) {
     return WebRTCState(
       authStatus: authStatus ?? this.authStatus,
@@ -51,6 +54,7 @@ class WebRTCState extends Equatable {
       isMuted: isMuted ?? this.isMuted,
       isSpeakerOn: isSpeakerOn ?? this.isSpeakerOn,
       smSessionId: smSessionId ?? this.smSessionId,
+      fromActiveSession: fromActiveSession ?? this.fromActiveSession,
     );
   }
 
@@ -75,5 +79,6 @@ class WebRTCState extends Equatable {
         isMuted,
         isSpeakerOn,
         smSessionId,
+        fromActiveSession,
       ];
 }

@@ -7,9 +7,9 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 
 class WebRTCRepo {
   /// Call `in-app/start-call-session` to get JWT, vertoPassword, vertoUrl, iceServers
-  Future<NetworkResult<VertoAuthResponse>> startCallSession() async {
+  Future<NetworkResult<VertoAuthResponse>> startCallSession({String categoryId = "1", String? sessionId}) async {
     try {
-      final response = await networkServices.startCallSession();
+      final response = await networkServices.startCallSession(categoryId: categoryId, sessionId: sessionId);
       final data = response.data as Map<String, dynamic>;
       final authResponse = VertoAuthResponse.fromJson(data["result"]);
       smPrint('WebRTC startCallSession: Success');

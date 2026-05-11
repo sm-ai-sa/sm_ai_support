@@ -45,6 +45,7 @@ class ChatPage extends StatefulWidget {
 
   // Convenience getters
   String get sessionId => providedSessionId ?? mySession?.id ?? '';
+
   // SessionModel? get currentSession => mySession?.toSessionModel();
   CategoryModel? get sessionCategory => mySession?.category ?? category;
 
@@ -279,7 +280,11 @@ class _ChatPageState extends State<ChatPage> {
         child: Scaffold(
           backgroundColor: ColorsPallets.white,
           extendBody: true,
-          appBar: ChatAppBar(),
+          appBar: ChatAppBar(
+            sessionCubit: _sessionCubit,
+            categoryId: widget.sessionCategory?.id.toString(),
+            sessionId: widget.sessionId.isNotEmpty ? widget.sessionId : null,
+          ),
           body: SafeArea(
             child: Column(
               children: [

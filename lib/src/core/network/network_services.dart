@@ -167,8 +167,11 @@ class NetworkServices {
   //! Voice / WebRTC API Methods -----------------------------------
 
   /// Start a call session — returns JWT, vertoPassword, vertoUrl, iceServers
-  Future<Response> startCallSession() async {
-    return await dio.post(Apis.startCallSession, data: {"categoryId": "1"});
+  Future<Response> startCallSession({String categoryId = "1", String? sessionId}) async {
+    return await dio.post(
+      Apis.startCallSession,
+      data: {"categoryId": categoryId, if (sessionId != null) "sessionId": sessionId},
+    );
   }
 
   //! Authentication API Methods -----------------------------------
@@ -261,122 +264,122 @@ class NetworkServices {
     }
   }
 
-  //! Get User Tickets -----------------------------------
-  // Stream<List<TicketModel>> getUserTickets() {
-  //   return SMConfig.firestore
-  //       .collection('support')
-  //       .where(
-  //         'userId',
-  //         isEqualTo: SMConfig.userId,
-  //       )
-  //       .snapshots()
-  //       .map(
-  //     (value) {
-  //       return value.docs.map((e) => TicketModel.fromJson(e.data())).toList();
-  //     },
-  //   );
-  // }
+//! Get User Tickets -----------------------------------
+// Stream<List<TicketModel>> getUserTickets() {
+//   return SMConfig.firestore
+//       .collection('support')
+//       .where(
+//         'userId',
+//         isEqualTo: SMConfig.userId,
+//       )
+//       .snapshots()
+//       .map(
+//     (value) {
+//       return value.docs.map((e) => TicketModel.fromJson(e.data())).toList();
+//     },
+//   );
+// }
 
-  //! get user chats as stream
-  // Map<String, Stream<List<ChatMessageDoc>>> getUserChatStream({
-  //   required List<String> activeTickets,
-  // }) {
-  //   // ticketId -> chatStream
-  //   final Map<String, Stream<List<ChatMessageDoc>>> chatStreamMap = {};
-  //   for (final ticketId in activeTickets) {
-  //     final stream = SMConfig.firestore
-  //         .collection('support')
-  //         .doc(ticketId)
-  //         .collection('chat')
-  //         .orderBy('createdAt', descending: true)
-  //         .snapshots()
-  //         .map(
-  //           (event) => event.docs
-  //               .map(
-  //                 (e) => ChatMessageDoc.fromJson(e.data()),
-  //               )
-  //               .toList(),
-  //         );
-  //     chatStreamMap[ticketId] = stream;
-  //   }
-  //   return chatStreamMap;
-  // }
+//! get user chats as stream
+// Map<String, Stream<List<ChatMessageDoc>>> getUserChatStream({
+//   required List<String> activeTickets,
+// }) {
+//   // ticketId -> chatStream
+//   final Map<String, Stream<List<ChatMessageDoc>>> chatStreamMap = {};
+//   for (final ticketId in activeTickets) {
+//     final stream = SMConfig.firestore
+//         .collection('support')
+//         .doc(ticketId)
+//         .collection('chat')
+//         .orderBy('createdAt', descending: true)
+//         .snapshots()
+//         .map(
+//           (event) => event.docs
+//               .map(
+//                 (e) => ChatMessageDoc.fromJson(e.data()),
+//               )
+//               .toList(),
+//         );
+//     chatStreamMap[ticketId] = stream;
+//   }
+//   return chatStreamMap;
+// }
 
-  //! Open Ticket
-  // Future<void> openTicket({
-  //   required TicketModel ticket,
-  // }) async {
-  //   return await SMConfig.firestore.collection('support').doc(ticket.ticketId).set(ticket.toJson());
-  // }
+//! Open Ticket
+// Future<void> openTicket({
+//   required TicketModel ticket,
+// }) async {
+//   return await SMConfig.firestore.collection('support').doc(ticket.ticketId).set(ticket.toJson());
+// }
 
-  //! Push message to chat
-  // Future<void> pushMessage({
-  //   required String ticketId,
-  //   required String docId,
-  //   required MessageModel message,
-  //   bool isNewDoc = false,
-  // }) async {
-  //   ChatMessageDoc chatDoc = ChatMessageDoc(
-  //     docId: docId,
-  //     ticketId: ticketId,
-  //     createdAt: DateTime.now(),
-  //     messages: [message],
-  //   );
-  //   return isNewDoc
-  //       ? await SMConfig.firestore
-  //           .collection('support')
-  //           .doc(ticketId)
-  //           .collection('chat')
-  //           .doc(docId)
-  //           .set(chatDoc.toJson())
-  //       : await SMConfig.firestore.collection('support').doc(ticketId).collection('chat').doc(docId).update({
-  //           'messages': FieldValue.arrayUnion(
-  //             [message.toJson()],
-  //           ),
-  //         });
-  // }
+//! Push message to chat
+// Future<void> pushMessage({
+//   required String ticketId,
+//   required String docId,
+//   required MessageModel message,
+//   bool isNewDoc = false,
+// }) async {
+//   ChatMessageDoc chatDoc = ChatMessageDoc(
+//     docId: docId,
+//     ticketId: ticketId,
+//     createdAt: DateTime.now(),
+//     messages: [message],
+//   );
+//   return isNewDoc
+//       ? await SMConfig.firestore
+//           .collection('support')
+//           .doc(ticketId)
+//           .collection('chat')
+//           .doc(docId)
+//           .set(chatDoc.toJson())
+//       : await SMConfig.firestore.collection('support').doc(ticketId).collection('chat').doc(docId).update({
+//           'messages': FieldValue.arrayUnion(
+//             [message.toJson()],
+//           ),
+//         });
+// }
 
   /// Mark Admin messages as read
-  // Future<void> markAdminMessagesAsRead({required String ticketId, required List<ChatMessageDoc> updatedDocs}) async {
-  //   for (final doc in updatedDocs) {
-  //     await SMConfig.firestore.collection('support').doc(ticketId).collection('chat').doc(doc.docId).update({
-  //       'messages': doc.messages.map((e) => e.toJson()).toList(),
-  //     });
-  //   }
-  // }
+// Future<void> markAdminMessagesAsRead({required String ticketId, required List<ChatMessageDoc> updatedDocs}) async {
+//   for (final doc in updatedDocs) {
+//     await SMConfig.firestore.collection('support').doc(ticketId).collection('chat').doc(doc.docId).update({
+//       'messages': doc.messages.map((e) => e.toJson()).toList(),
+//     });
+//   }
+// }
 
   /// re-open closed ticket
-  // Future<void> reOpenTicket({required String ticketId}) async {
-  //   return await SMConfig.firestore.collection('support').doc(ticketId).update({
-  //     'status': TicketStatus.active.name,
-  //     'statusLogs': FieldValue.arrayUnion([
-  //       StatusLog(
-  //         changedToStatus: TicketStatus.active,
-  //         date: DateTime.now(),
-  //         changedByUserID: SMConfig.userId,
-  //         changedBy: ChangedBy.customer,
-  //       ).toJson(),
-  //     ]),
-  //   });
-  // }
+// Future<void> reOpenTicket({required String ticketId}) async {
+//   return await SMConfig.firestore.collection('support').doc(ticketId).update({
+//     'status': TicketStatus.active.name,
+//     'statusLogs': FieldValue.arrayUnion([
+//       StatusLog(
+//         changedToStatus: TicketStatus.active,
+//         date: DateTime.now(),
+//         changedByUserID: SMConfig.userId,
+//         changedBy: ChangedBy.customer,
+//       ).toJson(),
+//     ]),
+//   });
+// }
 
   /// Rate the ticket
-  // Future<void> rateTicket({required String ticketId, required num rate}) async {
-  //   return await SMConfig.firestore.collection('support').doc(ticketId).update({
-  //     'rate': rate,
-  //   });
-  // }
-  //! Push dummy tickets
-  // Future<void> pushDummyTickets() async {
-  //   final tickets = DummyDate.dummyTickets;
-  //   for (final ticket in tickets) {
-  //     await SMConfig.firestore.collection('support').doc(ticket.ticketId).set(ticket.toJson());
-  //   }
-  // }
+// Future<void> rateTicket({required String ticketId, required num rate}) async {
+//   return await SMConfig.firestore.collection('support').doc(ticketId).update({
+//     'rate': rate,
+//   });
+// }
+//! Push dummy tickets
+// Future<void> pushDummyTickets() async {
+//   final tickets = DummyDate.dummyTickets;
+//   for (final ticket in tickets) {
+//     await SMConfig.firestore.collection('support').doc(ticket.ticketId).set(ticket.toJson());
+//   }
+// }
 
-  // Future<void> changeTypingStatus({required String ticketId, required bool isTyping}) async {
-  //   return await SMConfig.firestore.collection('support').doc(ticketId).update({
-  //     'isUserTyping': isTyping,
-  //   });
-  // }
+// Future<void> changeTypingStatus({required String ticketId, required bool isTyping}) async {
+//   return await SMConfig.firestore.collection('support').doc(ticketId).update({
+//     'isUserTyping': isTyping,
+//   });
+// }
 }

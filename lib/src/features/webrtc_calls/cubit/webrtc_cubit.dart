@@ -42,7 +42,12 @@ class WebRTCCubit extends Cubit<WebRTCState> {
   }
 
   /// Full flow: startCallSession → configure service → connect to Verto
-  Future<void> startSessionAndConnect({required String destination}) async {
+  Future<void> startSessionAndConnect({
+    required String destination,
+    String categoryId = "1",
+    String? sessionId,
+    bool fromActiveSession = false,
+  }) async {
     // Reset state for a fresh call flow
     emit(const WebRTCState(authStatus: BaseStatus.loading));
     _subscribeToStreams();
@@ -50,12 +55,13 @@ class WebRTCCubit extends Cubit<WebRTCState> {
     final repo = sl<WebRTCRepo>();
 
     // Step 1: Call in-app/start-call-session to get credentials
-    final authResult = await repo.startCallSession();
+    final authResult = await repo.startCallSession(categoryId: categoryId, sessionId: sessionId);
     final authResponse = authResult.when(
       success: (data) {
         emit(state.copyWith(
           authStatus: BaseStatus.success,
           smSessionId: data.callSession.sessionId,
+          fromActiveSession: fromActiveSession,
         ));
         return data;
       },

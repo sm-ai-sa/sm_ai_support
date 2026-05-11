@@ -84,6 +84,7 @@ class StartCallWidget extends StatelessWidget {
                   prev.connectStatus != curr.connectStatus ||
                   prev.errorMessage != curr.errorMessage,
               listener: (context, state) {
+                if (state.fromActiveSession) return; // The listener in the chat appbar will work
                 if (state.connectStatus.isSuccess) {
                   context.smPushFullScreen(CallScreen(destination: destination));
                   return;
@@ -113,7 +114,7 @@ class StartCallWidget extends StatelessWidget {
                     return;
                   }
 
-                  sl<WebRTCCubit>().startSessionAndConnect(destination: destination);
+                  sl<WebRTCCubit>().startSessionAndConnect(destination: destination, fromActiveSession: false);
                 },
               ),
             ),
