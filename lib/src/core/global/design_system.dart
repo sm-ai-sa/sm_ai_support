@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 // import 'package:flutter_rating_stars/flutter_rating_stars.dart';
 import 'package:flutter_svg/svg.dart';
@@ -129,7 +128,7 @@ class DesignSystem {
             matchTextDirection: isDirectional,
             colorFilter: color != null ? ColorFilter.mode(color, BlendMode.srcIn) : null,
             fit: fit ?? BoxFit.cover,
-            placeholderBuilder: (_) => ShimmerItems.shimmerContainer(width: width, height: height, radius: 6),
+            // placeholderBuilder: (_) => ShimmerItems.shimmerContainer(width: width, height: height, radius: 6),
             errorBuilder: (_, __, ___) => svgIcon('category/warning'),
           ),
         ),
@@ -410,33 +409,38 @@ class DesignSystem {
     bool isOnlyShow = true,
     double? value,
     double? starSize,
-    Color? starOffColor,
     Function(double)? onRateChanged,
   }) {
-    return RatingBar.builder(
-      initialRating: value ?? 5,
-      onRatingUpdate: (v) {
-        if (onRateChanged != null) {
-          onRateChanged(v);
-        }
-      },
-      itemBuilder: (c, index) => Stack(
-        alignment: Alignment.center,
-        children: [
-          DesignSystem.svgIcon(
-            'star',
-            size: 12.rSp,
-            color: index < (value ?? 5) ? ColorsPallets.warning500 : ColorsPallets.warning500.withValues(alpha: .4),
+    final rating = value ?? 5;
+    final size = starSize ?? 12.rSp;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (index) {
+        return Padding(
+          padding: EdgeInsets.symmetric(horizontal: 2.rw),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: isOnlyShow ? null : () => onRateChanged?.call((index + 1).toDouble()),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                DesignSystem.svgIcon(
+                  'star',
+                  size: size,
+                  color: index < rating ? ColorsPallets.secondaryYellow100 : ColorsPallets.solid200,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 1.5),
+                  child: Text(
+                    (index + 1).toString(),
+                    style: TextStyles.s_11_700.copyWith(color: ColorsPallets.white, fontFamily: SMSupportTheme.sansFamily),
+                  ),
+                ),
+              ],
+            ),
           ),
-          Center(child: Text((index + 1).toString(), style: TextStyle(color: ColorsPallets.white, fontFamily: SMSupportTheme.sansFamily, fontSize: 5.rSp)))
-        ],
-      ),
-      itemCount: 5,
-      itemPadding: EdgeInsets.symmetric(horizontal: 2.rw),
-      itemSize: starSize ?? 12.rSp,
-      maxRating: 5,
-      glow: false,
-      tapOnlyMode: true,
+        );
+      }),
     );
   }
 

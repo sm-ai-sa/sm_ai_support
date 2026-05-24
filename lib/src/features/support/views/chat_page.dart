@@ -187,7 +187,10 @@ class _ChatPageState extends State<ChatPage> {
             haveBarrierColor: true,
             backgroundColor: ColorsPallets.white,
             barrierColor: ColorsPallets.neutralAlpha400.withValues(alpha: 0.6),
-            child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+            child: Directionality(
+              textDirection: SMConfig.smData.locale.isEnglish ? TextDirection.ltr : TextDirection.rtl,
+              child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+            ),
           );
         }
       });
@@ -317,7 +320,13 @@ class _ChatPageState extends State<ChatPage> {
             context: context,
             useDynamicHeight: true,
             isDismissible: false,
-            child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+            haveBarrierColor: true,
+            backgroundColor: ColorsPallets.white,
+            barrierColor: ColorsPallets.neutralAlpha400.withValues(alpha: 0.6),
+            child: Directionality(
+              textDirection: SMConfig.smData.locale.isEnglish ? TextDirection.ltr : TextDirection.rtl,
+              child: RateBS(sessionId: widget.sessionId, sessionCubit: _sessionCubit),
+            ),
           );
         }
       });

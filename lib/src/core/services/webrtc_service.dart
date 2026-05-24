@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sm_ai_support/src/core/models/webrtc_call_model.dart';
+import 'package:sm_ai_support/src/core/services/call_foreground_service.dart';
 import 'package:sm_ai_support/src/core/utils/utils.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -210,7 +211,8 @@ class WebRTCService {
           _callStartTime = DateTime.now();
           _setCallPhase(WebRTCCallPhase.active);
         } else if (state == RTCPeerConnectionState.RTCPeerConnectionStateFailed ||
-            state == RTCPeerConnectionState.RTCPeerConnectionStateDisconnected) {
+            state == RTCPeerConnectionState.RTCPeerConnectionStateClosed) {
+          // Disconnected is recoverable per the WebRTC spec — don't tear down here.
           if (_currentPhase == WebRTCCallPhase.active) {
             smLog('WebRTCService: Peer connection lost');
             _cleanupCall();
@@ -227,6 +229,11 @@ class WebRTCService {
       if (!micStatus.isGranted) {
         throw Exception('Microphone permission denied — cannot start voice call');
       }
+
+      // Start the Android foreground service before mic access so the call
+      // keeps running when the screen turns off / app goes to background.
+      // (No-op on iOS — handled by UIBackgroundModes in Info.plist.)
+      await CallForegroundService.start();
 
       // Microphone with audio processing (matches reference)
       _localStream = await navigator.mediaDevices.getUserMedia({
@@ -530,6 +537,7 @@ class WebRTCService {
     _isSpeakerOn = false;
     _callStartTime = null;
     _remoteStreamController.add(null);
+    await CallForegroundService.stop();
     _setCallPhase(WebRTCCallPhase.idle);
   }
 

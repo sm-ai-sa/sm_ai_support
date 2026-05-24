@@ -3,6 +3,11 @@
       <uses-permission android:name="android.permission.CAMERA"/>
       <uses-permission android:name="android.permission.RECORD_AUDIO"/>
       <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+      <!-- Foreground service for keeping WebRTC voice calls alive while screen is off -->
+      <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+      <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+      <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+      <uses-permission android:name="android.permission.WAKE_LOCK"/>
       <!-- Storage permissions for Android 12 and below -->
       <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
       <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
@@ -48,6 +53,14 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- WebRTC voice call foreground service (sm_ai_support).
+             Keeps the call alive when the screen is off / app is backgrounded. -->
+        <service
+            android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+            android:foregroundServiceType="microphone"
+            android:exported="false"
+            android:stopWithTask="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

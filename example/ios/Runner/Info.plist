@@ -56,6 +56,12 @@
 	<string>We need access to your photo library to select images and videos.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone to record audio.</string>
+	<!-- Keep WebRTC voice calls alive while screen is locked / app is backgrounded. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>voip</string>
+	</array>
 </dict>
 </plist>
 	

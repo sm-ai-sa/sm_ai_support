@@ -54,8 +54,14 @@ class _RateBSState extends State<RateBS> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                  SizedBox(height: 34.rh),
-                  if(rate == 0) ...[
+                    SizedBox(height: 12.rh),
+                    Container(
+                      width: 24.rw,
+                      height: 3.rh,
+                      decoration: ShapeDecoration(shape: StadiumBorder(), color: ColorsPallets.neutralSolid100),
+                    ),
+                    if(rate == 0) ...[
+                    SizedBox(height: 20.rh),
                     Text(SMText.rateTheConversation, style: TextStyles.s_20_400),
                     SizedBox(height: 5.rh),
                     Text(
@@ -68,7 +74,6 @@ class _RateBSState extends State<RateBS> {
                   DesignSystem.starsRating(
                     starSize: 35.rSp,
                     value: rate,
-                    starOffColor: ColorsPallets.solid200,
                     isOnlyShow: state.rateSessionStatus.isLoading,
                     onRateChanged: (v) {
                       rate = v;
@@ -85,7 +90,7 @@ class _RateBSState extends State<RateBS> {
                         border: Border.all(
                           color: _commentController.text.length > maxCommentLength
                               ? ColorsPallets.secondaryRed100
-                              : ColorsPallets.solid200,
+                              : ColorsPallets.hover50,
                         ),
                       ),
                       child: Stack(
@@ -102,7 +107,7 @@ class _RateBSState extends State<RateBS> {
                               ),
                               style: TextStyles.s_14_400,
                               maxLines: 4,
-                              minLines: 3,
+                              minLines: 2,
                               maxLength: null, // We'll handle the limit manually
                               onChanged: (value) {
                                 setState(() {});
@@ -123,6 +128,7 @@ class _RateBSState extends State<RateBS> {
                             child: Text(
                               '${_commentController.text.length}/$maxCommentLength',
                               style: TextStyles.s_12_400.copyWith(
+                                fontFamily: SMSupportTheme.sansFamily,
                                 color: _commentController.text.length > maxCommentLength
                                     ? ColorsPallets.secondaryRed100
                                     : ColorsPallets.subdued400,

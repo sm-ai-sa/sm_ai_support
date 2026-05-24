@@ -1,17 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:proximity_sensor/proximity_sensor.dart';
 import 'package:sm_ai_support/sm_ai_support.dart';
-import 'package:sm_ai_support/src/constant/texts.dart';
 import 'package:sm_ai_support/src/core/di/injection_container.dart';
 import 'package:sm_ai_support/src/core/global/design_system.dart';
-import 'package:sm_ai_support/src/core/models/webrtc_call_model.dart';
 import 'package:sm_ai_support/src/core/theme/colors.dart';
 import 'package:sm_ai_support/src/core/theme/styles.dart';
 import 'package:sm_ai_support/src/core/utils/extension.dart';
 import 'package:sm_ai_support/src/core/utils/extension/size_extension.dart';
 import 'package:sm_ai_support/src/features/support/views/chat_page.dart';
-import 'package:sm_ai_support/src/features/webrtc_calls/cubit/webrtc_cubit.dart';
-import 'package:sm_ai_support/src/features/webrtc_calls/cubit/webrtc_state.dart';
 import 'package:sm_ai_support/src/features/webrtc_calls/views/widgets/call_controls.dart';
 import 'package:sm_ai_support/src/features/webrtc_calls/views/widgets/voice_wave_visualizer.dart';
 
@@ -27,11 +26,34 @@ class CallScreen extends StatefulWidget {
 class _CallScreenState extends State<CallScreen> {
   bool _wasCallInProgress = false;
   bool _didHandleCallEnd = false;
+  StreamSubscription<int>? _proximitySubscription;
 
   @override
   void initState() {
     super.initState();
     sl<WebRTCCubit>().makeCall(widget.destination);
+    _enableProximitySensor();
+  }
+
+  /// Turn the screen off when the phone is near the user's ear, like a native
+  /// phone call. On iOS, subscribing to the events stream enables
+  /// `UIDevice.isProximityMonitoringEnabled` natively. On Android, we also
+  /// flip the screen-off wake lock explicitly.
+  ///
+  /// Order matters: per the plugin's example, `setProximityScreenOff(true)`
+  /// must be awaited before subscribing to `events`, otherwise the wake lock
+  /// isn't acquired and the screen never turns off.
+  Future<void> _enableProximitySensor() async {
+    await ProximitySensor.setProximityScreenOff(true).catchError((_) {});
+    if (!mounted) return;
+    _proximitySubscription = ProximitySensor.events.listen((_) {});
+  }
+
+  @override
+  void dispose() {
+    _proximitySubscription?.cancel();
+    ProximitySensor.setProximityScreenOff(false).catchError((_) => null);
+    super.dispose();
   }
 
   /// Replace the call screen with the chat page for [smSessionId].

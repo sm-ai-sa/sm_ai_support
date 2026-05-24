@@ -116,6 +116,47 @@ flutter pub get
 <string>We need access to your microphone for audio messages</string>
 ```
 
+### 📞 Voice Calling — Required Native Config
+
+The package's WebRTC voice-call feature keeps the call alive when the screen is off (like Messenger / Slack / native phone calls). To make this work, consuming apps must add the following native configuration.
+
+**Android** (`android/app/src/main/AndroidManifest.xml`):
+
+Add these permissions inside `<manifest>`:
+
+```xml
+<uses-permission android:name="android.permission.RECORD_AUDIO"/>
+<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+```
+
+Declare the foreground service inside `<application>`:
+
+```xml
+<service
+    android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+    android:foregroundServiceType="microphone"
+    android:exported="false"
+    android:stopWithTask="false" />
+```
+
+**iOS** (`ios/Runner/Info.plist`):
+
+```xml
+<key>UIBackgroundModes</key>
+<array>
+    <string>audio</string>
+    <string>voip</string>
+</array>
+```
+
+> Without these entries, calls will hang up when the screen sleeps or the app is backgrounded.
+
+> On Android 13+, the package requests `POST_NOTIFICATIONS` at runtime the first time a call starts. If the user denies it, the foreground-service notification can't be shown and Android may kill the call when the screen sleeps.
+
 ---
 
 ## 🚀 Quick Start

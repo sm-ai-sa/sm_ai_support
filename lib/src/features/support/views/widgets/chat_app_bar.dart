@@ -36,58 +36,59 @@ class ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
       systemOverlayStyle: SystemUiOverlayStyle.dark,
       elevation: 0,
       actions: [
-        BlocProvider.value(
-          value: sl<WebRTCCubit>(),
-          child: BlocConsumer<WebRTCCubit, WebRTCState>(
-            listenWhen: (prev, curr) =>
-                prev.authStatus != curr.authStatus ||
-                prev.connectStatus != curr.connectStatus ||
-                prev.errorMessage != curr.errorMessage,
-            listener: (context, state) {
-              if (!state.fromActiveSession) return;
-              if (state.connectStatus.isSuccess) {
-                context.smPushReplacementFullScreen(CallScreen(destination: destination));
-                return;
-              }
+        if (SMConfig.smData.isVoiceEnabled)
+          BlocProvider.value(
+            value: sl<WebRTCCubit>(),
+            child: BlocConsumer<WebRTCCubit, WebRTCState>(
+              listenWhen: (prev, curr) =>
+                  prev.authStatus != curr.authStatus ||
+                  prev.connectStatus != curr.connectStatus ||
+                  prev.errorMessage != curr.errorMessage,
+              listener: (context, state) {
+                if (!state.fromActiveSession) return;
+                if (state.connectStatus.isSuccess) {
+                  context.smPushReplacementFullScreen(CallScreen(destination: destination));
+                  return;
+                }
 
-              if (state.authStatus.isFailure || state.connectStatus.isFailure) {
-                primarySnackBar(context, message: state.errorMessage ?? "Error");
-              }
-              if (state.errorMessage != null && state.errorMessage!.contains('Auth rejected')) {
-                primarySnackBar(context, message: state.errorMessage ?? "Error");
-              }
-            },
-            builder: (context, state) {
-              final isLoading = state.authStatus.isLoading || state.connectStatus.isLoading;
-              return Padding(
-                padding: EdgeInsetsDirectional.only(end: 24.rw),
-                child: isLoading
-                    ? SizedBox(width: 24.rSp, height: 24.rSp, child: DesignSystem.loadingIndicator())
-                    : DesignSystem.svgIcon(
-                        "call",
-                        color: ColorsPallets.primaryColor,
-                        onTap: () {
-                          if (!SMConfig.smData.isVoiceEnabled) return;
-                          if (!AuthManager.isAuthenticated) {
-                            primaryCupertinoBottomSheet(
-                              showSwipeCloseIndicator: true,
-                              child: NeedAuthBS(),
-                              useDynamicHeight: true,
+                if (state.authStatus.isFailure || state.connectStatus.isFailure) {
+                  primarySnackBar(context, message: state.errorMessage ?? "Error");
+                }
+                if (state.errorMessage != null && state.errorMessage!.contains('Auth rejected')) {
+                  primarySnackBar(context, message: state.errorMessage ?? "Error");
+                }
+              },
+              builder: (context, state) {
+                final isLoading = state.authStatus.isLoading || state.connectStatus.isLoading;
+                return Padding(
+                  padding: EdgeInsetsDirectional.only(end: 24.rw),
+                  child: isLoading
+                      ? SizedBox(width: 24.rSp, height: 24.rSp, child: DesignSystem.loadingIndicator())
+                      : DesignSystem.svgIcon(
+                          "call",
+                          color: ColorsPallets.primaryColor,
+                          onTap: () {
+                            if (!SMConfig.smData.isVoiceEnabled) return;
+                            if (!AuthManager.isAuthenticated) {
+                              primaryCupertinoBottomSheet(
+                                showSwipeCloseIndicator: true,
+                                child: NeedAuthBS(),
+                                useDynamicHeight: true,
+                              );
+                              return;
+                            }
+                            sl<WebRTCCubit>().startSessionAndConnect(
+                              destination: destination,
+                              categoryId: categoryId ?? '1',
+                              sessionId: sessionId ?? sessionCubit.state.sessionId,
+                              fromActiveSession: true,
                             );
-                            return;
-                          }
-                          sl<WebRTCCubit>().startSessionAndConnect(
-                            destination: destination,
-                            categoryId: categoryId ?? '1',
-                            sessionId: sessionId ?? sessionCubit.state.sessionId,
-                            fromActiveSession: true,
-                          );
-                        },
-                      ),
-              );
-            },
+                          },
+                        ),
+                );
+              },
+            ),
           ),
-        ),
       ],
       leading: Row(
         children: [

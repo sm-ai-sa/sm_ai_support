@@ -53,6 +53,7 @@ class ColorsPallets {
   static const Color darkGreen = Color(0xFF484D46);
   static const Color violetPrimary = Color(0xFF7B61FF);
   static const Color mutedBlack = Color(0xFF141415);
+  static const Color secondaryYellow100 = Color(0xFFFDBA35);
 }
 
 class SMSupportTheme {
