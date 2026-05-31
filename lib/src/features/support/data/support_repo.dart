@@ -7,6 +7,36 @@ import 'package:sm_ai_support/src/core/utils/utils.dart';
 class SupportRepo {
   //! New Support API Methods -----------------------------------
 
+  // Cache scope: tenant content is keyed by the configured tenant + locale.
+  String get _cacheTenantId => SMConfig.smData.tenantId;
+  String get _cacheLocale => SMConfig.smData.locale.localeCode;
+
+  /// Read the cached tenant (stale-while-revalidate), or null if none/invalid.
+  /// Used to render the tenant instantly on init before the network responds.
+  TenantResponse? getCachedTenant() {
+    try {
+      final data = SharedPrefHelper.getCachedTenant(tenantId: _cacheTenantId, locale: _cacheLocale);
+      if (data == null) return null;
+      return TenantResponse.fromJson(data);
+    } catch (e) {
+      smPrint('Read cached tenant error: $e');
+      return null;
+    }
+  }
+
+  /// Read the cached categories (stale-while-revalidate), or null if none/invalid.
+  /// Used to render categories instantly on init before the network responds.
+  CategoriesResponse? getCachedCategories() {
+    try {
+      final data = SharedPrefHelper.getCachedCategories(tenantId: _cacheTenantId, locale: _cacheLocale);
+      if (data == null) return null;
+      return CategoriesResponse.fromJson(data);
+    } catch (e) {
+      smPrint('Read cached categories error: $e');
+      return null;
+    }
+  }
+
   /// Get tenant information by ID
   /// Returns tenant configuration data including theme colors, name, and logo
   Future<NetworkResult<TenantResponse>> getTenant({required String tenantId}) async {
@@ -15,6 +45,16 @@ class SupportRepo {
 
       if (response.statusCode?.isSuccess ?? false) {
         final tenantResponse = TenantResponse.fromJson(response.data);
+        // Cache the raw response so the next init can show it instantly.
+        try {
+          await SharedPrefHelper.cacheTenant(
+            tenantId: _cacheTenantId,
+            locale: _cacheLocale,
+            data: response.data as Map<String, dynamic>,
+          );
+        } catch (e) {
+          smPrint('Cache tenant error: $e');
+        }
         smPrint('Fetch Tenant Response: Success - Tenant ID: ${tenantResponse.tenant.tenantId}');
         return Success(tenantResponse);
       } else {
@@ -43,6 +83,16 @@ class SupportRepo {
 
       if (response.statusCode?.isSuccess ?? false) {
         final categoriesResponse = CategoriesResponse.fromJson(response.data);
+        // Cache the raw response so the next init can show it instantly.
+        try {
+          await SharedPrefHelper.cacheCategories(
+            tenantId: _cacheTenantId,
+            locale: _cacheLocale,
+            data: response.data as Map<String, dynamic>,
+          );
+        } catch (e) {
+          smPrint('Cache categories error: $e');
+        }
         smPrint('Fetch Categories Response: Success - ${categoriesResponse.result.length} categories');
         return Success(categoriesResponse);
       } else {

@@ -43,9 +43,22 @@ class SMSupportCubit extends Cubit<SMSupportState> {
   //! New Support API Methods -----------------------------------
 
   /// Get tenant information
+  ///
+  /// Stale-while-revalidate: if a cached tenant exists, it is shown instantly
+  /// (no shimmer) while the fresh response is fetched in the background, then
+  /// the response overrides the cache. If the refresh fails while cache is on
+  /// screen, the cached tenant stays visible.
   Future<void> getTenant({required String tenantId}) async {
     smPrint('Get Tenant: $tenantId');
-    emit(state.copyWith(getTenantStatus: BaseStatus.loading));
+
+    final cachedTenant = sl<SupportRepo>().getCachedTenant();
+    if (cachedTenant != null) {
+      smPrint('Get Tenant: showing cached tenant while refreshing');
+      emit(state.copyWith(getTenantStatus: BaseStatus.success, currentTenant: cachedTenant.tenant));
+    } else {
+      emit(state.copyWith(getTenantStatus: BaseStatus.loading));
+    }
+
     try {
       final result = await sl<SupportRepo>().getTenant(tenantId: tenantId);
       result.when(
@@ -54,21 +67,40 @@ class SMSupportCubit extends Cubit<SMSupportState> {
           emit(state.copyWith(getTenantStatus: BaseStatus.success, currentTenant: data.tenant));
         },
         error: (error) {
-          // Even in error case, we get dummy tenant from repo
-          smPrint('Get Tenant Error handled with dummy data');
-          emit(state.copyWith(getTenantStatus: BaseStatus.failure));
+          smPrint('Get Tenant Error');
+          // Keep the cached tenant on screen if we have one; only surface
+          // failure when there is nothing cached to fall back to.
+          primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
+          if (cachedTenant == null) emit(state.copyWith(getTenantStatus: BaseStatus.failure));
+
         },
       );
     } catch (e) {
       smPrint('Get Tenant Exception: $e');
-      emit(state.copyWith(getTenantStatus: BaseStatus.failure));
+      if (cachedTenant == null) {
+        emit(state.copyWith(getTenantStatus: BaseStatus.failure));
+      }
     }
   }
 
   /// Get support categories
+  ///
+  /// Stale-while-revalidate: if cached categories exist, they are shown instantly
+  /// (no shimmer) while the fresh response is fetched in the background, then the
+  /// response overrides the cache. If the refresh fails, the error is still
+  /// surfaced, but the cached list stays visible when one is available.
   Future<void> getCategories() async {
     smPrint('Get Categories');
-    emit(state.copyWith(getCategoriesStatus: BaseStatus.loading));
+
+    final cachedCategories = sl<SupportRepo>().getCachedCategories();
+    final hasCache = cachedCategories != null && cachedCategories.result.isNotEmpty;
+    if (hasCache) {
+      smPrint('Get Categories: showing ${cachedCategories.result.length} cached categories while refreshing');
+      emit(state.copyWith(getCategoriesStatus: BaseStatus.success, categories: cachedCategories.result));
+    } else {
+      emit(state.copyWith(getCategoriesStatus: BaseStatus.loading));
+    }
+
     try {
       final result = await sl<SupportRepo>().getCategories(tenantId: state.currentTenant?.tenantId ?? '');
       result.when(
@@ -77,13 +109,18 @@ class SMSupportCubit extends Cubit<SMSupportState> {
           emit(state.copyWith(getCategoriesStatus: BaseStatus.success, categories: data.result));
         },
         error: (error) {
+          // Surface the error, but keep the cached list visible if we have one.
           primarySnackBar(smNavigatorKey.currentContext!, message: error.failure.error);
-          emit(state.copyWith(getCategoriesStatus: BaseStatus.failure));
+          if (!hasCache) {
+            emit(state.copyWith(getCategoriesStatus: BaseStatus.failure));
+          }
         },
       );
     } catch (e) {
       primarySnackBar(smNavigatorKey.currentContext!, message: e.toString());
-      emit(state.copyWith(getCategoriesStatus: BaseStatus.failure));
+      if (!hasCache) {
+        emit(state.copyWith(getCategoriesStatus: BaseStatus.failure));
+      }
     }
   }
 

@@ -29,6 +29,8 @@ class SharedPrefHelper {
   static const String _isAuthenticatedKey = 'is_authenticated';
   static const String _anonymousSessionIdsKey = 'anonymous_session_ids';
   static const String _anonymousSessionCategoryMapKey = 'anonymous_session_category_map';
+  static const String _tenantCacheKey = 'cached_tenant';
+  static const String _categoriesCacheKey = 'cached_categories';
 
   // Auth Token Methods
   static Future<void> setAuthToken(String token) async {
@@ -376,6 +378,63 @@ class SharedPrefHelper {
     await prefs.remove(_anonymousSessionCategoryMapKey);
     await clearAnonymousSessionIds(); // Also clear legacy list
     smPrint('Cleared all anonymous session mappings');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Support content cache (tenant info & categories) — stale-while-revalidate
+  //
+  // We store the *raw* API response body, not the parsed models: the models'
+  // own toJson is lossy (TenantModel reads `id` but writes `tenantId`,
+  // CategoryModel drops `name`), so round-tripping through them would corrupt
+  // the data. Caching the original server JSON and re-parsing with fromJson
+  // keeps it lossless.
+  //
+  // The cache is scoped per tenantId + locale because tenant name and category
+  // name/description are localized by the server based on the locale header.
+  // ---------------------------------------------------------------------------
+
+  static String _scopedCacheKey(String base, String tenantId, String locale) => '${base}_${tenantId}_$locale';
+
+  /// Cache the raw tenant API response body for [tenantId] + [locale].
+  static Future<void> cacheTenant({
+    required String tenantId,
+    required String locale,
+    required Map<String, dynamic> data,
+  }) async {
+    await prefs.setString(_scopedCacheKey(_tenantCacheKey, tenantId, locale), json.encode(data));
+  }
+
+  /// Read the cached raw tenant API response body, or null if absent/invalid.
+  static Map<String, dynamic>? getCachedTenant({required String tenantId, required String locale}) {
+    final raw = prefs.getString(_scopedCacheKey(_tenantCacheKey, tenantId, locale));
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return json.decode(raw) as Map<String, dynamic>;
+    } catch (e) {
+      smPrint('Error decoding cached tenant: $e');
+      return null;
+    }
+  }
+
+  /// Cache the raw categories API response body for [tenantId] + [locale].
+  static Future<void> cacheCategories({
+    required String tenantId,
+    required String locale,
+    required Map<String, dynamic> data,
+  }) async {
+    await prefs.setString(_scopedCacheKey(_categoriesCacheKey, tenantId, locale), json.encode(data));
+  }
+
+  /// Read the cached raw categories API response body, or null if absent/invalid.
+  static Map<String, dynamic>? getCachedCategories({required String tenantId, required String locale}) {
+    final raw = prefs.getString(_scopedCacheKey(_categoriesCacheKey, tenantId, locale));
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return json.decode(raw) as Map<String, dynamic>;
+    } catch (e) {
+      smPrint('Error decoding cached categories: $e');
+      return null;
+    }
   }
 
   /// Get all unique session IDs from the category map (backward compatibility)
